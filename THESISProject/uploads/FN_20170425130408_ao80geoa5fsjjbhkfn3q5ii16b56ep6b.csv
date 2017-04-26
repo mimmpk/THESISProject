@@ -1,0 +1,4 @@
+﻿no,function_id,function_desc,inputName,dataType,dataLength
+1,FR-01,Add Student Information,student id,varchar,10
+2,FR-02,Remove Student Information,first name,varchar,50
+2,FR-03,Remove Student Information,first name,varchar,50
