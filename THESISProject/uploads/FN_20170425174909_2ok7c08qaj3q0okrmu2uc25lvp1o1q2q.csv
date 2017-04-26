@@ -1,4 +1,0 @@
-﻿no,function_id,function_desc,inputName,dataType,dataLength,unique,defaultValue,nullable,minValue,maxValue,relationTableName,relationFieldName
-1,FR-01,Add Student Information,Student Id,varchar,10,Y,,N,,,student,student_id
-2,FR-01,Add Student Information,First Name,varchar,50,N,,N,,,student,first_name
-2,FR-03,Add Student Information,Last Name,varchar,50,N,,N,,,student,last_name
