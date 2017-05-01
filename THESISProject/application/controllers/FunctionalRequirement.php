@@ -81,6 +81,8 @@ class FunctionalRequirement extends CI_Controller {
 	    $config['max_size']  = '5000';
 	    
 	    $error = '';
+	    $successMsg = '';
+	    $isCorrectCSV = FALSE;
 	    $resultUpload = array();
 
 	    $projectId = $this->input->post('projectId');
@@ -101,9 +103,11 @@ class FunctionalRequirement extends CI_Controller {
        		//Validate data in File
        		$lineNo = 0;
        		$totalRecord = count($result);
+       		$funtionalRequirementsList = array();
        		$correctRecord = 0;
        		$incorrectRecord = 0;
        		
+       		$user = (null != $this->session->userdata('username'))? $this->session->userdata('username'): 'userDefault';
        		$dataHeader = '';
        		$inputNameKey = '';
        		$inputNameisNULL = FALSE;
@@ -114,6 +118,10 @@ class FunctionalRequirement extends CI_Controller {
        		foreach($result as $value){
        			++$lineNo;
        			$errorFlag = FALSE;	
+       			$hasDataLength = FALSE;
+       			$hasScalePoint = FALSE;
+
+       			$scalePoint = 0;
 
        			if(NUMBER_OF_UPLOADED_COLUMN_FR != count($value)){
        				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_004', $lineNo);
@@ -241,6 +249,7 @@ class FunctionalRequirement extends CI_Controller {
 		       			$inputLength = $value[KEY_FR_INPUT_LENGTH];
 		       			$lengthIsMatch = TRUE;
 		       			if($typeIsMatch && !in_array($miscValue, $exceptInputSize)){
+		       				$hasDataLength = TRUE;
 		       				if($this->checkNullOrEmpty($inputLength)){
 			       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_014', $lineNo);
 			       				$errorFlag = TRUE;
@@ -271,7 +280,12 @@ class FunctionalRequirement extends CI_Controller {
 			       								$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_018', $lineNo);
 			       								$errorFlag = TRUE;
 			       								$lengthIsMatch = FALSE;
+			       							}else{
+			       								$hasScalePoint = TRUE;
+			       								$scalePoint = $value[KEY_FR_DECIMAL_POINT];
 			       							}
+			       						}else{
+			       							$hasScalePoint = TRUE;
 			       						}
 			       					}
 			       				}
@@ -393,25 +407,55 @@ class FunctionalRequirement extends CI_Controller {
 			       				$inputNameKey = $value[KEY_FR_INPUT_NAME];
 			       			}
 		       			}
-       				}//end validate detail
-       			}       			
-       			
+       				}// end validate input
+       			}// end check detail
+
        			if($errorFlag == FALSE){
        				$correctRecord++;
+
+       				$funtionalRequirementsList[] = (object) array(
+       					'projectId' => $projectId, 
+	    				'functionNo' => $value[KEY_FR_NO], 
+	    				'functionDescription' => $value[KEY_FR_DESC], 
+	    				'inputName' => $value[KEY_FR_INPUT_NAME], 
+	    				'dataType' => $value[KEY_FR_INPUT_TYPE], 
+	    				'dataLength' => (($hasDataLength)? $value[KEY_FR_INPUT_LENGTH] : NULL), 
+	    				'scale' => (($hasScalePoint)? $scalePoint : NULL), 
+	    				'unique' => strtoupper($value[KEY_FR_INPUT_UNIQUE]), 
+	    				'defaultValue' => $value[KEY_FR_INPUT_DEFAULT], 
+	    				'notNull' => strtoupper($value[KEY_FR_INPUT_NULL]), 
+	    				'minValue' => $value[KEY_FR_INPUT_MIN_VALUE],
+	    				'maxValue' => $value[KEY_FR_INPUT_MAX_VALUE],
+	    				'tableName' => $value[KEY_FR_INPUT_TABLE_NAME],
+	    				'fieldName' => $value[KEY_FR_INPUT_FIELD_NAME],
+	    				'version' => INITIAL_VERSION,
+	    				'functionStatus' => ACTIVE_CODE,
+	    				'user' => $user);
        			}
-       		}//end foreach;
+
+       		} //end foreach
        		
        		unlink($fullPath); //delete uploaded file
        		$incorrectRecord = $totalRecord - $correctRecord;
        		if(0 < $incorrectRecord){
        			$error = ER_MSG_008;
+       		}else{
+       			$isCorrectCSV = TRUE;
        		}
 	    }
 
 	    //save data in database
-	    if(0 == $incorrectRecord){
+	    if($isCorrectCSV){
+	    	//upload
+	    	//var_dump($funtionalRequirementsList);
+	    	$resultUpload = $this->FR->uploadFR($funtionalRequirementsList);
 
-	    }
+	    	if($resultUpload){
+	    		$successMsg = ER_MSG_009;
+	    	}else{
+	    		$error = ER_MSG_008;
+	    	}
+		}
 
 
 	    $hfield = array('screenMode' => $screenMode, 'projectId' => $projectId, 'projectName' => $projectName, 'projectNameAlias' => $projectNameAlias);
@@ -420,6 +464,7 @@ class FunctionalRequirement extends CI_Controller {
 	    $data['correctRecords'] = $correctRecord;
 		$data['incorrectRecords'] = $incorrectRecord;
 	    $data['error_message'] = $error;
+	    $data['success_message'] = $successMsg;
 	    $data['result'] = $resultUpload;
 	    $this->openView($data, 'upload');
 	}

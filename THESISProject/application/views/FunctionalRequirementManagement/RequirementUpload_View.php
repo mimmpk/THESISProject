@@ -12,6 +12,12 @@
 	<!-- Main content -->
 	<div class="row">
 		<div class="col-md-12">
+			<?php if(!empty($success_message)) { ?>
+			<div class="alert alert-success alert-dismissible" style="margin-top: 3px;margin-bottom: 3px;">
+				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
+				<?php echo $success_message; ?>
+			</div>
+			<?php } ?>
 			<?php if(!empty($error_message)) { ?>
 			<div class="alert alert-danger alert-dismissible" style="margin-top: 3px;margin-bottom: 3px;">
 				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
@@ -74,19 +80,19 @@
 					<h3 class="box-title">Upload Result</h3><!-- <span style="color:green;"> Success!!</span> -->
 				</div>
 				<div class="box-body" style="margin-top: -10px;">
-					<div class="col-md-2" style="background: #F2F3F4;text-align: right;vertical-align: center;">
+					<div class="col-md-2" style="background: #D7DBDD;text-align: right;vertical-align: center;">
 						<label for="inputProjectName" style="margin-bottom: 0px;">Total Records :</label>
 					</div>
 					<div class="col-md-2">
 						<label for="inputProjectName" style="margin-bottom: 0px;"><?php echo $totalRecords ?></label>
 					</div>
-					<div class="col-md-2" style="background: #F2F3F4;text-align: right;vertical-align: center;">
+					<div class="col-md-2" style="background: #D7DBDD;text-align: right;vertical-align: center;">
 						<label for="inputProjectName" style="margin-bottom: 0px;">Correct :</label>
 					</div>
 					<div class="col-md-2">
 						<label for="inputProjectName" style="margin-bottom: 0px;"><?php echo $correctRecords ?> Record(s)</label>
 					</div>
-					<div class="col-md-2" style="background: #F2F3F4;text-align: right;vertical-align: center;">
+					<div class="col-md-2" style="background: #D7DBDD;text-align: right;vertical-align: center;">
 						<label for="inputProjectName" style="margin-bottom: 0px;">Incorrect :</label>
 					</div>
 					<div class="col-md-2">
@@ -94,7 +100,7 @@
 					</div>
 				</div>
 				<div class="box-body" style="margin-top: -10px;">
-					<table id="resultTbl" class="table table-bordered">
+					<table id="resultTbl" class="table table-bordered table-striped dataTable">
 						<thead>
 			            	<tr style="background: #CACFD2;">
 								<th>No.</th>
