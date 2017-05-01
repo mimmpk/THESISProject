@@ -6,6 +6,7 @@ class FunctionalRequirement extends CI_Controller {
 		parent::__construct();
 		$this->load->model('Project_model', 'Project');
 		$this->load->model('FunctionalRequirement_model', 'FR');
+		$this->load->model('Miscellaneous_model', 'MISC');
 		$this->load->library('form_validation', null, 'FValidate');
 		$this->load->library('session');
 	}
@@ -93,8 +94,9 @@ class FunctionalRequirement extends CI_Controller {
 	    	$error = "Import process failed.";
 	    }else{
 	    	$data = array('upload_data' => $this->upload->data());
+	    	$fullPath = $data['upload_data']['full_path'];
 	    	$this->load->library('csvreader');
-       		$result =  $this->csvreader->parse_file($data['upload_data']['full_path']);//path to csv file
+       		$result =  $this->csvreader->parse_file($fullPath);//path to csv file
        	
        		//Validate data in File
        		$lineNo = 0;
@@ -103,7 +105,7 @@ class FunctionalRequirement extends CI_Controller {
        		$incorrectRecord = 0;
        		
        		$dataHeader = '';
-       		$inputData = '';
+       		$inputNameKey = '';
        		$inputNameisNULL = FALSE;
        		$tableNameisNULL = FALSE;
        		$fieldNameisNULL = FALSE;
@@ -113,13 +115,14 @@ class FunctionalRequirement extends CI_Controller {
        			++$lineNo;
        			$errorFlag = FALSE;	
 
-       			if(13 != count($value)){
+       			if(NUMBER_OF_UPLOADED_COLUMN_FR != count($value)){
        				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_004', $lineNo);
        				continue;
        			}
 
+       			/*------------------------------------[HEADER]---------------------------------*/
 				/**************************[FUNCTIONAL REQUIREMENT ID]**************************/
-				if(checkNullOrEmpty($value[KEY_FR_NO])){
+				if($this->checkNullOrEmpty($value[KEY_FR_NO])){
 					//Check FR No. not null
 					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_005', $lineNo);
 				}else{
@@ -139,7 +142,7 @@ class FunctionalRequirement extends CI_Controller {
        			}
 
        			//Check Exist Functional Requirement ID
-       			if(!checkNullOrEmpty($value[KEY_FR_NO])){
+       			if(!$this->checkNullOrEmpty($value[KEY_FR_NO])){
        				$recordCount = $this->FR->searchExistFunctionalRequirement($value[KEY_FR_NO], $projectId);
        				if(0 < $recordCount){
        					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_006', $lineNo);
@@ -147,9 +150,9 @@ class FunctionalRequirement extends CI_Controller {
        				}
        			}
 
-       			/**************************[FUNCTIONAL REQUIREMENT DESCRIPTION]*************************/
+       			/**************************[FUNCTIONAL REQUIREMENT DESCRIPTION]***********************/
        			//Check FRs'Description not null
-       			if(checkNullOrEmpty($value[KEY_FR_DESC])){
+       			if($this->checkNullOrEmpty($value[KEY_FR_DESC])){
        				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_007', $lineNo);
        				$errorFlag = TRUE;
        			}else{
@@ -160,82 +163,260 @@ class FunctionalRequirement extends CI_Controller {
 	       			}
        			}
 
+       			/*--------------------------[DETAIL]---------------------------*/
        			/**************************[INPUT NAME]*************************/
        			//Check Input Name not null
-       			if(checkNullOrEmpty($value[KEY_FR_INPUT_NAME])){
+       			if($this->checkNullOrEmpty($value[KEY_FR_INPUT_NAME])){
        				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_008', $lineNo);
        				$errorFlag = TRUE;
        				$inputNameisNULL = TRUE;
        			}else{
-       				//Check length of Input Name
-	       			if(LENGTH_INPUT_NAME < strlen($value[KEY_FR_INPUT_NAME])){
-	       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_009', $lineNo);
-	       				$errorFlag = TRUE;
-	       			}
-       			}
+       				$resultInputInfo = $this->FR->searchFRInputInformation($projectId, $value[KEY_FR_INPUT_NAME]);
+       				if(0 < count($resultInputInfo)){
+       					//var_dump($resultInputInfo);
+       					//var_dump("<br/>");
+       					//var_dump($value);
+       					//Validate Type 1
+       					$cInputType = $this->nullToEmpty($resultInputInfo[0]['inputType']);
+       					$cInputSize = $this->nullToEmpty($resultInputInfo[0]['inputSize']);
+       					$cScalePoint = $this->nullToEmpty($resultInputInfo[0]['decimalPoint']);
+       					$cUnique = $this->nullToEmpty($resultInputInfo[0]['constraintUnique']);
+       					$cDefaultValue = $this->nullToEmpty($resultInputInfo[0]['constraintDefault']);
+       					$cNullable = $this->nullToEmpty($resultInputInfo[0]['constraintNull']);
+       					$cMinValue = $this->nullToEmpty($resultInputInfo[0]['constraintMinValue']);
+       					$cMaxValue = $this->nullToEmpty($resultInputInfo[0]['constraintMaxValue']);
+       					$cTableName = $this->nullToEmpty($resultInputInfo[0]['relationTableName']);
+       					$cColumnName = $this->nullToEmpty($resultInputInfo[0]['relationColumnName']);
+       					
+       					if($cInputType != strtoupper($value[KEY_FR_INPUT_TYPE])
+       						|| $cInputSize != $value[KEY_FR_INPUT_LENGTH]
+       						|| $cScalePoint != $value[KEY_FR_DECIMAL_POINT]
+       						|| $cUnique != strtoupper($value[KEY_FR_INPUT_UNIQUE])
+       						|| $cDefaultValue != $value[KEY_FR_INPUT_DEFAULT]
+       						|| $cNullable != strtoupper($value[KEY_FR_INPUT_NULL])
+       						|| $cMinValue != $value[KEY_FR_INPUT_MIN_VALUE]
+       						|| $cMaxValue != $value[KEY_FR_INPUT_MAX_VALUE]
+       						|| $cTableName != $value[KEY_FR_INPUT_TABLE_NAME]
+       						|| $cColumnName != $value[KEY_FR_INPUT_FIELD_NAME]){
+       						$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_030', $lineNo);
+		       				$errorFlag = TRUE;
+       					}
+       				}else{
+       					//Validate Type 2
+       					//Check length of Input Name
+		       			if(LENGTH_INPUT_NAME < strlen($value[KEY_FR_INPUT_NAME])){
+		       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_009', $lineNo);
+		       				$errorFlag = TRUE;
+		       			}
 
-       			/**************************[INPUT DATA TYPE]*************************/ 
-       			//Check Input Data Type not null
-       			if(checkNullOrEmpty($value[KEY_FR_INPUT_TYPE])){
-       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_011', $lineNo);
-       				$errorFlag = TRUE;
-       			}else{
-       				//Check Length of Input Data Type
-       				if(LENGTH_INPUT_DATA_TYPE < strlen($value[KEY_FR_INPUT_TYPE])){
-       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_012', $lineNo);
-       					$errorFlag = TRUE;
-       				}
+		       			$typeIsMatch = FALSE;
+		       			/**************************[INPUT DATA TYPE]*************************/ 
+		       			$dataType = '';
+		       			//Check Input Data Type not null
+		       			if($this->checkNullOrEmpty($value[KEY_FR_INPUT_TYPE])){
+		       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_011', $lineNo);
+		       				$errorFlag = TRUE;
+		       			}else{
+		       				//Check Length of Input Data Type
+		       				if(LENGTH_INPUT_DATA_TYPE < strlen($value[KEY_FR_INPUT_TYPE])){
+		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_012', $lineNo);
+		       					$errorFlag = TRUE;
+		       				}
 
-       				//Check format
-       				
-       			}
+		       				//Check format
+		       				$miscValue = strtolower($value[KEY_FR_INPUT_TYPE]);
+		       				$result = $this->MISC->searchMiscellaneous(MISC_DATA_INPUT_DATA_TYPE, $miscValue);
+		       				if(null == $result || 0 == count($result)){
+		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_013', $lineNo);
+		       					$errorFlag = TRUE;
+		       				}else{
+		       					$typeIsMatch = TRUE;
+		       					$dataType = $result[0]['miscValue2'];
+		       				}
+		       			}
+
+		       			/**************************[INPUT DATA LENGTH]*************************/ 
+		       			//Check Size
+		       			$exceptInputSize = array("date", "datetime", "int", "float", "real");
+		       			$inputLength = $value[KEY_FR_INPUT_LENGTH];
+		       			$lengthIsMatch = TRUE;
+		       			if($typeIsMatch && !in_array($miscValue, $exceptInputSize)){
+		       				if($this->checkNullOrEmpty($inputLength)){
+			       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_014', $lineNo);
+			       				$errorFlag = TRUE;
+			       				$lengthIsMatch = FALSE;
+			       			}else{
+			       				if("char" == $miscValue || "varchar" == $miscValue){
+			       					if($inputLength < 1 || $inputLength > 8000 ){
+			       						$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_015', $lineNo);
+			       						$errorFlag = TRUE;
+			       						$lengthIsMatch = FALSE;
+			       					}
+			       				}else if("nchar" == $miscValue || "nvarchar" == $miscValue){
+			       					if($inputLength < 1 || $inputLength > 4000 ){
+			       						$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_016', $lineNo);
+			       						$errorFlag = TRUE;
+			       						$lengthIsMatch = FALSE;
+			       					}
+			       				}else{
+			       					if($inputLength < 1 || $inputLength > 38 ){
+			       						$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_017', $lineNo);
+			       						$errorFlag = TRUE;
+			       						$lengthIsMatch = FALSE;
+			       					}else{
+			       						//Check Decimal Scale. If NULL, default value will be '0'.
+			       						$decimalScale = $value[KEY_FR_DECIMAL_POINT];
+			       						if(!$this->checkNullOrEmpty($decimalScale)){
+			       							if($decimalScale < 0 || $decimalScale > $inputLength){
+			       								$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_018', $lineNo);
+			       								$errorFlag = TRUE;
+			       								$lengthIsMatch = FALSE;
+			       							}
+			       						}
+			       					}
+			       				}
+			       			}
+		       			}
+		       			
+		       			/**************************[CONSTRAINT-UNIQUE]*************************/ 
+		       			if($this->checkNullOrEmpty($value[KEY_FR_INPUT_UNIQUE])){
+		   					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_019', $lineNo);
+							$errorFlag = TRUE;
+		       			}else{
+		       				$uniqueContraint = strtoupper($value[KEY_FR_INPUT_UNIQUE]);
+		       				if("Y" != $uniqueContraint && "N" != $uniqueContraint){
+		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_020', $lineNo);
+								$errorFlag = TRUE;
+		       				}
+		       			}
+
+		       			/**************************[CONSTRAINT-DEFAULT]*************************/
+		       			if(!$this->checkNullOrEmpty($value[KEY_FR_INPUT_DEFAULT]) && $typeIsMatch && $lengthIsMatch){
+		       				$defaultValue = $value[KEY_FR_INPUT_DEFAULT];
+		       				if("Numerics" == $dataType){
+		       					if(!is_numeric($defaultValue)){
+		       						$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_021', $lineNo);
+									$errorFlag = TRUE;
+		       					}else{
+		       						if('decimal' == $miscValue && is_float((float)$defaultValue)){
+		       							$decimalFotmat = explode(".", $defaultValue);
+		       							if($decimalFotmat[0] > $inputLength){
+		       								$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_021', $lineNo);
+											$errorFlag = TRUE;
+		       							}
+		       						}
+		       					}
+		       				}else if("Strings" == $dataType && strlen($defaultValue) > $inputLength){
+		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_021', $lineNo);
+								$errorFlag = TRUE;
+		       				}else{ //date
+		       					if("getdate()" != strtolower($defaultValue)){
+		       						$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_021', $lineNo);
+									$errorFlag = TRUE;
+		       					}
+		       				}
+		       			}
+
+		       			/****************************[CONSTRAINT-NULL]***************************/
+		       			if($this->checkNullOrEmpty($value[KEY_FR_INPUT_NULL])){
+		   					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_022', $lineNo);
+							$errorFlag = TRUE;
+		       			}else{
+		       				$notNullConstaint = strtoupper($value[KEY_FR_INPUT_NULL]);
+		       				if("Y" != $notNullConstaint && "N" != $notNullConstaint){
+		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_023', $lineNo);
+								$errorFlag = TRUE;
+		       				}
+		       			}
+
+		       			/*************************[CONSTRAINT-CHECK(MIN)]************************/
+		       			if($typeIsMatch && !$this->checkNullOrEmpty($value[KEY_FR_INPUT_MIN_VALUE])){
+		       				if("Numerics" == $dataType){
+		       					if(!is_numeric($value[KEY_FR_INPUT_MIN_VALUE])){
+		       						$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_024', $lineNo);
+									$errorFlag = TRUE;
+		       					}
+		       				}else{
+		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_024', $lineNo);
+								$errorFlag = TRUE;
+		       				}
+		       			}
+
+		       			/*************************[CONSTRAINT-CHECK(MAX)]************************/
+		       			if($typeIsMatch && !$this->checkNullOrEmpty($value[KEY_FR_INPUT_MAX_VALUE])){
+		       				if("Numerics" == $dataType){
+		       					if(!is_numeric($value[KEY_FR_INPUT_MAX_VALUE])){
+		       						$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_025', $lineNo);
+									$errorFlag = TRUE;
+		       					}
+		       				}else{
+		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_025', $lineNo);
+								$errorFlag = TRUE;
+		       				}
+		       			}
+
+		       			/*************************[TABLE NAME of DB TARGET]************************/
+		       			if(!$this->checkNullOrEmpty($value[KEY_FR_INPUT_TABLE_NAME])){
+		       				if(MAX_TABLE_NAME < strlen($value[KEY_FR_INPUT_TABLE_NAME])){
+		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_027', $lineNo);
+								$errorFlag = TRUE;
+		       				}else{
+		       					$tableNameisNULL = TRUE;
+		       				}
+		       			}else{
+		       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_026', $lineNo);
+							$errorFlag = TRUE;
+		       			}
+
+		       			/*************************[FIELD NAME of DB TARGET]************************/
+						if(!$this->checkNullOrEmpty($value[KEY_FR_INPUT_FIELD_NAME])){
+		       				if(MAX_FIELD_NAME < strlen($value[KEY_FR_INPUT_FIELD_NAME])){
+		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_029', $lineNo);
+								$errorFlag = TRUE;
+		       				}else{
+		       					$fieldNameisNULL = TRUE;
+		       				}
+		       			}else{
+		       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_028', $lineNo);
+							$errorFlag = TRUE;
+		       			}
 
 
-
-
-
-
-
-
-
-
-
-
-
-       			//Check unique Input Name with Table and Field of Target Database
-       			if(!$inputNameisNULL && !$tableNameisNULL && !$fieldNameisNULL){
-       				//Check unique in CSV File
-       				$detailKey = $value[KEY_FR_INPUT_NAME]."_".$value[KEY_FR_INPUT_TABLE_NAME]."_".$value[KEY_FR_INPUT_FIELD_NAME];
-       				if(!empty($inputData) && $inputData != $detailKey){
-	       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_010', $lineNo);
-	       				$errorFlag = TRUE;
-	       			}else{
-	       				$dataHeader = $detailKey;
-	       			}
-
-	       			//Check Exist in Database
-       			}
-				
-
-
-       			
-
-
-
-
-       			
+		       			/********************************[MORE]*********************************/ 
+		       			//Check unique Input Name with Table and Field of Target Database
+		       			if(!$inputNameisNULL){ //&& !$tableNameisNULL && !$fieldNameisNULL
+		       				//Check unique in CSV File
+		       				if(!empty($inputNameKey) && $inputNameKey == $value[KEY_FR_INPUT_NAME]){
+			       				$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_010', $lineNo);
+			       				$errorFlag = TRUE;
+			       			}else{
+			       				$inputNameKey = $value[KEY_FR_INPUT_NAME];
+			       			}
+		       			}
+       				}//end validate detail
+       			}       			
        			
        			if($errorFlag == FALSE){
        				$correctRecord++;
        			}
-       		}
+       		}//end foreach;
+       		
+       		unlink($fullPath); //delete uploaded file
        		$incorrectRecord = $totalRecord - $correctRecord;
+       		if(0 < $incorrectRecord){
+       			$error = ER_MSG_008;
+       		}
 	    }
-	    
-	    //var_dump($resultUpload);
+
+	    //save data in database
+	    if(0 == $incorrectRecord){
+
+	    }
+
+
 	    $hfield = array('screenMode' => $screenMode, 'projectId' => $projectId, 'projectName' => $projectName, 'projectNameAlias' => $projectNameAlias);
 	    $data['hfield'] = $hfield;
-	    $data['totalRecords'] = (string)$totalRecord;
+	    $data['totalRecords'] = $totalRecord;
 	    $data['correctRecords'] = $correctRecord;
 		$data['incorrectRecords'] = $incorrectRecord;
 	    $data['error_message'] = $error;
@@ -278,6 +459,12 @@ class FunctionalRequirement extends CI_Controller {
 
 	private function checkNullOrEmpty($varInput){
 		return (!isset($varInput) || empty($varInput));
+	}
+
+	private function nullToEmpty($value){
+		if(NULL == $value)
+			return "";
+		return $value; 
 	}
 }
 ?>
