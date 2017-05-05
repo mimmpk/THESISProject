@@ -448,9 +448,9 @@ class FunctionalRequirement extends CI_Controller {
 	    if($isCorrectCSV){
 	    	//upload
 	    	//var_dump($funtionalRequirementsList);
-	    	$resultUpload = $this->FR->uploadFR($funtionalRequirementsList);
+	    	$isSaveSuccess = $this->FR->uploadFR($funtionalRequirementsList);
 
-	    	if($resultUpload){
+	    	if($isSaveSuccess){
 	    		$successMsg = ER_MSG_009;
 	    	}else{
 	    		$error = ER_MSG_008;
@@ -471,10 +471,10 @@ class FunctionalRequirement extends CI_Controller {
 
 	private function openView($data, $page){
 		if('search' == $page){
-			$data['html'] = 'FunctionalRequirementManagement/RequirementSearch_View';
+			$data['html'] = 'FunctionalRequirementManagement/requirementSearch_view';
 			$data['projectCombo'] = $this->Project->searchActiveProjectCombobox();
 		}else{
-			$data['html'] = 'FunctionalRequirementManagement/RequirementUpload_View';
+			$data['html'] = 'FunctionalRequirementManagement/requirementUpload_view';
 		}
 		$data['active_title'] = 'master';
 		$data['active_page'] = 'mats002';

@@ -85,10 +85,28 @@
 		        	<ul class="treeview-menu" id="master">
 		        		<li id="mats001"><a href="<?php echo base_url(); ?>Project/"><i class="fa fa-circle-o"></i> Project</a></li>
 			            <li id="mats002"><a href="<?php echo base_url(); ?>FunctionalRequirement/"><i class="fa fa-circle-o"></i> Functional Requirements</a></li>
-			            <li id="mats003"><a href="#"><i class="fa fa-circle-o"></i> Test Cases</a></li>
+			            <li id="mats003"><a href="<?php echo base_url(); ?>TestCaseManagement/"><i class="fa fa-circle-o"></i> Test Cases</a></li>
 			            <li id="mats004"><a href="#"><i class="fa fa-circle-o"></i> RTM</a></li>
+			            <li id="mats005"><a href="#"><i class="fa fa-circle-o"></i> Database Schema</a></li>
 		          	</ul>
-		        	</ul>
+		        </li>
+		        <li class="treeview">
+		        	<a href="#">
+		        		<i class="fa fa-exchange"></i>
+			        	<span>Change Management</span>
+			        	<span class="pull-right-container">
+					  		<i class="fa fa-angle-left pull-right"></i>
+						</span>
+		        	</a>
+		        </li>
+		        <li class="treeview">
+		        	<a href="#">
+		        		<i class="fa fa-history"></i>
+			        	<span>Version Management</span>
+			        	<span class="pull-right-container">
+					  		<i class="fa fa-angle-left pull-right"></i>
+						</span>
+		        	</a>
 		        </li>
       		</ul>
 	    </section>

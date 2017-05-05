@@ -87,21 +87,24 @@ class Project extends CI_Controller {
 			'projectNameAlias' => '', 
 			'startDate' => '', 
 			'endDate' => '', 
-			'customer' => ''
+			'customer' => '',
+			'databaseName' => '',
+			'hostname' => '',
+			'port' => '',
+			'username' => '',
+			'password' => ''
 		);
 
 		$data['projectInfo'] = $formObj;
 		$data['error_message'] = '';
-		$data['mode'] = 'new';
-		$this->openMaintenanceView($data);
+		$this->openMaintenanceView($data, 'new');
 	}
 
 	public function viewDetail($projectId){
 		if(isset($projectId) && null != $projectId){
 			$data['projectInfo'] = $this->Project->searchProjectDetail($projectId);
-			$data['mode'] = 'view';
 			$data['error_message'] = '';
-			$this->openMaintenanceView($data);
+			$this->openMaintenanceView($data, 'view');
 		}else{
 			echo "error";
 		}
@@ -110,9 +113,8 @@ class Project extends CI_Controller {
 	public function editDetail($projectId){
 		if(isset($projectId) && null != $projectId){
 			$data['projectInfo'] = $this->Project->searchProjectDetail($projectId);
-			$data['mode'] = 'edit';
 			$data['error_message'] = '';
-			$this->openMaintenanceView($data);
+			$this->openMaintenanceView($data, 'edit');
 		}else{
 			echo "error";
 		}
@@ -129,12 +131,23 @@ class Project extends CI_Controller {
 		$endDateInput = trim($this->input->post('inputEndDate'));
 		$customer = trim($this->input->post('inputCustomer'));
 		$mode = trim($this->input->post('mode'));
+		$databaseName = trim($this->input->post('inputDatabaseName'));
+		$hostname = trim($this->input->post('inputHostname'));
+		$port = trim($this->input->post('inputPort'));
+		$username = trim($this->input->post('inputUsername'));
+		$password = trim($this->input->post('inputPassword'));
 
 		$this->FValidate->set_rules('inputProjectName', null, 'required|max_length[100]');
 		$this->FValidate->set_rules('inputProjectNameAlias', null, 'required|max_length[50]');
 		$this->FValidate->set_rules('inputStartDate', null, 'required');
 		$this->FValidate->set_rules('inputEndDate', null, 'required');
 		$this->FValidate->set_rules('inputCustomer', null, 'required|max_length[100]');
+
+		$this->FValidate->set_rules('inputDatabaseName', null, 'required|max_length[255]');
+		$this->FValidate->set_rules('inputHostname', null, 'required|max_length[255]');
+		$this->FValidate->set_rules('inputPort', null, 'required|max_length[4]');
+		$this->FValidate->set_rules('inputUsername', null, 'required|max_length[50]');
+		$this->FValidate->set_rules('inputPassword', null, 'required|max_length[50]');
 
 		if($this->FValidate->run()){
 			//**Check StartDate must less than EndDate.
@@ -144,12 +157,26 @@ class Project extends CI_Controller {
 				$error_message = ER_MSG_002;
 			}else{
 				$user = (null != $this->session->userdata('username'))? $this->session->userdata('username') : 'userDefault';
+				$paramObj = (object) array (
+					'projectId' => $projectId, 
+					'projectName' => $projectName,
+					'projectAlias' => $projectNameAlias, 
+					'startDate' => $startDate, 
+					'endDate' => $endDate, 
+					'customer' => $customer, 
+					'user' => $user,
+					'databaseName' => $databaseName,
+					'hostname' => $hostname,
+					'port' => $port,
+					'username' => $username,
+					'password' => $password
+				);
 				if('new' == $mode){ //save
 					$existResult = $this->Project->searchCountProjectInformationByProjectName($projectName);
 					//var_dump($existResult);
 					if(null != $existResult && 0 == (int)$existResult[0]['counts']){
 						//echo "success";
-						$result = $this->Project->insertProjectInformation($projectName, $projectNameAlias, $startDate, $endDate, $customer, $user);
+						$result = $this->Project->insertProjectInformation($paramObj);
 						if(null != $result){
 							echo "<script type='text/javascript'>alert('Save Successful!')</script>";
 							$this->viewDetail($result);
@@ -160,17 +187,10 @@ class Project extends CI_Controller {
 						$error_message = ER_MSG_004;
 					}
 				}else{ //update
-					$paramObj = (object) array (
-						'projectId' => $projectId, 
-						'projectAlias' => $projectNameAlias, 
-						'startDate' => $startDate, 
-						'endDate' => $endDate, 
-						'customer' => $customer, 
-						'user' => $user);
 					$rowResult = $this->Project->updateProjectInformation($paramObj);
 					if(0 < $rowResult){
 						echo "<script type='text/javascript'>alert('Save Successful!')</script>";
-						$mode = "view";
+						$this->viewDetail($projectId);
 					}else{
 						$error_message = ER_MSG_005;
 					}
@@ -184,13 +204,17 @@ class Project extends CI_Controller {
 			'projectNameAlias' => $projectNameAlias, 
 			'startDate' => $startDateInput, 
 			'endDate' => $endDateInput, 
-			'customer' => $customer
+			'customer' => $customer,
+			'databaseName' => $databaseName,
+			'hostname' => $hostname,
+			'port' => $port,
+			'username' => $username,
+			'password' => $password
 		);
 		//var_dump($formObj);
 		$data['projectInfo'] = $formObj;
-		$data['mode'] = $mode;
 		$data['error_message'] = $error_message;
-		$this->openMaintenanceView($data);
+		$this->openMaintenanceView($data, $mode);
 	}
 
 	private function checkNullOrEmpty($varInput){
@@ -198,7 +222,7 @@ class Project extends CI_Controller {
 	}
 
 	private function openSearchView($data){
-		$data['html'] = 'projectSearch_view';
+		$data['html'] = 'ProjectManagement/projectSearch_view';
 		$data['active_title'] = 'master';
 		$data['active_page'] = 'mats001';
 		$this->load->view('template/header');
@@ -206,8 +230,13 @@ class Project extends CI_Controller {
 		$this->load->view('template/footer');
 	}
 
-	private function openMaintenanceView($data){
-		$data['html'] = 'projectMaintenance_view';
+	private function openMaintenanceView($data, $mode){
+		if("view" == $mode){
+			$data['html'] = 'ProjectManagement/projectMaintenanceDetail_view';
+		}else{
+			$data['html'] = 'ProjectManagement/projectMaintenance_view';
+		}
+		$data['mode'] = $mode;
 		$data['active_title'] = 'master';
 		$data['active_page'] = 'mats001';
 		$this->load->view('template/header');

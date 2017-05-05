@@ -7,39 +7,63 @@ class FunctionalRequirement_model extends CI_Model {
 	}
 
 	function searchFunctionalRequirementHeaderInfo($param){
-		$where[] = "projectId = '".$param->projectId."'";
+		$where[] = "FRH.projectId = '".$param->projectId."'";
 		if("2" != $param->status)
-			$where[] = "functionStatus = '".$param->status."'";
+			$where[] = "FRV.activeVersionFlag = '".$param->status."'";
 		
 		$where_clause = implode(' AND ', $where);
-		$queryStr = "SELECT functionId, functionNo, functionVersion, functionStatus, CAST(functionDescription AS VARBINARY(MAX)) as fnDesc 
-			FROM FN_REQ_HEADER WHERE $where_clause ORDER BY functionNo, functionVersion";
+		$queryStr = "SELECT FRH.functionId, FRH.functionNo, 
+			CAST(FRH.functionDescription AS VARBINARY(MAX)) as fnDesc, 
+			FRV.functionVersionNumber as functionVersion, 
+			FRV.activeVersionFlag as functionStatus 
+			FROM M_FN_REQ_HEADER FRH 
+			INNER JOIN M_FN_REQ_VERSION FRV 
+			ON FRH.functionId = FRV.functionId 
+			WHERE $where_clause 
+			ORDER BY FRH.functionNo, FRV.functionVersionNumber";
 		$result = $this->db->query($queryStr);
 		return $result->result_array();
 	}
 
 	function searchExistFunctionalRequirement($fnId, $projectId){
-		$queryStr = "SELECT * FROM FN_REQ_HEADER WHERE projectId = '$projectId' AND functionNo = '$fnId'";
+		$queryStr = "SELECT * FROM M_FN_REQ_HEADER WHERE projectId = '$projectId' AND functionNo = '$fnId'";
 		$result = $this->db->query($queryStr);
 		return $result->num_rows();
 	}
 
 	function searchFRInputInformation($projectId, $inputName){
-		$queryStr = "SELECT * FROM FN_REQ_INPUT FRI WHERE FRI.projectId = '$projectId' AND FRI.inputName = '$inputName'";
+		$queryStr = "SELECT * FROM M_FN_REQ_INPUT FRI WHERE FRI.projectId = '$projectId' AND FRI.inputName = '$inputName'";
 		$result = $this->db->query($queryStr);
 		return $result->result_array();
 	}
 
+	/*function searchActiveFunctionalRequirementCombo($projectId){
+		$queryStr = "SELECT * 
+			FROM FN_REQ_HEADER FRH 
+			INNER JOIN FN_REQ_VERSION FRV
+			ON FRH.functionId = FRV.functionId
+			WHERE FRV.activeVersionFlag = '1' AND FRH.projectId = $projectId";
+		$result = $this->db->query($queryStr);
+		return $result->result_array();
+	}*/
+
 	function insertFRHeader($param){
 		$currentDateTime = date('Y-m-d H:i:s');
-		$sqlStr = "INSERT INTO FN_REQ_HEADER (functionNo, functionDescription, functionVersion, projectId, functionStatus, createDate, createUser, updateDate, updateUser) VALUES ('{$param->functionNo}', '{$param->functionDescription}', '{$param->version}', '{$param->projectId}', '{$param->functionStatus}', '$currentDateTime', '{$param->user}', '$currentDateTime', '{$param->user}')";
+		$sqlStr = "INSERT INTO M_FN_REQ_HEADER (functionNo, functionDescription, projectId, createDate, createUser, updateDate, updateUser) VALUES ('{$param->functionNo}', '{$param->functionDescription}', '{$param->projectId}', '$currentDateTime', '{$param->user}', '$currentDateTime', '{$param->user}')";
 		$result = $this->db->query($sqlStr);
 		if($result){
-			$query = $this->db->query("SELECT IDENT_CURRENT('FN_REQ_HEADER') as last_id");
+			$query = $this->db->query("SELECT IDENT_CURRENT('M_FN_REQ_HEADER') as last_id");
 			$resultId = $query->result();
 			return $resultId[0]->last_id;
 		}
 		return NULL;
+	}
+
+	function insertFRVersion($functionId, $versionNumber, $functionStatus, $user){
+		$currentDateTime = date('Y-m-d H:i:s');
+		$sqlStr ="INSERT INTO M_FN_REQ_VERSION (functionId, functionVersionNumber, activeVersionFlag, createDate, createUser) VALUES ($functionId, $versionNumber, '$functionStatus', '$currentDateTime', '$user')";
+		$result = $this->db->query($sqlStr);
+		return $result;
 	}
 
 	function insertFRInput($param){
@@ -49,11 +73,11 @@ class FunctionalRequirement_model extends CI_Model {
 		$defaultValue = !empty($param->defaultValue)? $param->defaultValue : "NULL";
 		$minValue = !empty($param->minValue)? $param->minValue : "NULL";
 		$maxValue = !empty($param->maxValue)? $param->maxValue : "NULL";
-		$sqlStr = "INSERT INTO FN_REQ_INPUT (projectId, inputName, inputType, inputSize, decimalPoint, constraintUnique, constraintDefault, constraintNull, constraintMinValue, constraintMaxValue, relationTableName, relationColumnName, createDate, createUser, updateDate, updateUser) VALUES ({$param->projectId}, '{$param->inputName}', '{$param->dataType}', $dataLength, $scale, '{$param->unique}', $defaultValue, '{$param->notNull}', $minValue, $maxValue, '{$param->tableName}', '{$param->fieldName}', '$currentDateTime', '{$param->user}', '$currentDateTime', '{$param->user}')";
+		$sqlStr = "INSERT INTO M_FN_REQ_INPUT (projectId, inputName, inputType, inputSize, decimalPoint, constraintUnique, constraintDefault, constraintNull, constraintMinValue, constraintMaxValue, relationTableName, relationColumnName, createDate, createUser, updateDate, updateUser) VALUES ({$param->projectId}, '{$param->inputName}', '{$param->dataType}', $dataLength, $scale, '{$param->unique}', $defaultValue, '{$param->notNull}', $minValue, $maxValue, '{$param->tableName}', '{$param->fieldName}', '$currentDateTime', '{$param->user}', '$currentDateTime', '{$param->user}')";
 		//var_dump($sqlStr);
 		$result = $this->db->query($sqlStr);
 		if($result){
-			$query = $this->db->query("SELECT IDENT_CURRENT('FN_REQ_INPUT') as last_id");
+			$query = $this->db->query("SELECT IDENT_CURRENT('M_FN_REQ_INPUT') as last_id");
 			$resultId = $query->result();
 			return $resultId[0]->last_id;
 		}
@@ -62,7 +86,7 @@ class FunctionalRequirement_model extends CI_Model {
 
 	function insertFRDetail($inputId, $functionId, $user){
 		$currentDateTime = date('Y-m-d H:i:s');
-		$sqlStr = "INSERT INTO FN_REQ_DETAIL (functionId, inputId, createDate, createUser, updateDate, updateUser) VALUES ($functionId, $inputId, '$currentDateTime', '$user', '$currentDateTime', '$user')";
+		$sqlStr = "INSERT INTO M_FN_REQ_DETAIL (functionId, inputId, createDate, createUser, updateDate, updateUser) VALUES ($functionId, $inputId, '$currentDateTime', '$user', '$currentDateTime', '$user')";
 		$result = $this->db->query($sqlStr);
 		return $result;
 	}
@@ -74,6 +98,8 @@ class FunctionalRequirement_model extends CI_Model {
 		//insert Functional Requirement Header
 		$functionId = $this->insertFRHeader($param[0]);
 		if(NULL != $functionId){
+			//insert Functional Requirement Version
+			$resultInsertVersion = $this->insertFRVersion($functionId, $param[0]->version, $param[0]->functionStatus, $param[0]->user);
 			//insert Functional Requirement Detail
 			foreach ($param as $value) {
 				$inputId = '';
@@ -85,7 +111,7 @@ class FunctionalRequirement_model extends CI_Model {
 					//Insert New Input
 					$inputId = $this->insertFRInput($value);
 				}
-				$result = $this->insertFRDetail($inputId, $functionId, $value->user);
+				$resultInsertDetail = $this->insertFRDetail($inputId, $functionId, $value->user);
 			}// end foreach
 		}// end if
 		$this->db->trans_complete();

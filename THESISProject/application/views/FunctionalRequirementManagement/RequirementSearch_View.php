@@ -47,7 +47,7 @@
 					                </label>
 					                <label>
 					                	<input type="radio" name="inputStatus" class="minimal" value="0" <?php echo set_radio('inputStatus', '0'); ?>>
-					                	Unactive
+					                	Inactive
 					                </label>
 					                 <label>
 					                	<input type="radio" name="inputStatus" class="minimal" value="2" <?php echo set_radio('inputStatus', '2'); ?>>
@@ -114,9 +114,9 @@
 			                		<td><?php echo iconv('UCS-2LE', 'UTF-8', $value['fnDesc']); ?></td>
 			                		<td><?php echo $value['functionVersion'] ?></td>
 			                		<td><?php if('0' == $value['functionStatus'] ) { ?>
-			                			<span class="label label-success"><?php echo UNACTIVE_STATUS; ?> </span>
+			                			<span class="label label-danger"><?php echo UNACTIVE_STATUS; ?> </span>
 			                			<?php } else { ?>
-			                			<span class="label label-danger"><?php echo ACTIVE_STATUS; ?></span>
+			                			<span class="label label-success"><?php echo ACTIVE_STATUS; ?></span>
 			                			<?php } ?>
 			                		</td>
 			                		<td></td>

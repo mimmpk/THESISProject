@@ -36,7 +36,7 @@ class Project_model extends CI_Model {
 		}
 		
 		$where_clause = implode(' AND ', $where);
-		$queryStr = "SELECT projectId, projectName, projectNameAlias, startDate, endDate, customer FROM project WHERE $where_clause ORDER BY projectName";
+		$queryStr = "SELECT projectId, projectName, projectNameAlias, startDate, endDate, customer FROM M_PROJECT WHERE $where_clause ORDER BY projectName";
 		//echo $queryStr."<br/>";
 		$result = $this->db->query($queryStr);
 		return $result->result_array();
@@ -45,16 +45,23 @@ class Project_model extends CI_Model {
 	function searchProjectDetail($projectId){
 		$queryStr 
 			= "SELECT 
-				projectId, projectName, projectNameAlias, 
-				CONVERT(nvarchar, startDate, 103) as startDate, 
-				CONVERT(nvarchar, endDate, 103) as endDate, customer 
-			FROM project WHERE projectId = $projectId";
+				p.projectId, p.projectName, p.projectNameAlias, 
+				CONVERT(nvarchar, p.startDate, 103) as startDate, 
+				CONVERT(nvarchar, p.endDate, 103) as endDate, 
+				CAST(p.customer AS VARBINARY(MAX)) as customer, 
+				d.databaseName, d.hostname, d.port, d.username, d.password
+			FROM M_PROJECT p LEFT JOIN M_PROJECT_DATABASE_CONFIG d
+			ON p.projectId = d.projectId
+			WHERE p.projectId = $projectId";
 		$result = $this->db->query($queryStr);
 		return $result->row();
 	}
 
 	function searchActiveProjectCombobox(){
-		$queryStr = "SELECT projectId, projectName, projectNameAlias FROM project ORDER BY projectName";
+		$queryStr = "SELECT projectId, projectName, projectNameAlias 
+			FROM M_PROJECT 
+			WHERE activeFlag = '1' 
+			ORDER BY projectName";
 		$result = $this->db->query($queryStr);
 		return $result->result_array();
 	}
@@ -66,29 +73,73 @@ class Project_model extends CI_Model {
 	}
 
 	function searchCountProjectInformationByProjectName($projectName){
-		$queryStr = "SELECT count(*) as counts FROM project WHERE projectName = '$projectName'";
+		$queryStr = "SELECT count(*) as counts FROM M_PROJECT WHERE projectName = '$projectName'";
 		return $this->db->query($queryStr)->result_array();
 	}
 
-	function insertProjectInformation($projectName, $projectAlias, $startDate, $endDate, $customer, $user){
+	function insertProjectInformation($param){
+		$this->db->trans_start(); //Starting Transaction
+		$this->db->trans_strict(FALSE);
+
+		$result = null;
 		$currentDateTime = date('Y-m-d H:i:s');
 
-		$sql = "INSERT INTO Project (projectName, projectNameAlias, startDate, endDate, customer, createDate, createUser, updateDate, updateUser) VALUES ('{$projectName}', '{$projectAlias}', '". $startDate->format('Y-m-d') ."', '". $endDate->format('Y-m-d') ."', '{$customer}', '$currentDateTime', '$user', '$currentDateTime', '$user')";
-		//var_dump($this->db->insert_id());
-		$result = $this->db->query($sql);
-		if($result){
-			$query = $this->db->query("SELECT IDENT_CURRENT('project') as last_id");
-			$resultId = $query->result();
-			return $resultId[0]->last_id;
-		}else{
-			return null;
+		$sql = "INSERT INTO M_PROJECT (projectName, projectNameAlias, startDate, endDate, customer, createDate, createUser, updateDate, updateUser, activeFlag) VALUES ('{$param->projectName}', '{$param->projectAlias}', '".$param->startDate->format('Y-m-d')."', '".$param->endDate->format('Y-m-d')."', '$param->customer', '$currentDateTime', '$param->user', '$currentDateTime', '$param->user', '".ACTIVE_CODE."')";
+		$insertResult = $this->db->query($sql);
+		if($insertResult){
+			$query = $this->db->query("SELECT IDENT_CURRENT('M_PROJECT') as last_id");
+			$result = $query->result();
+			
+			$param->projectId = $result[0]->last_id;
+			$this->insertProjectDatabaseConfig($param);
 		}
+
+		$this->db->trans_complete();
+    	$trans_status = $this->db->trans_status();
+	    if($trans_status == FALSE){
+	    	$this->db->trans_rollback();
+	    	return null;
+	    }else{
+	   		$this->db->trans_commit();
+	   		return $result[0]->last_id;
+	    }
+	}
+
+	function insertProjectDatabaseConfig($param){
+		$sql = "INSERT INTO M_PROJECT_DATABASE_CONFIG
+           ([projectId], [databaseName], [hostname], [port], [username], [password])
+           VALUES ($param->projectId, '$param->databaseName', '$param->hostname', '$param->port', '$param->username', '$param->password')";
+        $result = $this->db->query($sql);
+        return $result;
 	}
 
 	function updateProjectInformation($param){
+		$this->db->trans_start(); //Starting Transaction
+		$this->db->trans_strict(FALSE);
+
 		$currentDateTime = date('Y-m-d H:i:s');
 
-		$sql = "UPDATE [PROJECT] SET projectNameAlias = '{$param->projectAlias}', startDate = '{$param->startDate->format('Y-m-d')}', endDate = '{$param->endDate->format('Y-m-d')}', customer = '{$param->customer}', updateDate = '$currentDateTime', updateUser = '{$param->user}' WHERE projectId = {$param->projectId}";
+		$sql = "UPDATE [M_PROJECT] SET projectNameAlias = '{$param->projectAlias}', startDate = '{$param->startDate->format('Y-m-d')}', endDate = '{$param->endDate->format('Y-m-d')}', customer = '{$param->customer}', updateDate = '$currentDateTime', updateUser = '{$param->user}' WHERE projectId = {$param->projectId}";
+
+		$this->db->query($sql);
+		$updateRecords = $this->db->affected_rows();
+		if(0 < $updateRecords){
+			$updateRecords = $this->updateProjectDatabaseConfig($param);
+		}
+
+		$this->db->trans_complete();
+    	$trans_status = $this->db->trans_status();
+	    if($trans_status == FALSE || 0 == $updateRecords){
+	    	$this->db->trans_rollback();
+	    	return FALSE;
+	    }else{
+	   		$this->db->trans_commit();
+	   		return TRUE;
+	    }
+	}
+
+	function updateProjectDatabaseConfig($param){
+		$sql = "UPDATE M_PROJECT_DATABASE_CONFIG SET databaseName = '$param->databaseName', hostname = '$param->hostname', port = '$param->port', username = '$param->username', password = '$param->password' WHERE projectId = {$param->projectId}";
 
 		$this->db->query($sql);
 		return $this->db->affected_rows();

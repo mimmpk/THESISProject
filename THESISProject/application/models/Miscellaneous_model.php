@@ -13,9 +13,9 @@ class Miscellaneous_model extends CI_Model {
 		if(isset($miscValue) && !empty($miscValue)){
 			$where[] = "miscValue1 = '".$miscValue."'";
 		}
-
+		$where[] = "activeFlag = '1'";
 		$where_clause = implode(' AND ', $where);
-		$result = $this->db->query("SELECT miscData, miscValue1, miscValue2, miscDescription FROM miscellaneous where $where_clause");
+		$result = $this->db->query("SELECT miscData, miscValue1, miscValue2, miscDescription FROM m_miscellaneous where $where_clause");
 		return $result->result_array();
 	}
 }
