@@ -269,7 +269,7 @@ class FunctionalRequirement extends CI_Controller {
 			       						$lengthIsMatch = FALSE;
 			       					}
 			       				}else{
-			       					if($inputLength < 1 || $inputLength > 38 ){
+			       					if($inputLength < 1 || $inputLength > 38){
 			       						$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_017', $lineNo);
 			       						$errorFlag = TRUE;
 			       						$lengthIsMatch = FALSE;

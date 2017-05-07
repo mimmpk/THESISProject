@@ -54,7 +54,7 @@
 				  <img src="<?php echo base_url(); ?>/assets/img/avatar02-1.png" class="img-circle">
 				</div>
 				<div class="pull-left info">
-				  <p>Alexander Pierce</p>
+				  <p>Parichat Kiatphao</p>
 				  <i class="fa fa-circle text-success"></i> Online
 				</div>
 			</div>

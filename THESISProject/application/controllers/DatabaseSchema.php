@@ -12,6 +12,7 @@ class DatabaseSchema extends CI_Controller{
 		$this->load->library('session');
 		$this->load->model('Project_model', 'mProject');
 		$this->load->model('DatabaseSchema_model', 'mDbSchema');
+		$this->load->model('Miscellaneous_model', 'mMisc');
 	}
 
 	public function index(){
@@ -103,20 +104,66 @@ class DatabaseSchema extends CI_Controller{
        		$result =  $this->csvreader->parse_file($fullPath);//path to csv file
 
        		//Validate data in File
-       		
-       		$totalRecord = count($result);
-       		$databaseSchemaList = array();
-       		$correctRecord = 0;
-       		$incorrectRecord = 0;
+       		if(0 < count($result)){
+       			$totalRecord = count($result);
+       			$correctRecord = 0;
+	       		$incorrectRecord = 0;
+	       		$databaseSchemaList = array();
 
-       		$user = (null != $this->session->userdata('username'))? $this->session->userdata('username'): 'userDefault';
-       		
-       		
 
+	       		if($this->validate($result, $uploadResult, $correctRecord, $projectId)){
+	       			$user = (null != $this->session->userdata('username'))? $this->session->userdata('username'): 'userDefault';
+	       			//Prepare data for uploading
+	       			foreach ($result as $value) {
+	       				$databaseSchemaList[] = (object) array(
+		       				'tableName' => $value[KEY_DB_TABLE_NAME],
+		       				'columnName' => $value[KEY_DB_COLUMN_NAME],
+		       				'primaryKey' => $value[KEY_DB_ISPRIMARY_KEY],
+		       				'dataType' => $value[KEY_FR_INPUT_TYPE],
+		       				'dataLength' => $value[KEY_FR_INPUT_LENGTH],
+		       				'scale' => $value[KEY_FR_DECIMAL_POINT],
+		       				'unique' => $value[KEY_FR_INPUT_UNIQUE],
+		       				'defaultValue' => $value[KEY_FR_INPUT_DEFAULT],
+		       				'null' => $value[KEY_FR_INPUT_NULL],
+		       				'minValue' => $value[KEY_FR_INPUT_MIN_VALUE],
+		       				'maxValue' => $value[KEY_FR_INPUT_MAX_VALUE],
+		       				'schemaVersionId' => '',
+		       				'schemaVersionNo' => INITIAL_VERSION,
+		       				'status' => ACTIVE_CODE
+	       				);
+	       			}
+
+	       			//Saving data
+	       			$result = $this->mDbSchema->uploadDatabaseSchema($databaseSchemaList, $user, $projectId);
+	       			if($result){
+	       				$successMessage = ER_MSG_009;
+	       			}else{
+	       				$errorMessage = ER_MSG_008;
+	       			}
+
+	       		}else{
+	       			$errorMessage = ER_MSG_008;
+	       		}
+	       		$incorrectRecord = $totalRecord - $correctRecord;
+	       		$data['totalRecords'] = $totalRecord;
+			    $data['correctRecords'] = $correctRecord;
+				$data['incorrectRecords'] = $incorrectRecord;
+       		}else{
+       			$errorMessage = ER_MSG_010;
+       		}
+       		unlink($fullPath); //delete uploaded file
 		}
+
+		$hfield = array('screenMode' => $screenMode, 'projectId' => $projectId, 'projectName' => $projectName, 'projectNameAlias' => $projectNameAlias);
+		$data['hfield'] = $hfield;
+	    $data['error_message'] = $errorMessage;
+	    $data['success_message'] = $successMessage;
+	    $data['uploadResult'] = $uploadResult;
+		$this->openView($data, 'upload');
+
 	}
 
-	private function ValidateCSVFile($data, &$uploadResult, &$incorrectRecord){
+	private function validate($data, &$uploadResult, &$correctRecord, $projectId){
 		$lineNo = 0;
 		$checkTableName = '';
 		$checkColumnName = '';
@@ -173,9 +220,201 @@ class DatabaseSchema extends CI_Controller{
    				}else{
    					$checkColumnName = $value[KEY_DB_COLUMN_NAME];
    				}
+
+   				//Check duplicate Table and Column in Database
+   				if(!empty($value[KEY_DB_TABLE_NAME])){
+   					$countRecords = $this->mDbSchema->searchExistDatabaseSchemaInfo($value[KEY_DB_TABLE_NAME], $value[KEY_DB_COLUMN_NAME], $projectId);
+   					if(0 < $countRecords){
+   						$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_036', $lineNo);
+   						$hasError = TRUE;
+   					}
+   				}
    			}
 
    			/**************************[PRIMARY KEY]**************************/
+   			if($this->checkNullOrEmpty($value[KEY_DB_ISPRIMARY_KEY])){
+   				$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_033', $lineNo);
+   				$hasError = TRUE;
+   			}else{
+   				//Check Format ('Y' or 'N')
+   				$primaryKeyValue = strtoupper($value[KEY_DB_ISPRIMARY_KEY]);
+   				if("Y" != $primaryKeyValue && "N" != $primaryKeyValue){
+					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_034', $lineNo);
+   					$hasError = TRUE;
+   				}
+   			}
+
+   			/**************************[DATA TYPE]**************************/
+   			$typeIsMatch = FALSE;
+   			$dataType = '';
+   			if($this->checkNullOrEmpty($value[KEY_FR_INPUT_TYPE])){
+   				$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_011', $lineNo);
+   				$hasError = TRUE;
+   			}else{
+   				//Check Length of Data Type
+   				if(LENGTH_INPUT_DATA_TYPE < strlen($value[KEY_FR_INPUT_TYPE])){
+   					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_012', $lineNo);
+   					$hasError = TRUE;
+   				}
+
+   				//Check format
+   				$miscValue = strtolower($value[KEY_FR_INPUT_TYPE]);
+   				$result = $this->mMisc->searchMiscellaneous(MISC_DATA_INPUT_DATA_TYPE, $miscValue);
+   				if(null == $result || empty($result)){
+   					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_013', $lineNo);
+   					$hasError = TRUE;
+   				}else{
+   					$typeIsMatch = TRUE;
+   					$dataType = $result[0]['miscValue2'];
+   				}
+
+   			}
+
+   			/**************************[DATA LENGTH]**************************/
+   			$exceptInputSize = array("date", "datetime", "int", "float", "real");
+   			$inputLength = $value[KEY_FR_INPUT_LENGTH];
+   			$lengthIsMatch = TRUE;
+
+   			if($typeIsMatch && !in_array($miscValue, $exceptInputSize)){
+   				if($this->checkNullOrEmpty($inputLength)){
+   					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_014', $lineNo);
+   					$hasError = TRUE;
+   					$lengthIsMatch = FALSE;
+   				}else{
+   					if("char" == $miscValue || "varchar" == $miscValue){
+   						if($inputLength < 1 || $inputLength > 8000 ){
+   							$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_015', $lineNo);
+   							$hasError = TRUE;
+   							$lengthIsMatch = FALSE;
+   						}
+   					}else if("nchar" == $miscValue || "nvarchar" == $miscValue){
+						if($inputLength < 1 || $inputLength > 4000 ){
+							$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_016', $lineNo);
+							$hasError = TRUE;
+							$lengthIsMatch = FALSE;
+						}
+   					}else{
+   						if($inputLength < 1 || $inputLength > 38){
+							$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_017', $lineNo);
+							$hasError = TRUE;
+							$lengthIsMatch = FALSE;
+						}else{
+							//Check Decimal Scale. If NULL, default value will be '0'.
+							$hasScalePoint = TRUE;
+							$decimalScale = $value[KEY_FR_DECIMAL_POINT];
+							if(!$this->checkNullOrEmpty($decimalScale)){
+								if($decimalScale < 0 || $decimalScale > $inputLength){
+									$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_018', $lineNo);
+									$hasError = TRUE;
+									$lengthIsMatch = FALSE;
+									$hasScalePoint = FALSE;
+								}else{
+									$scalePoint = $value[KEY_FR_DECIMAL_POINT];
+								}
+							}
+						}
+   					}
+   				}
+   			}
+
+   			/**************************[CONSTRAINT-UNIQUE]**************************/
+   			if($this->checkNullOrEmpty($value[KEY_FR_INPUT_UNIQUE])){
+   				$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_019', $lineNo);
+   				$hasError = TRUE;
+   			}else{
+   				$uniqueContraint = strtoupper($value[KEY_FR_INPUT_UNIQUE]);
+   				if("Y" != $uniqueContraint && "N" != $uniqueContraint){
+   					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_020', $lineNo);
+   					$hasError = TRUE;
+   				}
+   			}
+
+   			/**************************[CONSTRAINT-DEFAULT]**************************/
+   			if(!$this->checkNullOrEmpty($value[KEY_FR_INPUT_DEFAULT]) && $typeIsMatch && $lengthIsMatch){
+   				$defaultValue = $value[KEY_FR_INPUT_DEFAULT];
+   				if("Numerics" == $dataType){
+   					if(!is_numeric($defaultValue)){
+   						$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_021', $lineNo);
+   						$hasError = TRUE;
+   					}else if('decimal' == $miscValue && is_float((float)$defaultValue)){
+   						$decimalFotmat = explode(".", $defaultValue);
+   						if(strlen($decimalFotmat[0]) > $inputLength){
+   							$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_021', $lineNo);
+   							$hasError = TRUE;
+   						}
+   					}
+   				}else if("Strings" == $dataType && strlen($defaultValue) > $inputLength){
+   					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_021', $lineNo);
+   					$hasError = TRUE;
+   				}else{ // Date Type
+   					if("getdate()" != strtolower($defaultValue)){
+   						$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_021', $lineNo);
+   						$hasError = TRUE;
+   					}
+   				}
+   			}
+
+   			/****************************[CONSTRAINT-NULL]***************************/
+   			if($this->checkNullOrEmpty($value[KEY_FR_INPUT_NULL])){
+   				$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_022', $lineNo);
+   				$hasError = TRUE;
+   			}else{
+   				$notNullConstaint = strtoupper($value[KEY_FR_INPUT_NULL]);
+   				if("Y" != $notNullConstaint && "N" != $notNullConstaint){
+   					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_023', $lineNo);
+   					$hasError = TRUE;
+   				}
+   			}
+
+   			/************************[CONSTRAINT-CHECK(MIN)]************************/
+   			$hasMinValue = FALSE;
+   			$hasMaxValue = FALSE;
+   			if($typeIsMatch && !$this->checkNullOrEmpty($value[KEY_FR_INPUT_MIN_VALUE])){
+   				if("Numerics" == $dataType){
+   					if(!is_numeric($value[KEY_FR_INPUT_MIN_VALUE])){
+   						$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_024', $lineNo);
+   						$hasError = TRUE;
+   					}else{
+   						$hasMinValue = TRUE;
+   					}
+   				}else{
+				   	$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_024', $lineNo);
+					$hasError = TRUE;
+   				}
+   			}
+
+   			/************************[CONSTRAINT-CHECK(MAX)]************************/
+   			if($typeIsMatch && !$this->checkNullOrEmpty($value[KEY_FR_INPUT_MAX_VALUE])){
+   				if("Numerics" == $dataType){
+   					if(!is_numeric($value[KEY_FR_INPUT_MAX_VALUE])){
+   						$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_025', $lineNo);
+   						$hasError = TRUE;
+   					}else{
+   						$hasMaxValue = TRUE;
+   					}
+   				}else{
+   					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_025', $lineNo);
+					$hasError = TRUE;
+   				}
+   			}
+
+   			if($hasMinValue && $hasMaxValue){
+   				if((float)$value[KEY_FR_INPUT_MIN_VALUE] > (float)$value[KEY_FR_INPUT_MAX_VALUE]){
+   					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_035', $lineNo);
+					$hasError = TRUE;
+   				}
+   			}
+
+
+   			if(!$hasError){
+   				$correctRecord++;
+   			}
+   		} // end foreach
+
+   		if($correctRecord == count($data)){
+   			return TRUE;
+   		}else{
+   			return FALSE;
    		}
 	}
 

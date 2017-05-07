@@ -70,4 +70,63 @@
 			</div>
 		</div>
 	</div>
+
+      <?php if(isset($uploadResult) and !empty($uploadResult)) { ?>
+      <!-- Start: Search Result Section -->
+      <div class="row">
+            <div class="col-md-12">
+                  <div class="box box-success" style="margin-top: -10px;">
+                        <div class="box-header">
+                              <h3 class="box-title">Upload Result</h3>
+                        </div>
+                        <div class="box-body" style="margin-top: -10px;">
+                              <div class="col-md-2" style="background: #D7DBDD;text-align: right;vertical-align: center;">
+                                    <label for="inputProjectName" style="margin-bottom: 0px;">Total Records :</label>
+                              </div>
+                              <div class="col-md-2">
+                                    <label for="inputProjectName" style="margin-bottom: 0px;"><?php echo $totalRecords ?></label>
+                              </div>
+                              <div class="col-md-2" style="background: #D7DBDD;text-align: right;vertical-align: center;">
+                                    <label for="inputProjectName" style="margin-bottom: 0px;">Correct :</label>
+                              </div>
+                              <div class="col-md-2">
+                                    <label for="inputProjectName" style="margin-bottom: 0px;"><?php echo $correctRecords ?> Record(s)</label>
+                              </div>
+                              <div class="col-md-2" style="background: #D7DBDD;text-align: right;vertical-align: center;">
+                                    <label for="inputProjectName" style="margin-bottom: 0px;">Incorrect :</label>
+                              </div>
+                              <div class="col-md-2">
+                                    <label for="inputProjectName" style="margin-bottom: 0px;"><?php echo $incorrectRecords ?> Record(s)</label>
+                              </div>
+                        </div>
+                        <div class="box-body" style="margin-top: -10px;">
+                              <table id="resultTbl" class="table table-bordered table-striped dataTable">
+                                    <thead>
+                                          <tr style="background: #CACFD2;">
+                                                <th>No.</th>
+                                                <th>Message</th>
+                                                <th>CSV Line No.</th>
+                                          </tr>
+                                    </thead>
+                                    <?php if(null != $uploadResult and 0 < count($uploadResult)){ ?>
+                                    <tbody>
+                                          <?php 
+                                          $define = 1;
+                                          foreach($uploadResult as $key => $value): 
+                                          $classRow = (0 == $define%2)? 'even' : 'odd'; ?>
+                                          <tr class="<?php echo $classRow; ?>">
+                                                <td><?php echo $define++; ?></td>
+                                                <td><?php echo constant($key) ?></td>
+                                                <td><?php echo implode(",", $value); ?></td>
+                                          </tr>
+                                          <?php endforeach; ?>            
+                                    </tbody>
+                                    <?php }?>
+                              </table>
+                        </div>
+                  </div>
+            </div>
+      </div>
+      <!-- End: Search Result Section -->
+      <?php } ?>
 </section>
