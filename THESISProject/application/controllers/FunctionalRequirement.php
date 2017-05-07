@@ -56,6 +56,7 @@ class FunctionalRequirement extends CI_Controller {
 				$projectName = $result->projectName;
 				$projectNameAlias = $result->projectNameAlias;
 			}else{
+				$screenMode = '0';
 				$errorMessage = ER_MSG_007;
 			}
 		}else{

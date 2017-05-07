@@ -87,7 +87,7 @@
 			            <li id="mats002"><a href="<?php echo base_url(); ?>FunctionalRequirement/"><i class="fa fa-circle-o"></i> Functional Requirements</a></li>
 			            <li id="mats003"><a href="<?php echo base_url(); ?>TestCaseManagement/"><i class="fa fa-circle-o"></i> Test Cases</a></li>
 			            <li id="mats004"><a href="#"><i class="fa fa-circle-o"></i> RTM</a></li>
-			            <li id="mats005"><a href="#"><i class="fa fa-circle-o"></i> Database Schema</a></li>
+			            <li id="mats005"><a href="<?php echo base_url(); ?>DatabaseSchema/"><i class="fa fa-circle-o"></i> Database Schema</a></li>
 		          	</ul>
 		        </li>
 		        <li class="treeview">
