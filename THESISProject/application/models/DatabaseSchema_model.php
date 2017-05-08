@@ -35,13 +35,16 @@ class DatabaseSchema_model extends CI_Model{
 	}
 
 	function searchExistDatabaseSchemaInfo($tableName, $columnName, $projectId){
-		$sqlStr = "SELECT *
+		$sqlStr = "SELECT di.*
 			FROM M_DATABASE_SCHEMA_INFO di
+			INNER JOIN M_DATABASE_SCHEMA_VERSION dv
+			ON di.schemaVersionId = dv.schemaVersionId
 			WHERE di.projectId = $projectId
 			AND di.tableName = '$tableName'
-			AND di.columnName =  '$columnName'";
+			AND di.columnName =  '$columnName'
+			AND dv.activeFlag = '1'";
 		$result = $this->db->query($sqlStr);
-		return $result->num_rows();
+		return $result->row();
 	}
 
 	function uploadDatabaseSchema($param, $user, $projectId){
@@ -73,7 +76,7 @@ class DatabaseSchema_model extends CI_Model{
 		$currentDate = date('Y-m-d');
 		$currentDateTime = date('Y-m-d H:i:s');
 
-		$sqlStr = "INSERT INTO M_DATABASE_SCHEMA_VERSION (tableName, columnName, schemaVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousSchemaVersionId, createDate, createUser, updateDate, updateUser) VALUES ('{$param->tableName}', '{$param->columnName}', {$param->schemaVersionNo}, '$currentDate', NULL, '{$param->status}', NULL, '$currentDateTime', $user, '$currentDateTime', $user)";
+		$sqlStr = "INSERT INTO M_DATABASE_SCHEMA_VERSION (tableName, columnName, schemaVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousSchemaVersionId, createDate, createUser, updateDate, updateUser) VALUES ('{$param->tableName}', '{$param->columnName}', {$param->schemaVersionNo}, '$currentDate', NULL, '{$param->status}', NULL, '$currentDateTime', '$user', '$currentDateTime', '$user')";
 
 		$result = $this->db->query($sqlStr);
 		if($result){
@@ -85,7 +88,7 @@ class DatabaseSchema_model extends CI_Model{
 	}
 
 	function insertDatabaseSchemaInfo($param, $projectId){
-		$dataType = strtoupper($param->dataType);
+		$dataType = $param->dataType;
 		$dataLength = !empty($param->dataLength)? $param->dataLength : "NULL";
 		$scale = !empty($param->scale)? $param->scale : "NULL";
 		$defaultValue = !empty($param->defaultValue)? $param->defaultValue : "NULL";

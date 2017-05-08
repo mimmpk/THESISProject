@@ -116,15 +116,15 @@ class DatabaseSchema extends CI_Controller{
 	       			//Prepare data for uploading
 	       			foreach ($result as $value) {
 	       				$databaseSchemaList[] = (object) array(
-		       				'tableName' => $value[KEY_DB_TABLE_NAME],
-		       				'columnName' => $value[KEY_DB_COLUMN_NAME],
-		       				'primaryKey' => $value[KEY_DB_ISPRIMARY_KEY],
-		       				'dataType' => $value[KEY_FR_INPUT_TYPE],
+		       				'tableName' => strtoupper($value[KEY_DB_TABLE_NAME]),
+		       				'columnName' => strtoupper($value[KEY_DB_COLUMN_NAME]),
+		       				'primaryKey' => strtoupper($value[KEY_DB_ISPRIMARY_KEY]),
+		       				'dataType' => strtoupper($value[KEY_FR_INPUT_TYPE]),
 		       				'dataLength' => $value[KEY_FR_INPUT_LENGTH],
 		       				'scale' => $value[KEY_FR_DECIMAL_POINT],
-		       				'unique' => $value[KEY_FR_INPUT_UNIQUE],
+		       				'unique' => strtoupper($value[KEY_FR_INPUT_UNIQUE]),
 		       				'defaultValue' => $value[KEY_FR_INPUT_DEFAULT],
-		       				'null' => $value[KEY_FR_INPUT_NULL],
+		       				'null' => strtoupper($value[KEY_FR_INPUT_NULL]),
 		       				'minValue' => $value[KEY_FR_INPUT_MIN_VALUE],
 		       				'maxValue' => $value[KEY_FR_INPUT_MAX_VALUE],
 		       				'schemaVersionId' => '',
@@ -222,7 +222,7 @@ class DatabaseSchema extends CI_Controller{
    				}
 
    				//Check duplicate Table and Column in Database
-   				if(!empty($value[KEY_DB_TABLE_NAME])){
+   				if(!empty($value[KEY_DB_TABLE_NAME] && !empty($value[KEY_DB_COLUMN_NAME]))){
    					$countRecords = $this->mDbSchema->searchExistDatabaseSchemaInfo($value[KEY_DB_TABLE_NAME], $value[KEY_DB_COLUMN_NAME], $projectId);
    					if(0 < $countRecords){
    						$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_036', $lineNo);
