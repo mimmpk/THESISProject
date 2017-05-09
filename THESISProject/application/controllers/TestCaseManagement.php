@@ -113,12 +113,29 @@ class TestCaseManagement extends CI_Controller{
        		    	$user = (null != $this->session->userdata('username'))? $this->session->userdata('username'): 'userDefault';
 
        		    	//Saving data
+       		    	$saveResult = $this->mTestCase->uploadTestCaseInfo($testCaseInfoList, $user);
+       		    	if($saveResult){
+       		    		$successMessage = ER_MSG_009;
+       		    	}else{
+       		    		$errorMessage = ER_MSG_008;
+       		    	}
        		    }
+       		    $incorrectRecord = $totalRecord - $correctRecord;
+           		$data['totalRecords'] = $totalRecord;
+    		    $data['correctRecords'] = $correctRecord;
+    			$data['incorrectRecords'] = $incorrectRecord;
 			}else{
 				$errorMessage = ER_MSG_010;
 			}
 			unlink($fullPath); //delete uploaded file
 		}
+		$hfield = array('screenMode' => $screenMode, 'projectId' => $projectId, 'projectName' => $projectName, 'projectNameAlias' => $projectNameAlias);
+
+		$data['hfield'] = $hfield;
+		$data['uploadResult'] = $uploadResult;
+		$data['error_message'] = $errorMessage;
+ 		$data['success_message'] = $successMessage;
+		$this->openView($data, 'upload');
 	}
 
 	private function validate($data, $projectId, &$uploadResult, &$correctRecord, &$testCaseInfoList){
@@ -127,7 +144,7 @@ class TestCaseManagement extends CI_Controller{
 		$checkTestCaseDesc = '';
 		$checkExpectedResult = '';
 		$checkInputName = '';
-		
+		//var_dump($data);
 		foreach ($data as $value) {
 			++$lineNo;
 
@@ -160,8 +177,7 @@ class TestCaseManagement extends CI_Controller{
    			
    			/****************************[Test Case Description]**************************/
    			if(!$this->checkNullOrEmpty($value[KEY_TC_TESTCASE_DESC])){
-   				if(!empty($value[KEY_TC_TESTCASE_DESC]) 
-   					&& $checkTestCaseDesc != $value[KEY_TC_TESTCASE_DESC]){
+   				if(!empty($checkTestCaseDesc) && ($checkTestCaseDesc != $value[KEY_TC_TESTCASE_DESC])){
    					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_042', $lineNo);
    					$hasError = TRUE;
    				}else{
@@ -224,12 +240,12 @@ class TestCaseManagement extends CI_Controller{
 
    			if(!$hasError){
    				$correctRecord++;
-   				$testCaseInfoList[] = array(
+   				$testCaseInfoList[] = (object) array(
    					'testCaseId' => '',
    					'testCaseNo' => $value[KEY_TC_TESTCASE_NO],
    					'testCaseDescription' => $value[KEY_TC_TESTCASE_DESC],
    					'expectedResult' => $value[KEY_TC_EXPECTED_RESULT],
-   					'projectId' = > $projectId,
+   					'projectId' => $projectId,
    					'refInputId' => $refInputId,
    					'refInputName' => $value[KEY_TC_INPUT_NAME],
    					'testData' => $value[KEY_TC_TEST_DATA],
@@ -262,6 +278,25 @@ class TestCaseManagement extends CI_Controller{
 
 	private function checkNullOrEmpty($varInput){
 		return (!isset($varInput) || empty($varInput));
+	}
+
+	/*
+	$key = errorCode;
+	$value = lineNo;
+
+	map[string,mixed] 	-- The key is undefined
+	$key(string) 		-- The key is defined, but isn't yet set to an array
+	$value(string) 		-- The key is defined, and the element is an array.
+	*/
+	private function appendThings($array, $key, $value) {
+		if(empty($array[$key]) && !isset($array[$key])){
+			$array[$key] = array(0 => $value);
+		}else{ //(is_array($array[$key]))
+			if(array_key_exists($key, $array)){
+				$array[$key][] = $value;
+			}
+		}
+		return $array;
 	}
 }
 ?>

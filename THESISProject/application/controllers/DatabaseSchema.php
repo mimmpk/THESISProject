@@ -158,7 +158,6 @@ class DatabaseSchema extends CI_Controller{
 	    $data['success_message'] = $successMessage;
 	    $data['uploadResult'] = $uploadResult;
 		$this->openView($data, 'upload');
-
 	}
 
 	private function validate($data, &$uploadResult, &$correctRecord, $projectId){
