@@ -192,8 +192,8 @@ class FunctionalRequirement extends CI_Controller {
        				$resultInputInfo = $this->FR->searchFRInputInformation($projectId, $value[KEY_FR_INPUT_NAME]);
        				if(0 < count($resultInputInfo)){
        					//Validate with exist data
-       					$referTableName = $resultInputInfo->referTableName;
-       					$referColumnName = $resultInputInfo->referColumnName;
+       					$referTableName = $resultInputInfo->refTableName;
+       					$referColumnName = $resultInputInfo->refColumnName;
        					
        					if($referTableName != strtoupper($value[KEY_FR_INPUT_TABLE_NAME])
        						|| $referColumnName != strtoupper($value[KEY_FR_INPUT_FIELD_NAME])){
@@ -279,7 +279,11 @@ class FunctionalRequirement extends CI_Controller {
        		}else{
        			$isCorrectCSV = TRUE;
        		}
-	    }
+
+       		$data['totalRecords'] = $totalRecord;
+		    $data['correctRecords'] = $correctRecord;
+			$data['incorrectRecords'] = $incorrectRecord;
+	    } //end if
 
 	    //save data in database
 	    if($isCorrectCSV){
@@ -295,9 +299,6 @@ class FunctionalRequirement extends CI_Controller {
 
 	    $hfield = array('screenMode' => $screenMode, 'projectId' => $projectId, 'projectName' => $projectName, 'projectNameAlias' => $projectNameAlias);
 	    $data['hfield'] = $hfield;
-	    $data['totalRecords'] = $totalRecord;
-	    $data['correctRecords'] = $correctRecord;
-		$data['incorrectRecords'] = $incorrectRecord;
 	    $data['error_message'] = $error;
 	    $data['success_message'] = $successMsg;
 	    $data['result'] = $resultUpload;

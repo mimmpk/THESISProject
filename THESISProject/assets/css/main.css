@@ -5,3 +5,7 @@ td{
     font-size:13px;
     word-wrap: break-word;
 }
+
+.tableResult thead th {
+   text-align: center;
+}

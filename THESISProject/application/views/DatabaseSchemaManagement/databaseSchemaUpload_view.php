@@ -25,10 +25,10 @@
 			</div>
 			<?php } ?>
 			<div class="box box-primary">
-				<div class="box-header with-border">
-             		<h3 class="box-title">Import Database Schema Information</h3>
-            	</div>
-            	<form role="form" action="<?php echo base_url() ?>DatabaseSchema/doUpload/" method="post" enctype="multipart/form-data">
+                        <div class="box-header with-border">
+             		   <h3 class="box-title">Import Database Schema Information</h3>
+                        </div>
+      	            <form role="form" action="<?php echo base_url() ?>DatabaseSchema/doUpload/" method="post" enctype="multipart/form-data">
             		<?php echo form_hidden($hfield); ?>
             		<div class="box-body">
             			<div class="row">
@@ -61,7 +61,7 @@
             						<button type="submit" class="btn bg-primary" style="width: 100px;" <?php echo $var;?> >
 	                					<i class="fa fa-upload"></i>
 	                					Upload
-	                				</button>
+                                                </button>
             					</div>
             				</div>
             			</div>

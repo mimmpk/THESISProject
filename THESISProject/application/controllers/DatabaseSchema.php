@@ -16,7 +16,6 @@ class DatabaseSchema extends CI_Controller{
 	}
 
 	public function index(){
-		$formObj = (object) array('projectId' => '', 'dbSchemaStatus' => '');
 		$data['error_message'] = '';
 		$data['resultList'] = null;
 		$this->openView($data, 'search');
@@ -41,8 +40,6 @@ class DatabaseSchema extends CI_Controller{
 			$data['searchFlag'] = 'Y';
 		}
 
-		$formObj = (object) array('projectId' => $projectId, 'dbSchemaStatus' => $status);
-		$data['formData'] = $formObj;
 		$data['error_message'] = $error_message;
 		$data['resultList'] = $resultList;
 		$this->openView($data, 'search');
@@ -80,78 +77,79 @@ class DatabaseSchema extends CI_Controller{
 	public function doUpload(){
 		$fileName = "DB_".date("YmdHis")."_".$this->session->session_id;
 		$config['upload_path'] = './uploads/';
-	    $config['allowed_types'] = 'csv';
-	    $config['file_name'] = $fileName;
-	    $config['max_size']  = '5000';
+        $config['allowed_types'] = 'csv';
+        $config['file_name'] = $fileName;
+        $config['max_size']  = '5000';
 
-	    $errorMessage = '';
-	    $successMessage = '';
-	    $uploadResult = array();
+        $errorMessage = '';
+        $successMessage = '';
+        $uploadResult = array();
 
-	    $projectId = $this->input->post('projectId');
-	    $projectName = $this->input->post('projectName');
+        $projectId = $this->input->post('projectId');
+        $projectName = $this->input->post('projectName');
 		$projectNameAlias = $this->input->post('projectNameAlias');
 		$screenMode = $this->input->post('screenMode');
 
 		$this->load->library('upload', $config);
 
 		if($this->upload->do_upload('fileName') == FALSE){
-			$errorMessage = "Import process failed.";
+			$errorMessage = ER_MSG_008;
 		}else{
 			$data = array('upload_data' => $this->upload->data());
 			$fullPath = $data['upload_data']['full_path'];
 	    	$this->load->library('csvreader');
-       		$result =  $this->csvreader->parse_file($fullPath);//path to csv file
+       	    $result =  $this->csvreader->parse_file($fullPath);//path to csv file
 
-       		//Validate data in File
-       		if(0 < count($result)){
-       			$totalRecord = count($result);
-       			$correctRecord = 0;
-	       		$incorrectRecord = 0;
-	       		$databaseSchemaList = array();
+    		//Validate data in File
+    		if(0 < count($result)){
+    			$totalRecord = count($result);
+    			$correctRecord = 0;
+       		    $incorrectRecord = 0;
+       		    $databaseSchemaList = array();
 
 
-	       		if($this->validate($result, $uploadResult, $correctRecord, $projectId)){
-	       			$user = (null != $this->session->userdata('username'))? $this->session->userdata('username'): 'userDefault';
-	       			//Prepare data for uploading
-	       			foreach ($result as $value) {
-	       				$databaseSchemaList[] = (object) array(
-		       				'tableName' => strtoupper($value[KEY_DB_TABLE_NAME]),
-		       				'columnName' => strtoupper($value[KEY_DB_COLUMN_NAME]),
-		       				'primaryKey' => strtoupper($value[KEY_DB_ISPRIMARY_KEY]),
-		       				'dataType' => strtoupper($value[KEY_FR_INPUT_TYPE]),
-		       				'dataLength' => $value[KEY_FR_INPUT_LENGTH],
-		       				'scale' => $value[KEY_FR_DECIMAL_POINT],
-		       				'unique' => strtoupper($value[KEY_FR_INPUT_UNIQUE]),
-		       				'defaultValue' => $value[KEY_FR_INPUT_DEFAULT],
-		       				'null' => strtoupper($value[KEY_FR_INPUT_NULL]),
-		       				'minValue' => $value[KEY_FR_INPUT_MIN_VALUE],
-		       				'maxValue' => $value[KEY_FR_INPUT_MAX_VALUE],
-		       				'schemaVersionId' => '',
-		       				'schemaVersionNo' => INITIAL_VERSION,
-		       				'status' => ACTIVE_CODE
-	       				);
-	       			}
+           		if($this->validate($result, $uploadResult, $correctRecord, $projectId)){
+           			$user = (null != $this->session->userdata('username'))? $this->session->userdata('username'): 'userDefault';
+           			//Prepare data for uploading
+           			foreach ($result as $value) {
+           				$databaseSchemaList[] = (object) array(
+    	       				'tableName' => strtoupper($value[KEY_DB_TABLE_NAME]),
+    	       				'columnName' => strtoupper($value[KEY_DB_COLUMN_NAME]),
+    	       				'primaryKey' => strtoupper($value[KEY_DB_ISPRIMARY_KEY]),
+    	       				'dataType' => strtoupper($value[KEY_FR_INPUT_TYPE]),
+    	       				'dataLength' => $value[KEY_FR_INPUT_LENGTH],
+    	       				'scale' => $value[KEY_FR_DECIMAL_POINT],
+    	       				'unique' => strtoupper($value[KEY_FR_INPUT_UNIQUE]),
+    	       				'defaultValue' => $value[KEY_FR_INPUT_DEFAULT],
+    	       				'null' => strtoupper($value[KEY_FR_INPUT_NULL]),
+    	       				'minValue' => $value[KEY_FR_INPUT_MIN_VALUE],
+    	       				'maxValue' => $value[KEY_FR_INPUT_MAX_VALUE],
+    	       				'schemaVersionId' => '',
+    	       				'schemaVersionNo' => INITIAL_VERSION,
+    	       				'status' => ACTIVE_CODE
+           				);
+           			}
 
-	       			//Saving data
-	       			$result = $this->mDbSchema->uploadDatabaseSchema($databaseSchemaList, $user, $projectId);
-	       			if($result){
-	       				$successMessage = ER_MSG_009;
-	       			}else{
-	       				$errorMessage = ER_MSG_008;
-	       			}
+           			//Saving data
+           			$result = $this->mDbSchema->uploadDatabaseSchema($databaseSchemaList, $user, $projectId);
+           			if($result){
+           				$successMessage = ER_MSG_009;
+           			}else{
+           				$errorMessage = ER_MSG_008;
+           			}
 
-	       		}else{
-	       			$errorMessage = ER_MSG_008;
-	       		}
-	       		$incorrectRecord = $totalRecord - $correctRecord;
-	       		$data['totalRecords'] = $totalRecord;
-			    $data['correctRecords'] = $correctRecord;
-				$data['incorrectRecords'] = $incorrectRecord;
-       		}else{
-       			$errorMessage = ER_MSG_010;
-       		}
-       		unlink($fullPath); //delete uploaded file
+           		}else{
+           			$errorMessage = ER_MSG_008;
+           		}
+                
+           		$incorrectRecord = $totalRecord - $correctRecord;
+           		$data['totalRecords'] = $totalRecord;
+    		    $data['correctRecords'] = $correctRecord;
+    			$data['incorrectRecords'] = $incorrectRecord;
+    		}else{
+    			$errorMessage = ER_MSG_010;
+    		}
+    		unlink($fullPath); //delete uploaded file
 		}
 
 		$hfield = array('screenMode' => $screenMode, 'projectId' => $projectId, 'projectName' => $projectName, 'projectNameAlias' => $projectNameAlias);

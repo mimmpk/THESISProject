@@ -73,10 +73,9 @@ class DatabaseSchema_model extends CI_Model{
 	}
 
 	function insertDatabaseSchemaVersion($param, $user){
-		$currentDate = date('Y-m-d');
 		$currentDateTime = date('Y-m-d H:i:s');
 
-		$sqlStr = "INSERT INTO M_DATABASE_SCHEMA_VERSION (tableName, columnName, schemaVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousSchemaVersionId, createDate, createUser, updateDate, updateUser) VALUES ('{$param->tableName}', '{$param->columnName}', {$param->schemaVersionNo}, '$currentDate', NULL, '{$param->status}', NULL, '$currentDateTime', '$user', '$currentDateTime', '$user')";
+		$sqlStr = "INSERT INTO M_DATABASE_SCHEMA_VERSION (tableName, columnName, schemaVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousSchemaVersionId, createDate, createUser, updateDate, updateUser) VALUES ('{$param->tableName}', '{$param->columnName}', {$param->schemaVersionNo}, '$currentDateTime', NULL, '{$param->status}', NULL, '$currentDateTime', '$user', '$currentDateTime', '$user')";
 
 		$result = $this->db->query($sqlStr);
 		if($result){
