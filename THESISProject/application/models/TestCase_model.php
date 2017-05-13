@@ -127,18 +127,5 @@ class TestCase_model extends CI_Model{
 	   		return true;
 	    }
 	}
-
-	/*function searchMappingTestCaseData($testCaseNo, $projectId){
-		$sqlStr = "SELECT 
-				r.functionId,
-				r.testCaseId
-			FROM M_RTM r
-			INNER JOIN M_TESTCASE_HEADER t
-			ON r.testCaseId = t.testCaseId
-			WHERE t.testCaseNo = '$testCaseNo'
-			AND r.projectId = $projectId"
-		$result = $this->db->query($sqlStr);
-		return $result->result_array();
-	}*/
 }
 ?>

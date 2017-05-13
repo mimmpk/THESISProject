@@ -31,7 +31,7 @@ class FunctionalRequirement_model extends CI_Model {
 			WHERE projectId = '$projectId' 
 			AND functionNo = '$fnId'";
 		$result = $this->db->query($queryStr);
-		return $result->num_rows();
+		return $result->result_array();
 	}
 
 	function searchFRInputInformation($projectId, $inputName){

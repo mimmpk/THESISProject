@@ -153,7 +153,7 @@ class FunctionalRequirement extends CI_Controller {
        			//Check Exist Functional Requirement ID
        			if(!$this->checkNullOrEmpty($value[KEY_FR_NO])){
        				$recordCount = $this->FR->searchExistFunctionalRequirement($value[KEY_FR_NO], $projectId);
-       				if(0 < $recordCount){
+       				if(0 < count($recordCount)){
        					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_006', $lineNo);
        					$errorFlag = TRUE;
        				}
