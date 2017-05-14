@@ -26,10 +26,18 @@ class FunctionalRequirement_model extends CI_Model {
 	}
 
 	function searchExistFunctionalRequirement($fnId, $projectId){
+		if(null != $projectId && !empty($projectId)){
+			$where[] = "projectId = '$projectId'";
+		}
+		if(null != $fnId && !empty($fnId)){
+			$where[] = "functionNo = '$fnId'";
+		}
+		$where_clause = implode(' AND ', $where);
+		
 		$queryStr = "SELECT * 
 			FROM M_FN_REQ_HEADER 
-			WHERE projectId = '$projectId' 
-			AND functionNo = '$fnId'";
+			WHERE $where_clause";
+		
 		$result = $this->db->query($queryStr);
 		return $result->result_array();
 	}

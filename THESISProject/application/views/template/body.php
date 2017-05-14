@@ -34,13 +34,6 @@
 				checkboxClass: 'icheckbox_minimal-blue',
 				radioClass: 'iradio_minimal-blue'
 		    });
-
-		    prepareFnReqUploadingScreen();
 		});
-
-		function prepareFnReqUploadingScreen( jQuery ) {
-		    // Code to run when the document is ready.
-		    
-		}
     </script>
 </body>

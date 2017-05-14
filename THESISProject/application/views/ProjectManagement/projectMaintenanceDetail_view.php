@@ -11,7 +11,18 @@
 	 <!-- Main content -->
 	 <div class="row">
 	 	<div class="col-md-12">
-	 		<?php echo "<div style='color:red'>". $error_message ."</div>"?>
+	 		<?php if(!empty($success_message)) { ?>
+			<div class="alert alert-success alert-dismissible" style="margin-top: 3px;margin-bottom: 3px;">
+				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
+				<?php echo $success_message; ?>
+			</div>
+			<?php } ?>
+			<?php if(!empty($error_message)) { ?>
+			<div class="alert alert-danger alert-dismissible" style="margin-top: 3px;margin-bottom: 3px;">
+				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
+				<?php echo $error_message; ?>
+			</div>
+			<?php } ?>
 	 		<div class="box box-primary">
 	 			<div class="box-header with-border">
 	              <h3 class="box-title">Project Information</h3>
@@ -19,6 +30,7 @@
 	            <!-- form start -->
             	<form role="form" action="<?php echo base_url() ?>Project/save/" method="post">
             		<input type="hidden" name="mode" id="mode" value="<?php echo $mode; ?>">
+            		<input type="hidden" name="startFlag" id="startFlag" value="<?php echo $projectInfo->startFlag?>">
             		<input type="hidden" name="projectId" id="projectId" value="<?php echo $projectInfo->projectId?>">
             		<div class="box-body">
             			<div class="row">
@@ -79,9 +91,19 @@
 	        				</div>
             			</div>
             			<div class="row">
-            				<div class="col-md-12">
+            				<div class="col-md-4">
             					<div class="form-group">
-				                	<div align="right">
+            						<div align="left" style="margin-left: -10px;">
+            						<?php $var = ('1' == $projectInfo->startFlag)? 'disabled' : ''; ?>
+            							<a onclick="startProject();" class="btn btn-app btn-default <?php echo $var;?>" <?php echo $var;?>>
+			                				<i class="fa fa-play"></i> Start Project
+			                			</a>
+            						</div>
+		                		</div>
+            				</div>
+            				<div class="col-md-8">
+            					<div class="form-group">
+            						<div align="right">
 				                		<a href="<?php echo base_url() ?>Project/back/" class="btn btn-app btn-default">
 				                			<i class="fa fa-home"></i> Back
 				                		</a>
@@ -95,7 +117,7 @@
 				                			<i class="fa fa-save"></i> Save
 				                		</button>
 				                	</div>
-		                		</div>
+            					</div>
             				</div>
             			</div>
             		</div>
@@ -103,4 +125,13 @@
 	 		</div>
 	 	</div>
 	 </div>
+	 <script type="text/javascript">
+	 	function startProject(){
+	 		var msg = "Are you sure to start project?";
+	 		if(confirm(msg)){
+	 			var projectId = $('#projectId').val();
+	 			window.location  = baseUrl + "Project/startProject/" + projectId;
+	 		}
+	 	}
+	 </script>
 </section>

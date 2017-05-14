@@ -51,10 +51,17 @@ class TestCase_model extends CI_Model{
 	}
 
 	function searchExistTestCaseHeader($projectId, $testCaseNo){
+		if(null != $projectId && !empty($projectId)){
+			$where[] = "th.projectId = $projectId";
+		}
+		if(null != $testCaseNo && !empty($testCaseNo)){
+			$where[] = "th.testCaseNo = '$testCaseNo'";
+		}
+		$where_clause = implode(' AND ', $where);
+
 		$sqlStr = "SELECT *
 			FROM M_TESTCASE_HEADER th
-			WHERE th.projectId = $projectId
-			AND th.testCaseNo = '$testCaseNo'";
+			WHERE $where_clause";
 		$result = $this->db->query($sqlStr);
 		return $result->row();
 	}

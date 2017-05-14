@@ -1,6 +1,7 @@
 <section class="content-header">
 	<h1>
-		Project Search
+		<span class="glyphicon glyphicon-list-alt"></span>
+		Project
 	</h1>
 	<ol class="breadcrumb">
 		<li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
@@ -109,12 +110,12 @@
     					<table id="example2" class="table table-bordered">
     						<thead>
 				            	<tr>
-									<th>Project Name</th>
-									<th>Project Name Alias</th>
-									<th>Start Date</th>
-									<th>End Date</th>
-									<th>Customer</th>
-									<th>Action</th>
+									<th style="width: 25%">Project Name</th>
+									<th style="width: 15%">Project Name Alias</th>
+									<th style="width: 10%">Start Date</th>
+									<th style="width: 10%">End Date</th>
+									<th style="width: 30%">Customer</th>
+									<th style="width: 20%">Action</th>
 				                </tr>
 			                </thead>
 			                <tbody>
@@ -125,11 +126,9 @@
 			                			<td><?php echo $value['startDate']; ?></td>
 			                			<td><?php echo $value['endDate']; ?></td>
 			                			<td><?php echo $value['customer']; ?></td>
-			                			<td>
-			                				<a href="<?php echo base_url(); ?>Project/viewDetail/<?php echo $value['projectId']?>">
-			                					<button type="button" class="btn btn-xs">
-			                						<i class="fa fa-sticky-note-o"></i> View
-			                					</button>
+			                			<td style="text-align: left;">
+			                				<a class="btn btn-primary btn-xs" href="<?php echo base_url(); ?>Project/viewDetail/<?php echo $value['projectId']?>">
+			                					<i class="fa fa-sticky-note-o"></i> View
 			                				</a>
 			                			</td>
 			                		</tr>

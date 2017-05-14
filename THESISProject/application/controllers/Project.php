@@ -22,6 +22,9 @@ class Project extends CI_Controller {
 	function __construct(){
 		parent::__construct();
 		$this->load->model('Project_model', 'Project');
+		$this->load->model('FunctionalRequirement_model', 'mFR');
+		$this->load->model('TestCase_model', 'mTestCase');
+		$this->load->model('RTM_model', 'mRTM');
 		$this->load->library('form_validation', null, 'FValidate');
 		$this->load->library('session');
 	}
@@ -211,10 +214,58 @@ class Project extends CI_Controller {
 			'username' => $username,
 			'password' => $password
 		);
-		//var_dump($formObj);
 		$data['projectInfo'] = $formObj;
 		$data['error_message'] = $error_message;
 		$this->openMaintenanceView($data, $mode);
+	}
+
+	/* When users click 'Start Project' button, they can not initiate data. 
+	* (Database Schema, Functional Requirments, Test Cases, RTM)
+	*/
+	public function startProject($projectId){
+		$error_message = '';
+		$success_message = '';
+
+		$resultValidate = $this->validateStartProject($projectId, $error_message);
+		if($resultValidate == TRUE){
+			$user = (null != $this->session->userdata('username'))? $this->session->userdata('username') : 'userDefault';
+			$param = (object) array('user' => $user, 'projectId' => $projectId);
+			
+			$updateRecords = $this->Project->updateProjectInformation_byStartFlag($param);
+			if(0 < $updateRecords){
+				$success_message = 'Start Project process finished.';
+			}else{
+				$error_message = 'Start Project proecess failed. Please try again.';
+			}
+		}
+
+		$data['projectInfo'] = $this->Project->searchProjectDetail($projectId);
+		$data['success_message'] = $success_message;
+		$data['error_message'] = $error_message;
+		$this->openMaintenanceView($data, 'view');
+	}
+
+	//Validate
+	private function validateStartProject($projectId, &$error_message){
+		
+		$countFR = $this->mFR->searchExistFunctionalRequirement('', $projectId);
+		if(0 == count($countFR)){
+			$error_message = ER_IMP_054;
+			return FALSE;
+		}
+
+		$countTC = $this->mTestCase->searchExistTestCaseHeader($projectId, '');
+		if(0 == count($countTC)){
+			$error_message = ER_IMP_055;
+			return FALSE;
+		}
+
+		$countRTM = $this->mRTM->searchExistRTMVersion($projectId);
+		if(0 == count($countRTM)){
+			$error_message = ER_IMP_056;
+			return FALSE;
+		}
+		return TRUE;
 	}
 
 	private function checkNullOrEmpty($varInput){

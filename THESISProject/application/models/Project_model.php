@@ -49,7 +49,7 @@ class Project_model extends CI_Model {
 				CONVERT(nvarchar, p.startDate, 103) as startDate, 
 				CONVERT(nvarchar, p.endDate, 103) as endDate, 
 				CAST(p.customer AS VARBINARY(MAX)) as customer, 
-				p.databaseName, p.hostname, p.port, p.username, p.password
+				p.databaseName, p.hostname, p.port, p.username, p.password, p.startFlag
 			FROM M_PROJECT p
 			WHERE p.projectId = $projectId";
 		$result = $this->db->query($queryStr);
@@ -60,6 +60,15 @@ class Project_model extends CI_Model {
 		$queryStr = "SELECT projectId, projectName, projectNameAlias 
 			FROM M_PROJECT 
 			WHERE activeFlag = '1' 
+			ORDER BY projectName";
+		$result = $this->db->query($queryStr);
+		return $result->result_array();
+	}
+
+	function searchStartProjectCombobox(){
+		$queryStr = "SELECT projectId, projectName, projectNameAlias
+			FROM M_PROJECT
+			WHERE activeFlag = '1' AND startFlag = '1'
 			ORDER BY projectName";
 		$result = $this->db->query($queryStr);
 		return $result->result_array();
@@ -134,6 +143,18 @@ class Project_model extends CI_Model {
 	   		return TRUE;
 	    }
 	}	
+
+	function updateProjectInformation_byStartFlag($param){
+		$currentDateTime = date('Y-m-d H:i:s');
+		$sql = "UPDATE [M_PROJECT] 
+			SET startFlag = '1',
+				updateDate = '{$currentDateTime}', 
+				updateUser = '{$param->user}' 
+			WHERE projectId = {$param->projectId}";
+
+		$this->db->query($sql);
+		return $this->db->affected_rows();
+	}
 
 	function ms_escape_string($data) {
         if ( !isset($data) or empty($data) ) return '';

@@ -98,6 +98,13 @@
 					  		<i class="fa fa-angle-left pull-right"></i>
 						</span>
 		        	</a>
+		        	<ul class="treeview-menu" id="changeManagement">
+		        		<li id="trns001">
+		        			<a href="<?php echo base_url(); ?>ChangeManagement/">
+		        				<i class="fa fa-circle-o"></i> Change Request
+		        			</a>
+		        		</li>
+		        	</ul>
 		        </li>
 		        <li class="treeview">
 		        	<a href="#">

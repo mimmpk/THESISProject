@@ -88,7 +88,16 @@
             				</div>
             			</div>
             			<div class="row">
-            				<div class="col-md-12">
+            				<div class="col-md-4">
+            					<div class="form-group">
+            						<div align="left" style="margin-left: -10px;">
+            							<button type="button" id="btnStart" class="btn btn-app btn-default disabled" disabled>
+			                				<i class="fa fa-play"></i> Start Project
+			                			</button>
+            						</div>
+		                		</div>
+            				</div>
+            				<div class="col-md-8">
             					<div class="form-group">
             						<div align="right">
             							<button type="button" id="btnBack" class="btn btn-app btn-default disabled" disabled>
@@ -112,12 +121,4 @@
 	 		</div>
 	 	</div>
 	 </div>
-	 <script type="text/javascript">
-	 	function initForm(){
-	 		var mode = $('#mode').val();
-	 		if('edit' == mode){
-	 			alert('edit');
-	 		}
-	 	}
-	 </script>
 </section>
