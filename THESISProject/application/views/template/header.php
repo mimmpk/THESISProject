@@ -7,8 +7,14 @@
 
  	<!-- Tell the browser to be responsive to screen width -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<!-- jQuery UI -->
+	<?php echo css_asset('jQuery-UI/jquery-ui.css'); ?>
+
 	<!-- Bootstrap 3.3.6 -->
 	<?php echo css_asset('bootstrap.min.css'); ?>
+
+	
 	
 	<!-- Font Awesome -->
   	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">

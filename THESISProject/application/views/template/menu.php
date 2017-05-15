@@ -104,6 +104,11 @@
 		        				<i class="fa fa-circle-o"></i> Change Request
 		        			</a>
 		        		</li>
+		        		<li id="trns002">
+		        			<a href="#">
+		        				<i class="fa fa-circle-o"></i> Cancel Latest Change
+		        			</a>
+		        		</li>
 		        	</ul>
 		        </li>
 		        <li class="treeview">

@@ -8,14 +8,19 @@ class FunctionalRequirement_model extends CI_Model {
 
 	function searchFunctionalRequirementHeaderInfo($param){
 		$where[] = "FRH.projectId = '".$param->projectId."'";
-		if("2" != $param->status)
+		
+		if(isset($param->status) && ("2" != $param->status)){
 			$where[] = "FRV.activeFlag = '".$param->status."'";
+		}
 		
 		$where_clause = implode(' AND ', $where);
-		$queryStr = "SELECT FRH.functionId, FRH.functionNo, 
-			CAST(FRH.functionDescription AS VARBINARY(MAX)) as fnDesc, 
-			FRV.functionVersionNumber as functionVersion, 
-			FRV.activeFlag as functionStatus 
+		$queryStr = "SELECT 
+				FRH.functionId, 
+				FRH.functionNo, 
+				CAST(FRH.functionDescription AS VARBINARY(MAX)) as fnDesc, 
+				FRV.functionVersionNumber as functionVersion, 
+				FRV.activeFlag as functionStatus,
+				CONVERT(nvarchar, FRV.effectiveStartDate , 103) as effectiveStartDate
 			FROM M_FN_REQ_HEADER FRH 
 			INNER JOIN M_FN_REQ_VERSION FRV 
 			ON FRH.functionId = FRV.functionId 
@@ -72,6 +77,60 @@ class FunctionalRequirement_model extends CI_Model {
 			AND dv.activeFlag = '1'";
 		$result = $this->db->query($queryStr);
 		return $result->row();
+	}
+
+	function searchFunctionalRequirementDetail($param){
+		if(isset($param->projectId) && !empty($param->projectId)){
+			$where[] = "h.projectId = $param->projectId";
+		}
+
+		if(isset($param->functionId) && !empty($param->functionId)){
+			$where[] = "h.functionId = $param->functionId";
+		}
+
+		if(isset($param->inputId) && !empty($param->inputId)){
+			$where[] = "d.inputId = $param->inputId";
+		}
+
+		if(isset($param->schemaVersionId) && !empty($param->schemaVersionId)){
+			$where[] = "d.schemaVersionId = $param->schemaVersionId";
+		}
+		$where_clause = implode(' AND ', $where);
+
+		$queryStr = "SELECT
+				h.functionId,
+				h.functionNo,
+				h.functionDescription,
+				v.functionVersionNumber,
+				d.inputId,
+				d.schemaVersionId,
+				i.inputName,
+				db.tableName,
+				db.columnName,
+				db.dataType,
+				db.dataLength,
+				db.constraintUnique,
+				db.constraintNull,
+				db.constraintDefault,
+				db.constraintMinValue,
+				db.constraintMaxValue
+			FROM M_FN_REQ_HEADER h
+			INNER JOIN M_FN_REQ_VERSION v
+			ON h.functionId = v.functionId
+			AND v.activeFlag = '1'
+			INNER JOIN M_FN_REQ_DETAIL d
+			ON h.functionId = d.functionId
+			AND d.activeFlag = '1'
+			INNER JOIN M_FN_REQ_INPUT i
+			ON d.inputId = i.inputId
+			INNER JOIN M_DATABASE_SCHEMA_INFO db
+			ON i.refTableName = db.tableName
+			AND i.refColumnName = db.columnName
+			AND d.schemaVersionId = db.schemaVersionId
+			WHERE $where_clause";
+			//var_dump($queryStr);
+		$result = $this->db->query($queryStr);
+		return $result->result_array();
 	}
 
 	function insertFRHeader($param){

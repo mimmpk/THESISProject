@@ -34,6 +34,32 @@
 				checkboxClass: 'icheckbox_minimal-blue',
 				radioClass: 'iradio_minimal-blue'
 		    });
+
+		    function fetch_post_data(keyId){
+				$.ajax({
+					url:"<?php echo base_url(); ?>ChangeManagement/viewFRInputDetail/",
+					method:"POST",
+					data:{keyId: keyId},
+					success:function(data){
+						$('#edit_input_modal').modal('show');
+						$('#input_detail').html(data);
+					}
+				});
+			}
+
+			$(document).on('click', '.view', function(){
+				var keyId = $(this).attr("id");
+				fetch_post_data(keyId);
+			});
+
+			$("body").on( "click", "#saveChange", function(){
+				 alert( "Handler for .click() called." );
+			});
 		});
     </script>
+    <style>
+		.ui-autocomplete{
+			z-index:1050;
+		}
+	</style>
 </body>

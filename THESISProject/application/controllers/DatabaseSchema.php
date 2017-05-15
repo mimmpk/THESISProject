@@ -116,7 +116,7 @@ class DatabaseSchema extends CI_Controller{
     	       				'tableName' => strtoupper($value[KEY_DB_TABLE_NAME]),
     	       				'columnName' => strtoupper($value[KEY_DB_COLUMN_NAME]),
     	       				'primaryKey' => strtoupper($value[KEY_DB_ISPRIMARY_KEY]),
-    	       				'dataType' => strtoupper($value[KEY_FR_INPUT_TYPE]),
+    	       				'dataType' => strtolower($value[KEY_FR_INPUT_TYPE]),
     	       				'dataLength' => $value[KEY_FR_INPUT_LENGTH],
     	       				'scale' => $value[KEY_FR_DECIMAL_POINT],
     	       				'unique' => strtoupper($value[KEY_FR_INPUT_UNIQUE]),

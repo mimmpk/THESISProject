@@ -34,6 +34,27 @@ class DatabaseSchema_model extends CI_Model{
 		return $result->result_array();
 	}
 
+	function getTableByProjectId($projectId, $term){
+		$row_set = array();
+
+		$sqlStr = "SELECT distinct i.tableName 
+			FROM M_DATABASE_SCHEMA_INFO i
+			INNER JOIN M_DATABASE_SCHEMA_VERSION v
+			ON i.schemaVersionId = v.schemaVersionId
+			WHERE i.projectId = $projectId
+			AND i.tableName like '%$term%'
+			AND v.activeFlag = '1'";
+		$result = $this->db->query($sqlStr);
+
+		if($result->num_rows() > 0){
+	      	foreach ($result->result_array() as $row){
+	        	$row_set[] = htmlentities(stripslashes($row['tableName'])); //build an array
+	      	}
+    	}
+
+    	return json_encode($row_set); //format the array into json data
+	}
+
 	function searchExistDatabaseSchemaInfo($tableName, $columnName, $projectId){
 		$sqlStr = "SELECT di.*
 			FROM M_DATABASE_SCHEMA_INFO di

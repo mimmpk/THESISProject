@@ -1,5 +1,6 @@
 <!-- javascript -->
 <?php echo js_asset('jquery-3.1.1.js'); ?>
+<?php echo js_asset('jQuery-UI/jquery-ui.js'); ?>
 <?php echo js_asset('bootstrap.min.js'); ?>
 <?php echo js_asset('fastclick.js'); ?>
 <?php echo js_asset('app.min.js'); ?>
