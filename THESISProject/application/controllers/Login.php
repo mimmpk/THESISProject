@@ -46,9 +46,13 @@ class Login extends CI_Controller {
 		$this->FValidate->set_rules('password', '"Password"', 'required');
 
 		if($this->FValidate->run()){
-			If($this->Users->_checkUser($username, $password)){
+			$result = $this->Users->_checkUser($username, $password);
+			If(null != $result){
 				//echo 'pass';
 				$userSession = array(
+					'userId' 	=> $result->userId,
+					'firstName' => $result->firstname,
+					'lastName' 	=> $result->lastname,
 					'username' 	=> $username,
 					'logged'	=> TRUE
 				);

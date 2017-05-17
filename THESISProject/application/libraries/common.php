@@ -26,6 +26,12 @@ class Common {
 		}
 		return $array;
 	}
+
+	function nullToEmpty($value){
+		if(NULL == $value)
+			return "";
+		return $value; 
+	}
 }
 
 ?>

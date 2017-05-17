@@ -106,14 +106,18 @@
 	                							<th>Input Name</th>
 	                							<th>Data Type</th>
 	                							<th>Data Length</th>
+	                							<th>Scale</th>
 	                							<th>Unique</th>
 	                							<th>NOT NULL</th>
-	                							<th>Default value</th>
+	                							<th>Default</th>
 	                							<th>Min</th>
 	                							<th>Max</th>
 	                							<th>Table</th>
 	                							<th>Column</th>
-	                							<th><a href="#"><span class="label label-success">Add new input</span></a></th>
+	                							<th>
+	                							<!-- <a href="#"><span class="label label-success">Add new input</span></a> -->
+	                								<button type="button" name="addBtn" id="addBtn" class="btn btn-danger btn-xs addInput" >Add new input</button>
+	                							</th>
 	                						</tr>
 	                						<?php 
 	                						$define = 1;
@@ -128,6 +132,9 @@
                 								</td>
                 								<td>
                 									<?php echo $value['dataLength']; ?>
+                								</td>
+                								<td>
+                									<?php echo $value['decimalPoint']; ?>
                 								</td>
                 								<td>
                 									<?php echo $value['constraintUnique']; ?>
@@ -154,6 +161,7 @@
                 									<?php $keyId = $projectInfo->projectId."|".$value['inputId']."|".$value['schemaVersionId']; ?>
                 									
                 									<button type="button" name="edit" id="<?php echo $keyId; ?>" class="btn btn-primary btn-xs view" >Edit</button>
+                									<button type="button" name="delete" id="<?php echo $keyId; ?>" class="btn btn-danger btn-xs delete" >Delete</button>
 
                 									<!-- <a href="#"><span class="label label-primary">Edit</span></a>
                 									<a href="#"><span class="label label-danger">Delete</span></a> -->
@@ -171,10 +179,47 @@
                 	<div class="box-header with-border">
 	                    <h3 class="box-title">Change List</h3>
 	                </div>
-	                <div class="box-body">
+	                <div class="box-body no-padding">
 	                	<div class="row">
 	                		<div class="col-sm-12">
-	                			<div class="form-group">
+	                			<div class="form-group" id="inputChangeListTbl">
+	                				<table class="table table-condensed">
+	                					<tbody>
+	                						<tr>
+	                							<th>#</th>
+	                							<th>Input Name</th>
+	                							<th>Data Type</th>
+	                							<th>Data Length</th>
+	                							<th>Scale</th>
+	                							<th>Unique</th>
+	                							<th>NOT NULL</th>
+	                							<th>Default value</th>
+	                							<th>Min</th>
+	                							<th>Max</th>
+	                							<th>Change Type</th>
+	                							<th></th>
+	                						</tr>
+	                						<?php if(isset($inputChangeList) && 0 < count($inputChangeList)) { 
+	                							$define = 1;
+			               						foreach($inputChangeList as $value): ?>
+				               					<tr>
+				               						<td><?php echo $define++; ?></td>
+				               						<td><?php echo $value['inputName'] ?></td>
+				               						<td><?php echo $value['newDataType'] ?></td>
+				               						<td><?php echo $value['newDataLength'] ?></td>
+				               						<td><?php echo $value['newScaleLength'] ?></td>
+				               						<td><?php echo $value['newUnique'] ?></td>
+				               						<td><?php echo $value['newNotNull'] ?></td>
+				               						<td><?php echo $value['newDefaultValue'] ?></td>
+				               						<td><?php echo $value['newMinValue'] ?></td>
+				               						<td><?php echo $value['newMaxValue'] ?></td>
+				               						<td><?php echo $value['changeType'] ?></td>
+				               						<td><span class="glyphicon glyphicon-trash"></span></td>
+				               					</tr>
+			               					<?php endforeach; ?>
+	                						<?php } ?>
+	                					</tbody>
+	                				</table>
 	                			</div>
 	                		</div>
 	                	</div>
@@ -198,9 +243,18 @@
 						<b> <?php echo $resultHeader->functionNo; ?> </b>
 					</h4>
 				</div>
-				<div class="modal-body" id="input_detail">
-					
-				</div>
+				<form method="post" id="changeInput_form">
+
+					<div class="modal-body" id="input_detail">
+						<!-- detail here -->
+					</div>
+
+				<div class="box-body" align="left">
+				 	<button type="submit" name="saveChange" id="saveChange" class="btn btn-primary">
+				 		<i class="fa fa-save"></i> Save
+				 	</button>
+			 	</div>
+			 	</form>	
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 				</div>

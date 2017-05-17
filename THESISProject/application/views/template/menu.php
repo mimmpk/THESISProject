@@ -25,14 +25,21 @@
       						<img src="<?php echo base_url(); ?>/assets/img/avatar02.png" class="user-image">
           					<span class="hidden-xs"><?php echo $this->session->userdata('username') ?></span>
       					</a>
-          			</li>
-          			<li class="dropdown">
-          				<a href="#" class="dropdown-toggle" data-toggle="dropdown">
-          					<span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span>
-          				</a>
-          				<ul class="dropdown-menu">
-          					<li><a href="http://localhost/THESISProject/Login/doLogout">Log Out</a></li>
-          				</ul>
+      					<ul class="dropdown-menu">
+  						<!-- User image -->
+  						<li class="user-header">
+  							<img src="<?php echo base_url(); ?>/assets/img/avatar02.png" class="img-circle" alt="User Image">
+  							<p>
+				                Session Id:
+				                <small><?php echo $this->session->session_id; ?></small>
+			                </p>
+  						</li>
+  						<li class="user-footer">
+  							<div class="pull-right">
+  								<a href="http://localhost/THESISProject/Login/doLogout">Log Out</a>
+  							</div>
+  						</li>
+  					</ul>
           			</li>
       			</ul>
       		</div>

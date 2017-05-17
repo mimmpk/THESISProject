@@ -56,6 +56,14 @@ class FunctionalRequirement_model extends CI_Model {
 		return $result->row();
 	}
 
+	function searchFRInputInfoByInputId($inputId){
+		$queryStr = "SELECT * 
+			FROM M_FN_REQ_INPUT i 
+			WHERE i.inputId = $inputId";
+		$result = $this->db->query($queryStr);
+		return $result->row();
+	}
+
 	function searchExistFRInputsByTableAndColumnName($tableName, $columnName, $projectId){
 		$queryStr = "SELECT *
 			FROM M_FN_REQ_INPUT fi
@@ -109,6 +117,7 @@ class FunctionalRequirement_model extends CI_Model {
 				db.columnName,
 				db.dataType,
 				db.dataLength,
+				db.decimalPoint,
 				db.constraintUnique,
 				db.constraintNull,
 				db.constraintDefault,
