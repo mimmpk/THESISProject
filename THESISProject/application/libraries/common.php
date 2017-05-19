@@ -28,7 +28,7 @@ class Common {
 	}
 
 	function nullToEmpty($value){
-		if(NULL == $value)
+		if(NULL == $value || empty($value))
 			return "";
 		return $value; 
 	}

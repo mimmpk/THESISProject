@@ -220,8 +220,8 @@ class DatabaseSchema extends CI_Controller{
 
    				//Check duplicate Table and Column in Database
    				if(!empty($value[KEY_DB_TABLE_NAME] && !empty($value[KEY_DB_COLUMN_NAME]))){
-   					$countRecords = $this->mDbSchema->searchExistDatabaseSchemaInfo($value[KEY_DB_TABLE_NAME], $value[KEY_DB_COLUMN_NAME], $projectId);
-   					if(0 < $countRecords){
+   					$result = $this->mDbSchema->searchExistDatabaseSchemaInfo($value[KEY_DB_TABLE_NAME], $value[KEY_DB_COLUMN_NAME], $projectId);
+   					if(0 < count($result)){
    						$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_036', $lineNo);
    						$hasError = TRUE;
    					}
@@ -329,7 +329,7 @@ class DatabaseSchema extends CI_Controller{
    			/**************************[CONSTRAINT-DEFAULT]**************************/
    			if(!$this->checkNullOrEmpty($value[KEY_FR_INPUT_DEFAULT]) && $typeIsMatch && $lengthIsMatch){
    				$defaultValue = $value[KEY_FR_INPUT_DEFAULT];
-   				if("Numerics" == $dataType){
+   				if(DATA_TYPE_CATEGORY_NUMERICS == $dataType){
    					if(!is_numeric($defaultValue)){
    						$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_021', $lineNo);
    						$hasError = TRUE;
@@ -340,7 +340,7 @@ class DatabaseSchema extends CI_Controller{
    							$hasError = TRUE;
    						}
    					}
-   				}else if("Strings" == $dataType && strlen($defaultValue) > $inputLength){
+   				}else if(DATA_TYPE_CATEGORY_STRINGS == $dataType && strlen($defaultValue) > $inputLength){
    					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_021', $lineNo);
    					$hasError = TRUE;
    				}else{ // Date Type

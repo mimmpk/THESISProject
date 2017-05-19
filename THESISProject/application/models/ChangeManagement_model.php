@@ -32,6 +32,12 @@ class ChangeManagement_model extends CI_Model{
 			$where[] = "schemaVersionId = $param->schemaVersionId";
 		}
 
+		//For Adding new input
+		if(!empty($param->inputName) && !empty($param->table) && !empty($param->column)){
+			$where[] = "((inputName = '$param->inputName') 
+				OR (tableName = '$param->table' AND columnName = '$param->column'))";
+		}
+
 		$where_clause = implode(' AND ', $where);
 
 		$sqlStr = "SELECT *
@@ -40,6 +46,32 @@ class ChangeManagement_model extends CI_Model{
 			ORDER BY lineNumber";
 		$result = $this->db->query($sqlStr);
 		return $result->result_array();
+	}
+
+	function deleteTempFRInputChangeList($param){
+		if(!empty($param->userId)){
+			$where[] = "userId = $param->userId";
+		}
+
+		if(!empty($param->functionId)){
+			$where[] = "functionId = $param->functionId";
+		}
+
+		if(!empty($param->functionVersion)){
+			$where[] = "functionVersion = $param->functionVersion";
+		}
+
+
+		if(!empty($param->lineNumber)){
+			$where[] = "lineNumber = $param->lineNumber";
+		}
+
+		$where_condition = implode(' AND ', $where);
+
+		$sqlStr = "DELETE FROM T_TEMP_CHANGE_LIST
+			WHERE $where_condition";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
 	}
 
 	/*function searchTempFRInputChangeList($userId, $functionId, $functionVersion){
@@ -55,6 +87,8 @@ class ChangeManagement_model extends CI_Model{
 	function insertTempFRInputChange($param){
 		$currentDateTime = date('Y-m-d H:i:s');
 
+		$inputId = !empty($param->inputId)? $param->inputId : "NULL";
+		$schemaVersionId = !empty($param->schemaVersionId)? $param->schemaVersionId : "NULL";
 		$dataType = !empty($param->dataType)? "'".$param->dataType."'" : "NULL";
 		$dataLength = !empty($param->dataLength)? $param->dataLength : "NULL";
 		$scale = !empty($param->scaleLength)? $param->scaleLength : "NULL";
@@ -71,9 +105,9 @@ class ChangeManagement_model extends CI_Model{
 				$param->userId, 
 				$param->functionId,
 				$param->functionVersion,
-				$param->inputId,
+				$inputId,
 				'$param->inputName',
-				$param->schemaVersionId,
+				$schemaVersionId,
 				$dataType,
 				$dataLength,
 				$scale,

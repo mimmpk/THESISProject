@@ -116,7 +116,7 @@
 	                							<th>Column</th>
 	                							<th>
 	                							<!-- <a href="#"><span class="label label-success">Add new input</span></a> -->
-	                								<button type="button" name="addBtn" id="addBtn" class="btn btn-danger btn-xs addInput" >Add new input</button>
+	                								<button type="button" name="addBtn" id="addBtn" class="btn bg-orange btn-xs addInput" >Add new input</button>
 	                							</th>
 	                						</tr>
 	                						<?php 
@@ -214,7 +214,9 @@
 				               						<td><?php echo $value['newMinValue'] ?></td>
 				               						<td><?php echo $value['newMaxValue'] ?></td>
 				               						<td><?php echo $value['changeType'] ?></td>
-				               						<td><span class="glyphicon glyphicon-trash"></span></td>
+				               						<td>
+				               							<span id="<?php echo $value['lineNumber']; ?>" class="glyphicon glyphicon-trash deleteTmpFRInputChg"></span>
+				               						</td>
 				               					</tr>
 			               					<?php endforeach; ?>
 	                						<?php } ?>
@@ -226,7 +228,7 @@
 	                </div>
                 </div>
                 <div align="right">
-                	<button type="button" class="btn btn-primary">
+                	<button type="button" class="btn btn-success">
                 		<i class="fa fa-save"></i> Submit
                 	</button>
                 </div>
@@ -261,5 +263,4 @@
 			</div>
 		</div>
 	</div>
-
 </section>

@@ -96,10 +96,12 @@ class ChangeManagement extends CI_Controller{
 
 	function addFRInputDetail(){
 		$output = '';
+		$projectId = $this->input->post('projectId');
 		$functionId = $this->input->post('functionId');
 		$functionVersion = $this->input->post('functionVersion');
 
 		$param = array(
+			'projectId' => $projectId,
 			'functionId' => $functionId,
 			'functionVersionNumber' => $functionVersion,
 			'inputId' => '',
@@ -113,10 +115,12 @@ class ChangeManagement extends CI_Controller{
 			'constraintNull' => '',
 			'constraintDefault' => '',
 			'constraintMinValue' => '',
-			'constraintMaxValue' => ''
+			'constraintMaxValue' => '',
+			'tableName' => '',
+			'columnName' => ''
 		);
 
-		$output = $this->setFRInputDetailForm($param);
+		$output = $this->setFRInputDetailForm($param, CHANGE_TYPE_ADD);
 		echo $output;
 
 	}
@@ -133,13 +137,13 @@ class ChangeManagement extends CI_Controller{
 
 			if(0 < count($result)){
 				$row = $result[0];
-				$output = $this->setFRInputDetailForm($row);
+				$output = $this->setFRInputDetailForm($row, CHANGE_TYPE_EDIT);
 			}
 			echo $output;
 		}
 	}
 
-	function setFRInputDetailForm($row){
+	function setFRInputDetailForm($row, $mode){
 		//set Data Type combo
 		$dataTypeList = $this->mMisc->searchMiscellaneous(MISC_DATA_INPUT_DATA_TYPE, '');
 		$dataTypeCombo = '
@@ -153,25 +157,31 @@ class ChangeManagement extends CI_Controller{
 		$checkUnique = ($row["constraintUnique"] == "Y")? 'checked' : '';
 		$checkNotNull = ($row["constraintNull"] == "Y")? 'checked' : '';
 
+		$displayFlag = (CHANGE_TYPE_ADD == $mode)? 'block': 'none';
+		$requiredField = (CHANGE_TYPE_ADD == $mode)? '<span style="color:red;">*</span>': '';
+
 		$output = '
-			<input type="hidden" name="changeMode" id="changeMode" value="">
+			<input type="hidden" name="changeProjectId" value="'.$row["projectId"].'">
+			<input type="hidden" name="changeType" id="changeType" value="'.$mode.'">
 			<input type="hidden" name="changeFunctionId" value="'.$row["functionId"].'">
 			<input type="hidden" name="changeFunctionVersion" value="'.$row["functionVersionNumber"].'">
 			<input type="hidden" name="changeInputId" value="'.$row["inputId"].'">
-			<input type="hidden" name="changeInputName" value="'.$row["inputName"].'">
 			<input type="hidden" name="changeSchemaVersionId" value="'.$row["schemaVersionId"].'">
 
 			<table style="width:100%">
-			<tr>
+			<tr height="40">
 				<td>
-					<label>Input Name: 
+					<label>Input Name: '.$requiredField.'
 					<p class="text-green" style="margin:0;">'.$row["inputName"].'</p>
 					</label>
 				</td>
-			</tr>
-			<tr>
 				<td>
-					<label>Data Type: 
+					<input type="text" name="inputName" id="inputName" class="form-control" value="'.$row["inputName"].'" style="display:'.$displayFlag.'" maxlength="'.MAX_INPUT_NAME.'" />
+				</td>	
+			</tr>
+			<tr height="40">
+				<td>
+					<label>Data Type: '.$requiredField.'
 					<p class="text-green" style="margin:0;">'.$row["dataType"].'</p>
 					</label>
 				</td>
@@ -179,47 +189,47 @@ class ChangeManagement extends CI_Controller{
 					'.$dataTypeCombo.'
 				</td>
 			</tr>
-			<tr>
+			<tr height="40">
 				<td>
 					<label>Data Length: 
 					<p class="text-green" style="margin:0;">'.$row["dataLength"].'</p>
 					</label>
 				</td>
 				<td>
-					<input type="text" name="inputDataLength" id="inputDataLength" class="form-control"/>
+					<input type="number" min="1" step="1" name="inputDataLength" id="inputDataLength" class="form-control"/>
 				</td>
 			</tr>
-			<tr>
+			<tr height="40">
 				<td>
 					<label>Scale (if any*)
 					<p class="text-green" style="margin:0;">'.$row["decimalPoint"].'</p>
 					</label>
 				</td>
 				<td>
-					<input type="text" name="inputScale" id="inputScale" class="form-control" placeholder="Enter when data Type is \'Decimal\'"/>
+					<input type="number" min="1" step="1" name="inputScale" id="inputScale" class="form-control" placeholder="Enter when data Type is \'Decimal\'"/>
 				</td>
 			</tr>
-			<tr>
+			<tr height="40">
 				<td>&nbsp;</td>
 				<td>
 					<div class="checkbox">
 						<label style="font-weight:700;">
-						<input type="checkbox" id="inputUnique" name="inputUnique" '.$checkUnique.' >Unique
+						<input type="checkbox" id="inputUnique" name="inputUnique[]" value="Y" '.$checkUnique.' >Unique
 						<p class="text-green" style="margin:0;">'.$row["constraintUnique"].'</p>
 						</label>
-						<input type="hidden" id="oldUniqueValue" value="'.$row["constraintUnique"].'">
+						<input type="hidden" id="oldUniqueValue" name="oldUniqueValue" value="'.$row["constraintUnique"].'">
 						
 						&nbsp;&nbsp;
 						
 						<label style="font-weight:700;">
-						<input type="checkbox" id="inputNotNull" name="inputNotNull" '.$checkNotNull.' >NOT NULL
+						<input type="checkbox" id="inputNotNull" name="inputNotNull[]" value="Y" '.$checkNotNull.' >NOT NULL
 						<p class="text-green" style="margin:0;">'.$row["constraintNull"].'</p>
 						</label>
-						<input type="hidden" id="oldNotNullValue" value="'.$row["constraintNull"].'">
+						<input type="hidden" id="oldNotNullValue" name="oldNotNullValue" value="'.$row["constraintNull"].'">
 					</div>
 				</td>
 			</tr>
-			<tr height="41">
+			<tr height="40">
 				<td>
 					<label>Default Value:
 					<p class="text-green" style="margin:0;">'.$row["constraintDefault"].'</p>
@@ -229,24 +239,44 @@ class ChangeManagement extends CI_Controller{
 					<input type="text" id="inputDefault" name="inputDefault" class="form-control"/>
 				</td>
 			</tr>
-			<tr height="41">
+			<tr height="40">
 				<td>
 					<label>Min Value:
 					<p class="text-green" style="margin:0;">'.$row["constraintMinValue"].'</p>
 					</label>
 				</td>
 				<td>
-					<input type="text" id="inputMinValue" name="inputMinValue" class="form-control"/>
+					<input type="number" step="1" id="inputMinValue" name="inputMinValue" class="form-control"/>
 				</td>
 			</tr>
-			<tr height="41">
+			<tr height="40">
 				<td>
 					<label>Max Value:
 					<p class="text-green" style="margin:0;">'.$row["constraintMaxValue"].'</p>
 					</label>
 				</td>
 				<td>
-					<input type="text" id="inputMaxValue" name="inputMaxValue" class="form-control"/>
+					<input type="number" step="1" id="inputMaxValue" name="inputMaxValue" class="form-control"/>
+				</td>
+			</tr>
+			<tr height="40">
+				<td>
+					<label>Table Name: '.$requiredField.'
+					<p class="text-green" style="margin:0;">'.$row["tableName"].'</p>
+					</label>
+				</td>
+				<td>
+					<input type="text" id="inputTableName" name="inputTableName" class="form-control" style="display:'.$displayFlag.'"/>
+				</td>
+			</tr>
+			<tr height="40">
+				<td>
+					<label>Column Name: '.$requiredField.'
+					<p class="text-green" style="margin:0;">'.$row["columnName"].'</p>
+					</label>
+				</td>
+				<td>
+					<input type="text" id="inputColumnName" name="inputColumnName" class="form-control" style="display:'.$displayFlag.'"/>
 				</td>
 			</tr>
 			</table>';
@@ -255,74 +285,111 @@ class ChangeManagement extends CI_Controller{
 
 	function saveTempFRInput_edit(){
 		$output = '';
+		$error_message = '';
 		
 		if(!empty($_POST)){
 
 			try{
-				$changeMode = $this->input->post('changeMode');
+				$changeType = $this->input->post('changeType');
 
 				$userId = $this->session->userdata('userId');
 				$functionId = $this->input->post('changeFunctionId');
+				$functionVersion = $this->input->post('changeFunctionVersion');
 				$inputId = $this->input->post('changeInputId');
 				$schemaVersionId = $this->input->post('changeSchemaVersionId');
 
-				$functionVersion = $this->input->post('changeFunctionVersion');
-				$inputName = $this->input->post('changeInputName');
+				$inputName = trim($this->input->post('inputName'));
 				$dataType = $this->input->post('inputDataType');
 				$dataLength = $this->input->post('inputDataLength');
 				$scalePoint = $this->input->post('inputScale');
 				$unique = $this->input->post('inputUnique');
 				$notNull = $this->input->post('inputNotNull');
-				$defaultValue = $this->input->post('inputDefault');
+				$defaultValue = trim($this->input->post('inputDefault'));
 				$minValue = $this->input->post('inputMinValue');
 				$maxValue = $this->input->post('inputMaxValue');
-				
+				$tableName = trim($this->input->post('inputTableName'));
+				$columnName = trim($this->input->post('inputColumnName'));
+
+				$oldUnique = $this->input->post('oldUniqueValue');
+				$oldNotNull = $this->input->post('oldNotNullValue');
+
+				$unique = empty($unique)? "N": "Y";
+				$notNull = empty($notNull)? "N": "Y";
 
 				$user = $this->session->userdata('username');
-			
-				//validate check exist
-				$criteria = (object) array(
-					'userId' => $userId, 
+
+				$param = (object) array(
+					'userId' => $userId,
 					'functionId' => $functionId,
 					'functionVersion' => $functionVersion,
 					'inputId' => $inputId,
-					'schemaVersionId' => $schemaVersionId);
-				$records = $this->mChange->searchTempFRInputChangeList($criteria);
-				
-				if(0 == count($records)){
-					$param = (object) array(
-						'userId' => $userId,
+					'inputName' => $inputName,
+					'schemaVersionId' => $schemaVersionId,
+					'dataType' => $dataType,
+					'dataLength' => $dataLength,
+					'scaleLength' => $scalePoint,
+					'unique' => $unique,
+					'notNull' => $notNull,
+					'default' => $defaultValue,
+					'min' => $minValue,
+					'max' => $maxValue,
+					'table' => $tableName,
+					'column' => $columnName,
+					'changeType' => '',
+					'user' => $user);
+
+				if(CHANGE_TYPE_ADD == $changeType){ 
+					//*******Change Type: Add
+					//Validate
+					$projectId = $this->input->post('changeProjectId');
+					$resultValidate = $this->validateNewFRInput($projectId, $param, $error_message);
+					
+					if($resultValidate){
+						//Save
+						$param->changeType = CHANGE_TYPE_ADD;
+						$saveResult = $this->mChange->insertTempFRInputChange($param);
+						if($saveResult){
+							//refresh Change List
+							$output = $this->setInputChangeListData($userId, $functionId, $functionVersion);
+						}else{
+							$output = 'error|'.ER_MSG_013;
+						}
+						
+					}else{
+						$output = 'error|'.$error_message;
+					}
+
+				}else{ 
+					//*******Change Type: Edit
+					//validate check exist
+					$criteria = (object) array(
+						'userId' => $userId, 
 						'functionId' => $functionId,
 						'functionVersion' => $functionVersion,
 						'inputId' => $inputId,
-						'inputName' => $inputName,
-						'schemaVersionId' => $schemaVersionId,
-						'dataType' => $dataType,
-						'dataLength' => $dataLength,
-						'scaleLength' => $scalePoint,
-						'unique' => $unique,
-						'notNull' => $notNull,
-						'default' => $defaultValue,
-						'min' => $minValue,
-						'max' => $maxValue,
-						'changeType' => CHANGE_TYPE_EDIT,
-						'user' => $user);
-					$saveResult = $this->mChange->insertTempFRInputChange($param);
-					if($saveResult){
-						//refresh Change List
-						$output = $this->setInputChangeListData($userId, $functionId, $functionVersion);
+						'schemaVersionId' => $schemaVersionId);
+					$records = $this->mChange->searchTempFRInputChangeList($criteria);
+					
+					if(0 == count($records)){
+
+						$param->unique = ($unique == $oldUnique)? "": $unique;
+						$param->notNull = ($notNull == $oldNotNull)? "": $notNull;
+						$param->changeType = CHANGE_TYPE_EDIT;
+						$saveResult = $this->mChange->insertTempFRInputChange($param);
+						if($saveResult){
+							//refresh Change List
+							$output = $this->setInputChangeListData($userId, $functionId, $functionVersion);
+						}else{
+							$output = 'error|'.ER_MSG_013;
+						}
 					}else{
-						$output = 'error|'.ER_MSG_013;
+						//Error already change
+						$output = 'error|'.ER_TRN_001;
 					}
-				}else{
-					//Error already change
-					$output = 'error|'.ER_IMP_057;
 				}
 			}catch (Exception $e){
 				$output = 'error|'.ER_MSG_013.'<br/>'.$e;
 			}
-		}else{
-			$output = 'error|EMPTY $_POST';
 		}
 		echo $output;
 	}
@@ -344,7 +411,7 @@ class ChangeManagement extends CI_Controller{
 
 			//validate check exist
 			$criteria = (object) array(
-				'userId' => $userId, 
+				'userId' => $userId,
 				'functionId' => $functionId,
 				'functionVersion' => $functionVersion,
 				'inputId' => $inputId,
@@ -370,11 +437,35 @@ class ChangeManagement extends CI_Controller{
 					$output = 'error|'.ER_MSG_013;
 				}
 			}else{
-				$output = 'error|'.ER_IMP_057;
+				$output = 'error|'.ER_TRN_001;
 			}
 		}
 		echo $output;
+	}
 
+	function deleteTempFRInputList(){
+		$output = '';
+
+		if(!empty($_POST)){
+			$userId = $this->session->userdata('userId');
+			$functionId = $this->input->post('functionId');
+			$functionVersion = $this->input->post('functionVersion');
+			$lineNumber = $this->input->post('lineNumber');
+
+			$param = (object) array('userId' => $userId,
+				'functionId' => $functionId,
+				'functionVersion' => $functionVersion,
+				'lineNumber' => $lineNumber);
+			$recordDelete = $this->mChange->deleteTempFRInputChangeList($param);
+			if(0 < $recordDelete){
+				//refresh Change List
+				$output = $this->setInputChangeListData($userId, $functionId, $functionVersion);
+			}else{
+				$output = 'error|'.ER_MSG_015;
+			}
+		}
+
+		echo $output;
 	}
 
 	private function setInputChangeListData($userId, $functionId, $functionVersion){
@@ -406,23 +497,203 @@ class ChangeManagement extends CI_Controller{
 		foreach ($changeList as $value) {
 			$inputChangeOutput .= '
 			<tr>
-					<td>'.$lineNo++.'</td>
-					<td>'.$value['inputName'].'</td>
-					<td>'.$value['newDataType'].'</td>
-					<td>'.$value['newDataLength'].'</td>
-					<td>'.$value['newScaleLength'].'</td>
-					<td>'.$value['newUnique'].'</td>
-					<td>'.$value['newNotNull'].'</td>
-					<td>'.$value['newDefaultValue'].'</td>
-					<td>'.$value['newMinValue'].'</td>
-					<td>'.$value['newMaxValue'].'</td>
-					<td>'.$value['changeType'].'</td>
-					<td><span class="glyphicon glyphicon-trash"></span></td>
-				</tr>';
+				<td>'.$lineNo++.'</td>
+				<td>'.$value['inputName'].'</td>
+				<td>'.$value['newDataType'].'</td>
+				<td>'.$value['newDataLength'].'</td>
+				<td>'.$value['newScaleLength'].'</td>
+				<td>'.$value['newUnique'].'</td>
+				<td>'.$value['newNotNull'].'</td>
+				<td>'.$value['newDefaultValue'].'</td>
+				<td>'.$value['newMinValue'].'</td>
+				<td>'.$value['newMaxValue'].'</td>
+				<td>'.$value['changeType'].'</td>
+				<td>
+					<span id="'.$value['lineNumber'].'" class="glyphicon glyphicon-trash deleteTmpFRInputChg">
+					</span>
+				</td>
+			</tr>';
 		}
 		$inputChangeOutput .= '</tbody></table>';
 		return $inputChangeOutput;
 	}
+
+	private function validateNewFRInput($projectId, &$param, &$errorMsg){
+		//validate
+		$this->load->library('common');
+		
+		$correctFRInput = false;
+		$inputId = '';
+
+		//1. Check Existing in Selected Functional Requirement
+		$resultExist = $this->mFR->searchExistFRInputInFunctionalRequirement($param);
+		if(0 < count($resultExist)){
+			$errorMsg = ER_TRN_005;
+			return false;
+		}
+
+		//2. Check Existing in Current Change List
+		$criteria = (object) array(
+			'userId' => $param->userId, 
+			'functionId' => $param->functionId,
+			'functionVersion' => $param->functionVersion,
+			'inputName' => $param->inputName,
+			'table' => $param->table,
+			'column' => $param->column);
+		$resultExist = $this->mChange->searchTempFRInputChangeList($criteria);
+		if(0 < count($resultExist)){
+			$errorMsg = ER_TRN_006;
+			return false;
+		}
+
+		//3. Check input name match with table & column or not? (REQ INPUT DB)
+		$resultInputInfo = $this->mFR->searchFRInputInformation($projectId, $param->inputName);
+		if(0 < count($resultInputInfo)){
+			$referTableName = $resultInputInfo->refTableName;
+			$referColumnName = $resultInputInfo->refColumnName;
+			
+			if($referTableName != strtoupper($tableName)
+				|| $referColumnName != strtoupper($columnName)){
+				$errorMsg = ER_TRN_004;
+				return false;
+			}else{
+				$param->inputId = $resultInputInfo->inputId;
+				$correctFRInput = TRUE;
+			}
+		}
+
+		//4. Check table & column name match with input data (REQ INPUT DB)
+		if(!$correctFRInput){
+			$resultInputInfo = $this->mFR->searchExistFRInputsByTableAndColumnName(
+				$param->table, $param->column, $projectId);
+			if(0 <  count($resultInputInfo)){
+				if($param->inputName == $resultInputInfo->inputName){
+					$param->inputId = $resultInputInfo->inputId;
+					$correctFRInput = TRUE;
+				}else{
+					$errorMsg = ER_TRN_005;
+					return false;
+				}
+			}
+		}
+
+		//5. Check table & column name match with Schema data (DB SCHEMA)
+		$resultSchemaInfo = $this->mDB->searchExistDatabaseSchemaInfo($param->table, $param->column, $projectId);
+		if(null != $resultSchemaInfo && !empty($resultSchemaInfo)){
+			//5.1 Validate against Existing FR Input
+			if($param->dataType !== $resultSchemaInfo->dataType 
+				|| $param->dataLength !== $this->common->nullToEmpty($resultSchemaInfo->dataLength)
+				|| $param->scaleLength !== $this->common->nullToEmpty($resultSchemaInfo->decimalPoint)
+				|| $param->unique !== $resultSchemaInfo->constraintUnique
+				|| $param->notNull !== $resultSchemaInfo->constraintNull
+				|| $param->default !== $this->common->nullToEmpty($resultSchemaInfo->constraintDefault)
+				|| $param->min !== $this->common->nullToEmpty($resultSchemaInfo->constraintMinValue)
+				|| $param->max !==  $this->common->nullToEmpty($resultSchemaInfo->constraintMaxValue))
+			{
+				$errorMsg = ER_TRN_007;
+				return false;
+			}
+		}
+
+		//6. Validate New FR Input and Schema Info
+		$exceptInputSize = array("date", "datetime", "int", "float", "real");
+		//6.1 [Validate DataType]
+		if(!in_array($param->dataType, $exceptInputSize)){
+			if(empty($param->dataLength)){
+				$errorMsg = ER_TRN_008;
+				return false;
+			}else{
+				$dataLength = (int)$param->dataLength;
+				if("char" == $param->dataType || "varchar" == $param->dataType){
+					if($dataLength < 1 || $dataLength > 8000){
+						$errorMsg = ER_IMP_015;
+						return false;
+					}
+				}else if("nchar" == $param->dataType || "nvarchar" == $param->dataType){
+					if($dataLength< 1 || $dataLength > 4000 ){
+						$errorMsg = ER_IMP_016;
+						return false;
+					}
+				}else{
+					if($dataLength < 1 || $dataLength > 38){
+						$errorMsg = ER_IMP_017;
+						return false;
+					}else{
+						//6.2 [Validate Scale] for Decimal Type. If NULL, default value will be '0'.
+						if(!empty($param->scaleLength)){
+							$scale = (int)$param->scaleLength;
+							if($scale < 0 || $scale > $dataLength){
+								$errorMsg = ER_IMP_018;
+								return false;
+							}
+						}else{
+							$param->scaleLength = 0;
+						}
+					}
+				}
+			}
+		}
+
+		$dataTypeCategory = '';
+		$result = $this->mMisc->searchMiscellaneous(MISC_DATA_INPUT_DATA_TYPE, $param->dataType);
+		if(null != $result && !empty($result)){
+			$dataTypeCategory = $result[0]['miscValue2'];
+		}else{
+			$errorMsg = ER_MSG_014;
+			return false;
+		}
+		
+		//6.3 [Validate Default Value]
+		if(!empty($param->default)){
+			if(DATA_TYPE_CATEGORY_NUMERICS == $dataTypeCategory){
+				if(!is_numeric($param->default)){
+					$errorMsg = ER_IMP_021;
+					return false;
+				}else if('decimal' == $param->dataType && is_float((float)$param->default)){
+					$decimalFotmat = explode(".", $param->default);
+					if(strlen($decimalFotmat[0]) > $param->dataLength){
+						$errorMsg = ER_IMP_021;
+					return false;
+					}
+				}	
+			}else if(DATA_TYPE_CATEGORY_STRINGS == $dataTypeCategory
+				&& strlen($param->default) > $param->dataLength){
+				$errorMsg = ER_IMP_021;
+				return false;
+			}else{
+				// Date Type
+				if("getdate()" != strtolower($param->default)){
+					$errorMsg = ER_IMP_021;
+					return false;
+				}
+			}
+		}
+
+		//6.4 [Validate Min Value]
+		if(!empty($param->min) && DATA_TYPE_CATEGORY_NUMERICS != $dataTypeCategory){
+			$errorMsg = ER_IMP_024;
+			return false;
+		}
+
+		//6.5 [Validate Max Value]
+		if(!empty($param->max) && DATA_TYPE_CATEGORY_NUMERICS != $dataTypeCategory){
+			$errorMsg = ER_IMP_025;
+			return false;
+		}
+
+		if(!empty($param->min) && !empty($param->max)){
+			if((float)$param->min > (float)$param->max){
+				$errorMsg = ER_IMP_035;
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/*private function callChangeAPI(){
+
+	}*/
 
 	private function openView($data, $view){
 		if('search' == $view){

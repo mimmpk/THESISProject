@@ -64,6 +64,30 @@ class FunctionalRequirement_model extends CI_Model {
 		return $result->row();
 	}
 
+	function searchExistFRInputInFunctionalRequirement($param){
+		if(null != $param->functionId && !empty($param->functionId)){
+			$where[] = "h.functionId = $param->functionId";
+		}
+		if(null != $param->inputName && !empty($param->inputName)){
+			$where[] = "i.inputName = '$param->inputName'";
+		}
+
+		$where_clause = implode(' AND ', $where);
+
+		$queryStr = "SELECT *
+			FROM M_FN_REQ_HEADER h
+			INNER JOIN M_FN_REQ_DETAIL d
+			ON h.functionId = d.functionId
+			AND d.activeFlag = '1'
+			INNER JOIN M_FN_REQ_INPUT i
+			ON d.inputId = i.inputId
+			WHERE $where_clause";
+
+		$result = $this->db->query($queryStr);
+		return $result->result_array();
+
+	}
+
 	function searchExistFRInputsByTableAndColumnName($tableName, $columnName, $projectId){
 		$queryStr = "SELECT *
 			FROM M_FN_REQ_INPUT fi
@@ -75,14 +99,27 @@ class FunctionalRequirement_model extends CI_Model {
 	}
 
 	function searchReferenceDatabaseSchemaInfo($param){
-		$queryStr = "SELECT dv.*
+
+		if(isset($param->projectId) && !empty($param->projectId)){
+			$where[] = "di.projectId = $param->projectId";
+		}
+
+		if(isset($param->referTableName) && !empty($param->referTableName)){
+			$where[] = "di.tableName = '$param->referTableName'";
+		}
+
+		if(isset($param->referColumnName) && !empty($param->referColumnName)){
+			$where[] = "di.columnName = '$param->referColumnName'";
+		}
+
+		$where_clause = implode(' AND ', $where);
+
+		$queryStr = "SELECT di.*
 			FROM M_DATABASE_SCHEMA_VERSION dv
 			INNER JOIN M_DATABASE_SCHEMA_INFO di
 			ON dv.schemaVersionId = di.schemaVersionId
-			WHERE di.projectId = $param->projectId
-			AND di.tableName = '$param->referTableName'
-			AND di.columnName = '$param->referColumnName'
-			AND dv.activeFlag = '1'";
+			WHERE dv.activeFlag = '1'
+			AND $where_clause";
 		$result = $this->db->query($queryStr);
 		return $result->row();
 	}
@@ -105,7 +142,8 @@ class FunctionalRequirement_model extends CI_Model {
 		}
 		$where_clause = implode(' AND ', $where);
 
-		$queryStr = "SELECT
+		$queryStr = "SELECT 
+				h.projectId,
 				h.functionId,
 				h.functionNo,
 				h.functionDescription,

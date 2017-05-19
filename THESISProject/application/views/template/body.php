@@ -56,13 +56,18 @@
 
 
 			$(document).on('click', '.addInput', function(){
+				var projectId = $('input[name=projectId]').val();
 				var functionId = $('input[name=functionId]').val();
 				var functionVersion = $('input[name=functionVersion]').val();
 
 				$.ajax({
 					url:"<?php echo base_url(); ?>ChangeManagement/addFRInputDetail/",
 					method:"POST",
-					data:{functionId: functionId, functionVersion: functionVersion},
+					data:{
+						projectId: projectId, 
+						functionId: functionId, 
+						functionVersion: functionVersion
+					},
 					success:function(data){
 						$('#edit_input_modal').modal('show');
 						$('#input_detail').html(data);
@@ -100,51 +105,94 @@
 
 			$('#changeInput_form').on("submit", function(event){
 				event.preventDefault(); 
+
+				//alert($('input[name=projectId]').val());
 				
 				var newUnique = ($('#inputUnique').is(":checked"))? "Y": "N";
 				var newNotNull = ($('#inputNotNull').is(":checked"))? "Y": "N";
 
-				var projectId = $('input[name=projectId]').val();
-				var functionId = $('input[name=functionId]').val();
+				//var projectId = $('input[name=projectId]').val();
+				//var functionId = $('input[name=functionId]').val();
 
-				if($('#inputDataType').val() == "" &&
-					$('#inputDataLength').val() == "" &&
-					$('#inputScale').val() == "" &&
-					newUnique == $('#oldUniqueValue').val() &&
-					newNotNull == $('#oldNotNullValue').val() &&
-					$('#inputDefault').val() == "" &&
-					$('#inputMinValue').val() == "" &&
-					$('#inputMaxValue').val() == ""){
-					alert("Please enter at least one field.");
+				var changeType = $('#changeType').val();
+
+				if('edit' == changeType){
+					if($('#inputDataType').val() == "" 
+						&& $('#inputDataLength').val() == "" 
+						&& $('#inputScale').val() == "" 
+						&& newUnique == $('#oldUniqueValue').val() 
+						&& newNotNull == $('#oldNotNullValue').val() 
+						&& $('#inputDefault').val() == "" 
+						&& $('#inputMinValue').val() == "" 
+						&& $('#inputMaxValue').val() == ""){
+						alert("Please enter at least one field.");
+						return false;
+					}
 				}else{
-					$('#changeMode').val('2'); //edit
+					if($('#inputDataType').val() == "" 
+						|| $('#inputName').val() == "" 
+						|| $('#inputTableName').val() == "" 
+						|| $('#inputColumnName').val() == ""){
+						alert("Please enter all required fields.");
+						return false;
+					}
+				}
+
+				//Pass Validation
+				$.ajax({
+					url: "<?php echo base_url(); ?>ChangeManagement/saveTempFRInput_edit/",
+					method: "POST",
+					data: $("#changeInput_form").serialize(),
+					success: function(data){
+						if(null != data){
+							//alert(data);
+							var result = data.split("|");
+							if("error" == result[0]){
+								alert(result[1]);
+								return false;
+							}else{
+								//alert(result[1]);
+								$('#changeInput_form')[0].reset();  
+     							$('#edit_input_modal').modal('hide');
+     							$('#inputChangeListTbl').html(data);  
+							}
+						}else{
+							alert("There is a problem when save data, Please try to save again.");
+							return false; 
+						}
+					},
+					error: function(){ 
+						alert("There is a problem when save data, Please try to save again.");
+						return false; 
+					}
+				});
+			});
+
+			$(document).on('click', '.deleteTmpFRInputChg', function(){
+				var lineNo = $(this).attr("id");
+				var msg = "Are you sure to delete?";
+				if(confirm(msg)){
+					var functionId = $('input[name=functionId]').val();
+					var functionVersion = $('input[name=functionVersion]').val();
+
 					$.ajax({
-						url: "<?php echo base_url(); ?>ChangeManagement/saveTempFRInput_edit/",
-						method: "POST",
-						data: $("#changeInput_form").serialize(),
-						success: function(data){
-							if(null != data){
-								//alert(data);
+						url:"<?php echo base_url(); ?>ChangeManagement/deleteTempFRInputList/",
+						method:"POST",
+						data:{lineNumber: lineNo, functionId: functionId, functionVersion: functionVersion},
+						success:function(data){
+							//alert(data);
+							if("" != data){
 								var result = data.split("|");
 								if("error" == result[0]){
 									alert(result[1]);
 									return false;
 								}else{
-									//alert(result[1]);
-									$('#changeInput_form')[0].reset();  
-	     							$('#edit_input_modal').modal('hide');
-	     							$('#inputChangeListTbl').html(data);  
+									$('#inputChangeListTbl').html(data); 
 								}
-							}else{
-								alert("There is a problem when save data, Please try to save again.");
-								return false; 
 							}
-						}, 
-						error: function(){ 
-							alert("There is a problem when save data, Please try to save again.");
-							return false; 
-						} 
-					});
+							return false;
+						}
+					});	
 				}
 			});
 			//**************************[End: Change Management]*************************
