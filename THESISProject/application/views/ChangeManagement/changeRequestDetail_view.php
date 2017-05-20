@@ -25,8 +25,8 @@
 			</div>
 			<?php } ?>
 			
-			<form role="form" action="<?php echo base_url() ?>/ChangeManagement/" method="post" enctype="multipart/form-data">
-					<?php echo form_hidden($hfield); ?>
+			<form role="form" action="<?php echo base_url() ?>ChangeManagement/requestChangeFRInputs/" method="post" enctype="multipart/form-data">
+				<?php echo form_hidden($hfield); ?>
 				<div class="box box-primary">
 					<div class="box-header with-border">
 	                    <h3 class="box-title">Project Information</h3>
@@ -228,7 +228,7 @@
 	                </div>
                 </div>
                 <div align="right">
-                	<button type="button" class="btn btn-success">
+                	<button type="submit" class="btn btn-success" style="margin-top: -10px;">
                 		<i class="fa fa-save"></i> Submit
                 	</button>
                 </div>

@@ -7,10 +7,16 @@ class FunctionalRequirement_model extends CI_Model {
 	}
 
 	function searchFunctionalRequirementHeaderInfo($param){
-		$where[] = "FRH.projectId = '".$param->projectId."'";
+		if(isset($param->projectId) && !empty($param->projectId)){
+			$where[] = "FRH.projectId = ".$param->projectId;
+		}
 		
 		if(isset($param->status) && ("2" != $param->status)){
 			$where[] = "FRV.activeFlag = '".$param->status."'";
+		}
+
+		if(isset($param->functionId) && !empty($param->functionId)){
+			$where[] = "FRH.functionId = ".$param->functionId;
 		}
 		
 		$where_clause = implode(' AND ', $where);
