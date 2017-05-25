@@ -74,6 +74,7 @@ class DatabaseSchema_model extends CI_Model{
 
 		foreach($param as $value){
 			//Insert Database Schema Version
+			$value->projectId = $projectId;
 			$result = $this->insertDatabaseSchemaVersion($value, $user);
 			if(null != $result){
 				//Insert Database Schema Information
@@ -96,7 +97,7 @@ class DatabaseSchema_model extends CI_Model{
 	function insertDatabaseSchemaVersion($param, $user){
 		$currentDateTime = date('Y-m-d H:i:s');
 
-		$sqlStr = "INSERT INTO M_DATABASE_SCHEMA_VERSION (tableName, columnName, schemaVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousSchemaVersionId, createDate, createUser, updateDate, updateUser) VALUES ('{$param->tableName}', '{$param->columnName}', {$param->schemaVersionNo}, '$currentDateTime', NULL, '{$param->status}', NULL, '$currentDateTime', '$user', '$currentDateTime', '$user')";
+		$sqlStr = "INSERT INTO M_DATABASE_SCHEMA_VERSION (projectId, tableName, columnName, schemaVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousSchemaVersionId, createDate, createUser, updateDate, updateUser) VALUES ($param->projectId, '{$param->tableName}', '{$param->columnName}', {$param->schemaVersionNo}, '$currentDateTime', NULL, '{$param->status}', NULL, '$currentDateTime', '$user', '$currentDateTime', '$user')";
 
 		$result = $this->db->query($sqlStr);
 		if($result){
@@ -119,6 +120,23 @@ class DatabaseSchema_model extends CI_Model{
 
 		$result = $this->db->query($sqlStr);
 		return $result;
+	}
+
+	function updateDatabaseSchemaVersion($param){
+		$currentDateTime = date('Y-m-d H:i:s');
+		$sqlStr = "UPDATE M_DATABASE_SCHEMA_VERSION
+			SET effectiveEndDate = $param->currentDate,
+				activeFlag = '$param->activeFlag',
+				updateDate = '$currentDateTime',
+				updateUser = '$param->user'
+			WHERE projectId = $param->projectId
+			AND tableName = '$param->tableName'
+			AND columnName = '$param->columnName'
+			AND schemaVersionId = $param->oldSchemaVersionId
+			AND updateDate = '$param->oldUpdateDate'";
+
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
 	}
 }
 

@@ -76,7 +76,7 @@
 			});
 
 			$(document).on('click', '.delete', function(){
-				var msg = "Are you sure to delete this functional requirement's input?.";
+				var msg = "Are you sure to delete this functional requirement's input?";
 				
 				if(confirm(msg)){
 					var keyId = $(this).attr("id");
@@ -196,7 +196,6 @@
 				}
 			});
 			//**************************[End: Change Management]*************************
-
 
 		});
     </script>

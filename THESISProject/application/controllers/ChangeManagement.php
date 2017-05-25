@@ -8,11 +8,14 @@ class ChangeManagement extends CI_Controller{
 	
 	function __construct(){
 		parent::__construct();
+		$this->load->model('RTM_model', 'mRTM');
 		$this->load->model('Project_model', 'mProject');
-		$this->load->model('FunctionalRequirement_model', 'mFR');
-		$this->load->model('Miscellaneous_model', 'mMisc');
+		$this->load->model('TestCase_model', 'mTestCase');
 		$this->load->model('DatabaseSchema_model', 'mDB');
+		$this->load->model('Miscellaneous_model', 'mMisc');
 		$this->load->model('ChangeManagement_model', 'mChange');
+		$this->load->model('FunctionalRequirement_model', 'mFR');
+
 		$this->load->library('form_validation', null, 'FValidate');
 		$this->load->library('session');
 	}
@@ -47,55 +50,15 @@ class ChangeManagement extends CI_Controller{
 	}
 
 	function viewFunctionDetail($projectId, $functionId){
-		$error_message = '';
-		$functionVersion = '';
-
-		$resultHeader = array();
-		$resultList = array();
-		$inputChangeList = array();
-
-		$userId = $this->session->userdata('userId');
-
-		if(!empty($projectId) && !empty($functionId)){
-			//search project information
-			$projectInfo = $this->mProject->searchProjectDetail($projectId);
-			$data['projectInfo'] = $projectInfo;
-
-			$param = (object) array('projectId' => $projectId, 'functionId' => $functionId);
-			$resultList = $this->mFR->searchFunctionalRequirementDetail($param);
-			if(!empty($resultList)){
-				$resultHeader = (object) array(
-					'functionId' => $resultList[0]['functionId'],
-					'functionNo' => $resultList[0]['functionNo'],
-					'functionDescription' => $resultList[0]['functionDescription'],
-					'functionVersionNumber' => $resultList[0]['functionVersionNumber']);
-				$functionVersion = $resultList[0]['functionVersionNumber'];
-
-				$criteria = (object) array(
-					'userId' => $userId,
-					'functionId' => $resultList[0]['functionId'],
-					'functionVersion' => $resultList[0]['functionVersionNumber']);
-
-				$inputChangeList = $this->mChange->searchTempFRInputChangeList($criteria);
-			}else{
-				$error_message = ER_MSG_012;
-			}
-		}else{
-			$error_message = ER_MSG_011;
-		}
-
-		$hfield = array('projectId' => $projectId, 'functionId' => $functionId, 'functionVersion' => $functionVersion);
-		$data['hfield'] = $hfield;
-		$data['error_message'] = $error_message;
-		$data['resultHeader'] = $resultHeader;
-		$data['resultDetail'] = $resultList;
-		$data['inputChangeList'] = $inputChangeList;
-		$this->openView($data, 'detail');
+		$this->reloadPage('', $projectId, $functionId);
 	}
 
 	function requestChangeFRInputs(){
+		$errorFlag = false;
+		$success_message = '';
 		$error_message = '';
 
+		$functionNo = '';
 		$userId = $this->session->userdata('userId');
 		$projectId = $this->input->post('projectId');
 		$functionId = $this->input->post('functionId');
@@ -120,51 +83,86 @@ class ChangeManagement extends CI_Controller{
 				$error_message = ER_TRN_011;
 				$this->reloadPage($error_message, $projectId, $functionId, $functionVersion);
 				return false;
+			}else{
+				$functionNo = $resultReqHeader[0]['functionNo'];
 			}
 
 			/** 2.Call Change API */
-			$param = (object) array('projectId' => $projectId);
-			$this->callChangeAPI($param);
-
-		
-			/** 3.Save Change History */
-
+			$param = (object) array(
+				'projectId' => $projectId,
+				'functionId' => $functionId,
+				'functionNo' => $functionNo,
+				'functionVersion' => $functionVersion
+				);
+			$changeResult = $this->callChangeAPI($param);
 			
-			/** 4.Save Version */
+			/** 3.Control Version*/
+			if(null != $changeResult && !empty($changeResult)){
+				$user = $this->session->userdata('username');
+
+				$projectInfo = $this->mProject->searchProjectDetail($projectId);
+				$result = $this->mChange->saveChangeImpactData($changeResult, $projectInfo, $user, $error_message);
+
+				if($result){
+					$success_message = "callChangeAPI";
+				}
+
+			}else{
+				$errorFlag = true;
+				$error_message = ER_MSG_016;
+			}
+			
+			/** 4.Save Change Request */
 
 
-			/** 5.Display Result */
+			/** 5.Save Change History */
+
+
+			/** 6.Display Result */
 
 			
 		}catch(Exception $e){
+			$errorFlag = true;
 			$error_message = $e;
 		}
-		$this->reloadPage($error_message, $projectId, $functionId, $functionVersion);		
+
+		$data['success_message'] = $success_message;
+		$data['error_message'] = $error_message;
+		$this->openView($data, 'result');
+		//$this->reloadPage($error_message, $projectId, $functionId, $functionVersion);		
 	}
 
-	function reloadPage($errorMessage, $projectId, $functionId, $functionVersion){
+	function reloadPage($errorMessage, $projectId, $functionId, $functionVersion = ''){
 		$resultHeader = array();
 		$resultList = array();
 		$inputChangeList = array();
 
 		$userId = $this->session->userdata('userId');
+		if(!empty($projectId) && !empty($functionId)){
+			$projectInfo = $this->mProject->searchProjectDetail($projectId);
+			$data['projectInfo'] = $projectInfo;
 
-		$projectInfo = $this->mProject->searchProjectDetail($projectId);
-		$data['projectInfo'] = $projectInfo;
+			$param = (object) array('projectId' => $projectId, 'functionId' => $functionId);
+			$resultList = $this->mFR->searchFunctionalRequirementDetail($param);
 
-		$param = (object) array('projectId' => $projectId, 'functionId' => $functionId);
-		$resultList = $this->mFR->searchFunctionalRequirementDetail($param);
+			if(null != $resultList && 0 < count($resultList)){
+				$resultHeader = (object) array(
+				'functionId' => $resultList[0]['functionId'],
+				'functionNo' => $resultList[0]['functionNo'],
+				'functionDescription' => $resultList[0]['functionDescription'],
+				'functionVersionNumber' => $resultList[0]['functionVersionNumber']);
 
-		if(null != $resultList && 0 < count($resultList)){
-			$resultHeader = (object) array(
-			'functionId' => $resultList[0]['functionId'],
-			'functionNo' => $resultList[0]['functionNo'],
-			'functionDescription' => $resultList[0]['functionDescription'],
-			'functionVersionNumber' => $resultList[0]['functionVersionNumber']);
+				$functionVersion = (!empty($functionVersion)? $functionVersion : $resultList[0]['functionVersionNumber']);
+
+				//get temp change list
+				$criteria = (object) array('userId' => $userId, 'functionId' => $functionId, 'functionVersion' => $functionVersion);
+				$inputChangeList = $this->mChange->searchTempFRInputChangeList($criteria);
+			}else{
+				$error_message = ER_MSG_012;
+			}
+		}else{
+			$error_message = ER_MSG_011;
 		}
-
-		$criteria = (object) array('userId' => $userId, 'functionId' => $functionId, 'functionVersion' => $functionVersion);
-		$inputChangeList = $this->mChange->searchTempFRInputChangeList($criteria);
 
 		$hfield = array('projectId' => $projectId, 'functionId' => $functionId, 'functionVersion' => $functionVersion);
 		$data['hfield'] = $hfield;
@@ -583,6 +581,7 @@ class ChangeManagement extends CI_Controller{
 
 		$lineNo = 1;
 		$changeList = $this->mChange->searchTempFRInputChangeList($criteria);
+
 		$inputChangeOutput = '
 			<table class="table table-condensed">
 			<tbody>
@@ -597,10 +596,12 @@ class ChangeManagement extends CI_Controller{
 				<th>Default value</th>
 				<th>Min</th>
 				<th>Max</th>
-				<th>Change Type</th>
+				<th style="text-align: center;">Change Type</th>
 				<th></th>
 			</tr>';
 		foreach ($changeList as $value) {
+			$labelType = ('add' == $value['changeType'])? 'label-success': (('edit' == $value['changeType'])? 'label-warning' : 'label-danger');
+
 			$inputChangeOutput .= '
 			<tr>
 				<td>'.$lineNo++.'</td>
@@ -613,7 +614,11 @@ class ChangeManagement extends CI_Controller{
 				<td>'.$value['newDefaultValue'].'</td>
 				<td>'.$value['newMinValue'].'</td>
 				<td>'.$value['newMaxValue'].'</td>
-				<td>'.$value['changeType'].'</td>
+				<td style="text-align: center;">
+					<small class="label '.$labelType.'">
+						'.$value['changeType'].'
+					</small>
+				</td>
 				<td>
 					<span id="'.$value['lineNumber'].'" class="glyphicon glyphicon-trash deleteTmpFRInputChg">
 					</span>
@@ -799,30 +804,116 @@ class ChangeManagement extends CI_Controller{
 
 	private function callChangeAPI($param){
 		$passData = array();
+		$allFRHeader = array();
+		$allFRDetail = array();
+		$allTCHeader = array();
+		$allTCDetail = array();
+		$allRTM = array();
+		$changeList = array();
 
+		$userId = $this->session->userdata('userId');
+
+		//1.Project Information
 		$projectInfo = $this->mProject->searchProjectDetail($param->projectId);
-
-
 		$passData['projectInfo'] = $param->projectId;
 		$passData['connectDatabaseInfo'] = array(
-			'databaseName' => $projectInfo->databaseName , 
+			'databaseName' => $projectInfo->databaseName, 
 			'hostname' => $projectInfo->hostname, 
 			'port' => $projectInfo->port, 
 			'username' => $projectInfo->username, 
 			'password' => $projectInfo->password);
+		
+		//2. All Functional Requirements Header data
+		$criteria = (object) array('projectId' => $param->projectId, 'status' => '1');
+		$frHeaderList = $this->mFR->searchFunctionalRequirementHeaderInfo($criteria);
+		foreach($frHeaderList as $value){
+			$allFRHeader[$value['functionNo']] = array(
+				'functionVersion' => $value['functionVersion'], 
+				'functionDesc' => $value['fnDesc']);
+		}
+		$passData['FRHeader'] = $allFRHeader;
 
-		//$passData['changedFRHeader'] = array('' => , );
+		//3. All Functional Requirements Detail data
+		$functionNo = '';
+		$frDetailList = $this->mFR->searchFunctionalRequirementDetail($criteria);
+		foreach($frDetailList as $value){
+			$allFRDetail[$value['functionNo']][$value['inputName']] = array( 
+				'dataType' => $value['dataType'],
+				'dataLength' => $value['dataLength'],
+				'scale' => $value['decimalPoint'],
+				'unique' => $value['constraintUnique'],
+				'notNull' => $value['constraintNull'],
+				'default' => $value['constraintDefault'],
+				'min' => $value['constraintMinValue'],
+				'max' => $value['constraintMaxValue'],
+				'tabelName' => $value['tableName'],
+				'columnName' => $value['columnName']);
+		}
+		$passData['FRDetail'] = $allFRDetail;
+
+		//4. All Test Case Header data
+		$tcHeaderList = $this->mTestCase->searchTestCaseInfoByCriteria($param->projectId, '1');
+		foreach($tcHeaderList as $value){
+			$allTCHeader[$value['testCaseNo']] = array(
+				'testCaseVersion' => $value['testCaseVersion'], 
+				'testCaseDesc' => $value['testCaseDescription'],
+				'expectedResult' => $value['expectedResult']);
+		}
+		$passData['TCHeader'] = $allTCHeader;
+		
+		//5. All Test Case Detail data
+		$tcDetailList = $this->mTestCase->searchExistTestCaseDetail($param->projectId);
+		foreach ($tcDetailList as $value) {
+			$allTCDetail[$value['testCaseNo']][$value['refInputName']] = $value['testData'];
+		}
+		$passData['TCDetail'] = $allTCDetail;
+
+
+		//6. All RTM data
+		$rtmList = $this->mRTM->searchRTMInfoByCriteria($param->projectId);
+		foreach($rtmList as $value){
+			$allRTM = array('functionNo' => $value['functionNo'], 'testCaseNo' => $value['testCaseNo']);
+		}
+		$passData['RTM'] = $allRTM;
+
+		//7. Change Request Information
+		$criteria->userId = $userId;
+		$criteria->functionId = $param->functionId;
+		$criteria->functionVersion = $param->functionVersion;
+		$tempChangeFRInputsList = $this->mChange->searchTempFRInputChangeList($criteria);
+		$changeList = array('functionNo' => $param->functionNo, 'functionVersion' => $param->functionVersion);
+		foreach($tempChangeFRInputsList as $value){
+			$changeList['inputs'][] = array(
+				'changeType' => $value['changeType'],
+				'inputName' => $value['inputName'],
+				'dataType' => $value['newDataType'],
+				'dataLength' => $value['newDataLength'],
+				'scale' => $value['newScaleLength'],
+				'unique' => $value['newUnique'],
+				'notNull' => $value['newNotNull'],
+				'default' => $value['newDefaultValue'],
+				'min' => $value['newMinValue'],
+				'max' => $value['newMaxValue'],
+				'tableName' => $value['tableName'],
+				'columnName' => $value['columnName'] 
+			);
+		}
+		$passData['changeRequestInfo'] = $changeList;
 
 		$url = 'http://localhost/StubService/ChangeAPI.php';
 
-		echo '<br><hr><h2>'.$this->postCURL($url, $passData).'</h2><br><hr><br>';
+		$json = json_decode($this->postCURL($url, $passData));
+	
+		return $json;
+
+		//echo '<br><hr><h2>'.$this->postCURL($url, $passData).'</h2><br><hr><br>';
 	}
 
 	private function postCURL($_url, $_param){        
         $this->http_build_query_for_curl($_param, $postData);
         
         //test
-        var_dump($postData);
+       	//var_dump($postData);
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $_url);
@@ -830,7 +921,7 @@ class ChangeManagement extends CI_Controller{
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-type: multipart/form-data"));
-        
+
         //test
         echo (is_callable('curl_init')) ? '<h1>Enabled</h1>' : '<h1>Not enabled</h1>' ;
         
@@ -839,7 +930,7 @@ class ChangeManagement extends CI_Controller{
         return $output;
     }
 
-    function http_build_query_for_curl($arrays, &$new = array(), $prefix = null) {
+    private function http_build_query_for_curl($arrays, &$new = array(), $prefix = null) {
 	    if ( is_object( $arrays ) ) {
 	        $arrays = get_object_vars( $arrays );
 	    }
@@ -858,6 +949,8 @@ class ChangeManagement extends CI_Controller{
 		if('search' == $view){
 			$data['html'] = 'ChangeManagement/changeRequestSearch_view';
 			$data['projectCombo'] = $this->mProject->searchStartProjectCombobox();
+		}else if('result' == $view){
+			$data['html'] = 'ChangeManagement/changeRequestResult_view';
 		}else{
 			$data['html'] = 'ChangeManagement/changeRequestDetail_view';
 		}

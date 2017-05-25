@@ -116,7 +116,7 @@
 	                							<th>Column</th>
 	                							<th>
 	                							<!-- <a href="#"><span class="label label-success">Add new input</span></a> -->
-	                								<button type="button" name="addBtn" id="addBtn" class="btn bg-orange btn-xs addInput" >Add new input</button>
+	                								<button type="button" name="addBtn" id="addBtn" class="btn btn-success btn-xs addInput" >Add new input</button>
 	                							</th>
 	                						</tr>
 	                						<?php 
@@ -160,7 +160,7 @@
                 								<td>
                 									<?php $keyId = $projectInfo->projectId."|".$value['inputId']."|".$value['schemaVersionId']; ?>
                 									
-                									<button type="button" name="edit" id="<?php echo $keyId; ?>" class="btn btn-primary btn-xs view" >Edit</button>
+                									<button type="button" name="edit" id="<?php echo $keyId; ?>" class="btn btn-warning btn-xs view" >Edit</button>
                 									<button type="button" name="delete" id="<?php echo $keyId; ?>" class="btn btn-danger btn-xs delete" >Delete</button>
 
                 									<!-- <a href="#"><span class="label label-primary">Edit</span></a>
@@ -196,7 +196,7 @@
 	                							<th>Default value</th>
 	                							<th>Min</th>
 	                							<th>Max</th>
-	                							<th>Change Type</th>
+	                							<th style="text-align: center;">Change Type</th>
 	                							<th></th>
 	                						</tr>
 	                						<?php if(isset($inputChangeList) && 0 < count($inputChangeList)) { 
@@ -213,7 +213,12 @@
 				               						<td><?php echo $value['newDefaultValue'] ?></td>
 				               						<td><?php echo $value['newMinValue'] ?></td>
 				               						<td><?php echo $value['newMaxValue'] ?></td>
-				               						<td><?php echo $value['changeType'] ?></td>
+				               						<td style="text-align: center;">
+				               							<?php $labelType = ('add' == $value['changeType'])? 'label-success': (('edit' == $value['changeType'])? 'label-warning' : 'label-danger') ?>
+				               							<small class="label <?php echo $labelType ?>">
+			               									<?php echo $value['changeType']; ?>
+			               								</small>
+				               						</td>
 				               						<td>
 				               							<span id="<?php echo $value['lineNumber']; ?>" class="glyphicon glyphicon-trash deleteTmpFRInputChg"></span>
 				               						</td>
@@ -228,7 +233,7 @@
 	                </div>
                 </div>
                 <div align="right">
-                	<button type="submit" class="btn btn-success" style="margin-top: -10px;">
+                	<button type="submit" class="btn btn-primary" style="margin-top: -10px;">
                 		<i class="fa fa-save"></i> Submit
                 	</button>
                 </div>

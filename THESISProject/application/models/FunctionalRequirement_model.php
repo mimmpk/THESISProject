@@ -180,10 +180,22 @@ class FunctionalRequirement_model extends CI_Model {
 			ON i.refTableName = db.tableName
 			AND i.refColumnName = db.columnName
 			AND d.schemaVersionId = db.schemaVersionId
-			WHERE $where_clause";
+			WHERE $where_clause
+			ORDER BY h.functionNo";
 			//var_dump($queryStr);
 		$result = $this->db->query($queryStr);
 		return $result->result_array();
+	}
+
+	function searchLatestFunctionalRequirementVersion($functionId, $functionVersion){
+		$sqlStr = "SELECT *
+			FROM M_FN_REQ_VERSION 
+			WHERE functionId = $functionId
+			AND functionVersionNumber = $functionVersion
+			AND activeFlag = '1'" ;
+
+		$result = $this->db->query($sqlStr);
+		return $result->row();
 	}
 
 	function insertFRHeader($param){
@@ -200,7 +212,8 @@ class FunctionalRequirement_model extends CI_Model {
 
 	function insertFRVersion($param){
 		$currentDateTime = date('Y-m-d H:i:s');
-		$sqlStr ="INSERT INTO M_FN_REQ_VERSION (functionId, functionVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, createDate, createUser, updateDate, updateUser) VALUES ($param->functionId, $param->functionVersionNo, '$param->effectiveStartDate', $param->effectiveEndDate, '$param->activeFlag', '$currentDateTime', '$param->user', '$currentDateTime', '$param->user')";
+		$previousVersionId = !empty($param->previousVersionId)? $param->previousVersionId : "NULL";
+		$sqlStr ="INSERT INTO M_FN_REQ_VERSION (functionId, functionVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousVersionId, createDate, createUser, updateDate, updateUser) VALUES ($param->functionId, $param->functionVersionNo, '$param->effectiveStartDate', $param->effectiveEndDate, '$param->activeFlag', $previousVersionId, '$currentDateTime', '$param->user', '$currentDateTime', '$param->user')";
 		$result = $this->db->query($sqlStr);
 		return $result;
 	}
@@ -223,6 +236,20 @@ class FunctionalRequirement_model extends CI_Model {
 		$sqlStr = "INSERT INTO M_FN_REQ_DETAIL (functionId, inputId, schemaVersionId, effectiveStartDate, effectiveEndDate, activeFlag, createDate, createUser, updateDate, updateUser) VALUES ($functionId, $param->inputId, $param->schemaVersionId, '$param->effectiveStartDate', $param->effectiveEndDate, '$param->activeFlag', '$currentDateTime', '$param->user', '$currentDateTime', '$param->user')";
 		$result = $this->db->query($sqlStr);
 		return $result;
+	}
+
+	function updateFunctionalRequirementsVersion($param){
+		$sqlstr = "UPDATE M_FN_REQ_VERSION 
+			SET effectiveEndDate = $param->currentDate,
+				activeFlag = '$param->activeFlag',
+				updateDate = '$param->currentDate',
+				updateUser = '$param->user'
+			WHERE functionVersionId = $param->oldFunctionVersionId
+			AND functionId = $param->functionId
+			AND updateDate = '$param->oldUpdateDate'";
+
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
 	}
 
 	function uploadFR($param){

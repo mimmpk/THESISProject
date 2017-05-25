@@ -12,6 +12,12 @@
 	<!-- Main content -->
 	<div class="row">
 		<div class="col-md-12">
+			<?php if(!empty($success_message)) { ?>
+			<div class="alert alert-success alert-dismissible" style="margin-top: 3px;margin-bottom: 3px;">
+				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
+				<?php echo $success_message; ?>
+			</div>
+			<?php } ?>
 			<?php if(!empty($error_message)) { ?>
 			<div class="alert alert-danger alert-dismissible" style="margin-top: 3px;margin-bottom: 3px;">
 				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>

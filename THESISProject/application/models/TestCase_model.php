@@ -19,6 +19,8 @@ class TestCase_model extends CI_Model{
 		$sqlStr = "SELECT 
 				th.testCaseId,
 				th.testCaseNo,
+				th.testCaseDescription,
+				th.expectedResult,
 				tv.testCaseVersionNumber as testCaseVersion,
 				CONVERT(nvarchar, tv.effectiveStartDate, 103) as effectiveStartDate,
 				CONVERT(nvarchar, tv.effectiveEndDate, 103) as effectiveEndDate,
@@ -37,15 +39,32 @@ class TestCase_model extends CI_Model{
 		return $result->result_array();
 	}
 
-	function searchExistTestCaseDetail($projectId, $testCaseNo, $refInputId){
-		$sqlStr = "SELECT *
+	function searchExistTestCaseDetail($projectId, $testCaseNo = '', $refInputId = ''){
+		if(!empty($projectId)){
+			$where[] = "th.projectId = $projectId";
+		}
+
+		if(!empty($testCaseNo)){
+			$where[] = "th.testCaseNo = '$testCaseNo'";
+		}
+
+		if(!empty($refInputId)){
+			$where[] = "td.refInputId = $refInputId";
+		}
+
+		$where_condition = implode(' AND ', $where);
+
+		$sqlStr = "SELECT 
+				th.testCaseId,
+				th.testCaseNo,
+				td.refInputId,
+				td.refInputName,
+				td.testData
 			FROM M_TESTCASE_HEADER th
 			INNER JOIN M_TESTCASE_DETAIL td
 			ON th.testCaseId = td.testCaseId
-			WHERE th.projectId = {$projectId}
-			AND th.testCaseNo = '{$testCaseNo}'
-			AND td.refInputId = {$refInputId}
-			AND td.activeFlag = '1'";
+			WHERE td.activeFlag = '1'
+			AND $where_condition";
 		$result = $this->db->query($sqlStr);
 		return $result->result_array();
 	}
