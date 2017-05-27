@@ -101,7 +101,7 @@ class ChangeManagement extends CI_Controller{
 				$user = $this->session->userdata('username');
 
 				$projectInfo = $this->mProject->searchProjectDetail($projectId);
-				$result = $this->mChange->saveChangeImpactData($changeResult, $projectInfo, $user, $error_message);
+				$result = $this->mChange->controlVersionChangedData($changeResult, $projectInfo, $user, $error_message);
 
 				if($result){
 					$success_message = "callChangeAPI";
@@ -923,7 +923,7 @@ class ChangeManagement extends CI_Controller{
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-type: multipart/form-data"));
 
         //test
-        echo (is_callable('curl_init')) ? '<h1>Enabled</h1>' : '<h1>Not enabled</h1>' ;
+        //echo (is_callable('curl_init')) ? '<h1>Enabled</h1>' : '<h1>Not enabled</h1>' ;
         
         $output = curl_exec($ch);
         curl_close($ch);

@@ -97,7 +97,9 @@ class DatabaseSchema_model extends CI_Model{
 	function insertDatabaseSchemaVersion($param, $user){
 		$currentDateTime = date('Y-m-d H:i:s');
 
-		$sqlStr = "INSERT INTO M_DATABASE_SCHEMA_VERSION (projectId, tableName, columnName, schemaVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousSchemaVersionId, createDate, createUser, updateDate, updateUser) VALUES ($param->projectId, '{$param->tableName}', '{$param->columnName}', {$param->schemaVersionNo}, '$currentDateTime', NULL, '{$param->status}', NULL, '$currentDateTime', '$user', '$currentDateTime', '$user')";
+		$previousSchemaVersionId = (empty($param->previousVersionId)? "NULL": $param->previousVersionId);
+
+		$sqlStr = "INSERT INTO M_DATABASE_SCHEMA_VERSION (projectId, tableName, columnName, schemaVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousSchemaVersionId, createDate, createUser, updateDate, updateUser) VALUES ($param->projectId, '{$param->tableName}', '{$param->columnName}', {$param->schemaVersionNo}, '$currentDateTime', NULL, '{$param->status}', $previousSchemaVersionId, '$currentDateTime', '$user', '$currentDateTime', '$user')";
 
 		$result = $this->db->query($sqlStr);
 		if($result){
@@ -125,14 +127,14 @@ class DatabaseSchema_model extends CI_Model{
 	function updateDatabaseSchemaVersion($param){
 		$currentDateTime = date('Y-m-d H:i:s');
 		$sqlStr = "UPDATE M_DATABASE_SCHEMA_VERSION
-			SET effectiveEndDate = $param->currentDate,
-				activeFlag = '$param->activeFlag',
-				updateDate = '$currentDateTime',
-				updateUser = '$param->user'
-			WHERE projectId = $param->projectId
-			AND tableName = '$param->tableName'
-			AND columnName = '$param->columnName'
-			AND schemaVersionId = $param->oldSchemaVersionId
+			SET effectiveEndDate = '$param->currentDate', 
+				activeFlag = '$param->activeFlag', 
+				updateDate = '$currentDateTime', 
+				updateUser = '$param->user' 
+			WHERE projectId = $param->projectId 
+			AND tableName = '$param->tableName' 
+			AND columnName = '$param->columnName' 
+			AND schemaVersionId = $param->oldSchemaVersionId 
 			AND updateDate = '$param->oldUpdateDate'";
 
 		$result = $this->db->query($sqlStr);

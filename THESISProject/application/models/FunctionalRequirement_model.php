@@ -80,7 +80,7 @@ class FunctionalRequirement_model extends CI_Model {
 
 		$where_clause = implode(' AND ', $where);
 
-		$queryStr = "SELECT *
+		$queryStr = "SELECT h.functionId, d.inputId, d.schemaVersionId
 			FROM M_FN_REQ_HEADER h
 			INNER JOIN M_FN_REQ_DETAIL d
 			ON h.functionId = d.functionId
@@ -213,9 +213,15 @@ class FunctionalRequirement_model extends CI_Model {
 	function insertFRVersion($param){
 		$currentDateTime = date('Y-m-d H:i:s');
 		$previousVersionId = !empty($param->previousVersionId)? $param->previousVersionId : "NULL";
-		$sqlStr ="INSERT INTO M_FN_REQ_VERSION (functionId, functionVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousVersionId, createDate, createUser, updateDate, updateUser) VALUES ($param->functionId, $param->functionVersionNo, '$param->effectiveStartDate', $param->effectiveEndDate, '$param->activeFlag', $previousVersionId, '$currentDateTime', '$param->user', '$currentDateTime', '$param->user')";
+		$sqlStr ="INSERT INTO M_FN_REQ_VERSION (functionId, functionVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousVersionId, createDate, createUser, updateDate, updateUser) VALUES ($param->functionId, $param->functionVersionNo, '$param->effectiveStartDate', NULL, '$param->activeFlag', $previousVersionId, '$currentDateTime', '$param->user', '$currentDateTime', '$param->user')";
+
 		$result = $this->db->query($sqlStr);
-		return $result;
+		if($result){
+			$query = $this->db->query("SELECT IDENT_CURRENT('M_FN_REQ_VERSION') as last_id");
+			$resultId = $query->result();
+			return $resultId[0]->last_id;
+		}
+		return NULL;
 	}
 
 	function insertFRInput($param){
@@ -233,21 +239,35 @@ class FunctionalRequirement_model extends CI_Model {
 
 	function insertFRDetail($functionId, $param){
 		$currentDateTime = date('Y-m-d H:i:s');
-		$sqlStr = "INSERT INTO M_FN_REQ_DETAIL (functionId, inputId, schemaVersionId, effectiveStartDate, effectiveEndDate, activeFlag, createDate, createUser, updateDate, updateUser) VALUES ($functionId, $param->inputId, $param->schemaVersionId, '$param->effectiveStartDate', $param->effectiveEndDate, '$param->activeFlag', '$currentDateTime', '$param->user', '$currentDateTime', '$param->user')";
+		$sqlStr = "INSERT INTO M_FN_REQ_DETAIL (functionId, inputId, schemaVersionId, effectiveStartDate, effectiveEndDate, activeFlag, createDate, createUser, updateDate, updateUser) VALUES ($functionId, $param->inputId, $param->schemaVersionId, '$param->effectiveStartDate', NULL, '$param->activeFlag', '$currentDateTime', '$param->user', '$currentDateTime', '$param->user')";
 		$result = $this->db->query($sqlStr);
 		return $result;
 	}
 
 	function updateFunctionalRequirementsVersion($param){
 		$sqlstr = "UPDATE M_FN_REQ_VERSION 
-			SET effectiveEndDate = $param->currentDate,
+			SET effectiveEndDate = '$param->effectiveEndDate', 
+				activeFlag = '$param->activeFlag', 
+				updateDate = '$param->currentDate', 
+				updateUser = '$param->user' 
+			WHERE functionVersionId = $param->oldFunctionVersionId 
+			AND functionId = $param->functionId 
+			AND updateDate = '$param->oldUpdateDate'";
+
+		$result = $this->db->query($sqlstr);
+		return $this->db->affected_rows();
+	}
+
+	function updateFunctionalRequirementsDetail($param){
+		$sqlStr = "UPDATE M_FN_REQ_DETAIL
+			SET effectiveEndDate = '$param->effectiveEndDate',
 				activeFlag = '$param->activeFlag',
 				updateDate = '$param->currentDate',
 				updateUser = '$param->user'
-			WHERE functionVersionId = $param->oldFunctionVersionId
-			AND functionId = $param->functionId
-			AND updateDate = '$param->oldUpdateDate'";
-
+			WHERE functionId = $param->functionId
+			AND inputId = $param->inputId
+			AND schemaVersionId = $param->oldSchemaVersionId";
+		
 		$result = $this->db->query($sqlStr);
 		return $this->db->affected_rows();
 	}

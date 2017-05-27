@@ -113,7 +113,6 @@ class TestCase_model extends CI_Model{
 
 	function uploadTestCaseInfo($param, $user){
 		$this->db->trans_start(); //Starting Transaction
-		$this->db->trans_strict(FALSE);
 
 		$testCaseId = '';
 		$effectiveStartDate = date('Y-m-d H:i:s');
