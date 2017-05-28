@@ -53,9 +53,37 @@ class RTM_model extends CI_Model{
 
 	function insertRTMVersion($param, $user){
 		$currentDateTime = date('Y-m-d H:i:s');
-		$sqlStr = "INSERT INTO M_RTM_VERSION (projectId, rtmVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousVersionId, createDate,	createUser, updateDate, updateUser) VALUES ($param->projectId, $param->versionNo, '$param->effectiveStartDate', NULL, '$param->activeFlag', NULL, '$currentDateTime', '$user', '$currentDateTime', '$user')";
+		$previousVersionId = !empty($param->previousVersionId)? $param->previousVersionId : 'NULL';
+
+		$sqlStr = "INSERT INTO M_RTM_VERSION (projectId, rtmVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, previousVersionId, createDate,	createUser, updateDate, updateUser) VALUES ($param->projectId, $param->versionNo, '$param->effectiveStartDate', NULL, '$param->activeFlag', $previousVersionId, '$currentDateTime', '$user', '$currentDateTime', '$user')";
 		$result = $this->db->query($sqlStr);
 		return $result;
+	}
+
+	function updateRTMInfo($param){
+		$sqlStr = "UPDATE M_RTM
+			SET effectiveEndDate = '$param->effectiveEndDate',
+				activeFlag = '$param->activeFlag',
+				updateDate = '$param->updateDate',
+				updateUser = '$param->user'
+			WHERE projectId = $param->projectId 
+			AND functionId = $param->functionId 
+			AND testCaseId = $param->testCaseId";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
+	function updateRTMVersion($param){
+		$sqlStr = "UPDATE M_RTM_VERSION
+			SET effectiveEndDate = '$param->effectiveEndDate',
+				activeFlag = '$param->activeFlag',
+				updateDate = '$param->updateDate',
+				updateUser = '$param->user'
+			WHERE rtmVersionId = $param->rtmVersionIdCondition 
+			AND projectId = $param->projectId 
+			AND updateDate = '$param->updateDateCondition'";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
 	}
 
 	function uploadRTM($param, $user){

@@ -15,6 +15,7 @@ class ChangeManagement extends CI_Controller{
 		$this->load->model('Miscellaneous_model', 'mMisc');
 		$this->load->model('ChangeManagement_model', 'mChange');
 		$this->load->model('FunctionalRequirement_model', 'mFR');
+		$this->load->model('Common_model', 'mCommon');
 
 		$this->load->library('form_validation', null, 'FValidate');
 		$this->load->library('session');
@@ -101,26 +102,28 @@ class ChangeManagement extends CI_Controller{
 				$user = $this->session->userdata('username');
 
 				$projectInfo = $this->mProject->searchProjectDetail($projectId);
-				$result = $this->mChange->controlVersionChangedData($changeResult, $projectInfo, $user, $error_message);
+				$result = $this->mChange->controlVersionOfChangedData($changeResult, $projectInfo, $user, $error_message);
 
-				if($result){
+				if($result == true){
 					$success_message = "callChangeAPI";
+
+					/** 4.Save Change Request */
+					
+
+					/** 5.Save Change History */
+
+			
+					/** 6.Remove Test Change list */
+
+
+					/** 7.Display Result */
 				}
 
 			}else{
 				$errorFlag = true;
 				$error_message = ER_MSG_016;
 			}
-			
-			/** 4.Save Change Request */
 
-
-			/** 5.Save Change History */
-
-
-			/** 6.Display Result */
-
-			
 		}catch(Exception $e){
 			$errorFlag = true;
 			$error_message = $e;

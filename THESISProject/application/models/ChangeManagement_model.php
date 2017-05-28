@@ -13,6 +13,7 @@ class ChangeManagement_model extends CI_Model{
 		$this->load->model('DatabaseSchema_model', 'mDB');
 		$this->load->model('Miscellaneous_model', 'mMisc');
 		$this->load->model('TestCase_model', 'mTestCase');
+		$this->load->model('RTM_model', 'mRTM');
 	}
 
 	function searchTempFRInputChangeList($param){
@@ -79,16 +80,6 @@ class ChangeManagement_model extends CI_Model{
 		return $this->db->affected_rows();
 	}
 
-	/*function searchTempFRInputChangeList($userId, $functionId, $functionVersion){
-		$sqlStr = "SELECT *
-			FROM T_TEMP_CHANGE_LIST
-			WHERE userId = $userId
-			AND functionId = $functionId
-			AND functionVersion = $functionVersion";
-		$result = $this->db->query($sqlStr);
-		return $result->num_rows();
-	}*/
-
 	function insertTempFRInputChange($param){
 		$currentDateTime = date('Y-m-d H:i:s');
 
@@ -151,17 +142,29 @@ class ChangeManagement_model extends CI_Model{
 	}
 
 	function getLastTestCaseVersion($projectId, $testCaseNo, $testCaseVersionNo){
-		$sqlStr = "SELECT h.testCaseId, v.testCaseVersionNumber, v.updateDate
+		$sqlStr = "SELECT h.testCaseId, v.testCaseVersionId, v.testCaseVersionNumber, v.updateDate
 			FROM M_TESTCASE_HEADER h
 			INNER JOIN M_TESTCASE_VERSION v
 			ON h.testCaseId = v.testCaseId
 			WHERE v.activeFlag = '1'
 			AND h.projectId = $projectId
-			AND h.testCaseNo = $testCaseNo
+			AND h.testCaseNo = '$testCaseNo'
 			AND v.testCaseVersionNumber = $testCaseVersionNo";
 		$result = $this->db->query($sqlStr);	
 		return $result->row();
-	}		
+	}
+
+	function getLastRTMVersion($projectId){
+		$sqlStr = "SELECT 
+				rtmVersionId,
+				rtmVersionNumber,
+				updateDate
+			FROM M_RTM_VERSION 
+			WHERE projectId = $projectId
+			AND activeFlag = '1'";
+		$result = $this->db->query($sqlStr);	
+		return $result->row();
+	}	
 
 	function getSchemaFromDatabaseTarget($connectionDB, $tableName, $columnName){
 		$dbSchemaDetail = array();
@@ -255,14 +258,16 @@ class ChangeManagement_model extends CI_Model{
 		return $dbSchemaDetail;
 	}
 
-	function controlVersionChangedData($changeResult, $connectionDB, $user, &$error_message){
-		$this->db->trans_start(); //Starting Transaction
+	function controlVersionOfChangedData($changeResult, $connectionDB, $user, &$error_message){
+		//$this->db->trans_start(); //Starting Transaction
+		$this->db->trans_begin();
 
 		$errorFlag = false;
 		$affectedProjectId = $changeResult->projectInfo;
 		$affectedRequirements = $changeResult->affectedRequirement;
 		$affectedSchemaList = $changeResult->affectedSchema;
 		$affectedTestCase = $changeResult->affectedTestCase;
+		$affectedRTM = $changeResult->affectedRTM;
 
 		$newCurrentDate = date('Y-m-d H:i:s');
 
@@ -477,7 +482,7 @@ class ChangeManagement_model extends CI_Model{
 					if(0 == $resultUpdate){
 						$errorFlag = true;
 						$error_message = ER_MSG_016;
-						break;
+						break 2;
 					}
 				}
 			}
@@ -513,37 +518,178 @@ class ChangeManagement_model extends CI_Model{
 				}
 
 				$testCaseId = $resultLastTCVersion->testCaseId;
-				$newTCVersionNumber = (int)$resultLastTCVersion->testCaseVersionNumber + 1;
+				$oldTCVersionId = $resultLastTCVersion->testCaseVersionId;
+				$oldTCVersionNumber = (int)$resultLastTCVersion->testCaseVersionNumber;
+				$newTCVersionNumber = $oldTCVersionNumber + 1;
 				$oldUpdateDate = $resultLastTCVersion->updateDate;
-
 			}
 
 			//Insert Test Case Version.
 			if(CHANGE_TYPE_ADD == $testcaseInfoVal->changeType 
 				|| CHANGE_TYPE_EDIT == $testcaseInfoVal->changeType){
-				$param = (object) array(
-					'testCaseId' => $testCaseId,
-					'initialVersionNo' => $newTCVersionNumber,
+				$paramInsert = (object) array(
+					'testCaseId' 		 => $testCaseId,
+					'initialVersionNo' 	 => $newTCVersionNumber,
 					'effectiveStartDate' => $newCurrentDate,
-					'activeStatus' => ACTIVE_CODE);
-				$result = $this->mTestCase->insertTestCaseVersion($param, $user);
+					'previousVersionId'  => $oldTCVersionId,
+					'activeStatus' 		 => ACTIVE_CODE);
+				$result = $this->mTestCase->insertTestCaseVersion($paramInsert, $user);
 			}
 			
 			//Disabled Old Test Case Version.
 			if(CHANGE_TYPE_EDIT == $testcaseInfoVal->changeType 
 				|| CHANGE_TYPE_DELETE == $testcaseInfoVal->changeType){
-
+				$paramUpdate = (object) array(
+					'effectiveEndDate' 	=> $newCurrentDate,
+					'activeFlag' 		=> UNACTIVE_CODE,
+					'updateDate' 		=> $newCurrentDate,
+					'updateUser' 		=> $user,
+					'testCaseId' 		=> $testCaseId,
+					'testCaseVersionId' => $oldTCVersionId,
+					'updateDateCondition' 	=> $oldUpdateDate);
+				$rowUpdate = $this->mTestCase->updateTestCaseVersion($paramUpdate);
+				if(0 == $rowUpdate){
+					$errorFlag = true;
+					$error_message = ER_MSG_016;
+					break;
+				}
 			}
 
 			//Insert or Update Test Case Detail
+			foreach($testcaseInfoVal->testCaseDetails as $keyInputName => $value){
 
+				$resultInputInfo = $this->mFR->searchFRInputInformation($affectedProjectId, $keyInputName);
+				if(null == $resultInputInfo || 0 == count($resultInputInfo)){
+					$errorFlag = true;
+					$error_message = ER_MSG_016;
+					break 2;
+				}
 
+				if(CHANGE_TYPE_EDIT == $value->changeType 
+					|| CHANGE_TYPE_DELETE == $value->changeType){
+					$paramUpdateDetail = (object) array(
+						'effectiveEndDate' 	=> $newCurrentDate, 
+						'activeFlag' 		=> UNACTIVE_CODE, 
+						'updateDate' 		=> $newCurrentDate, 
+						'updateUser' 		=> $user, 
+						'testCaseId' 		=> $testCaseId, 
+						'inputId' 			=> $resultInputInfo->inputId, 
+						'activeFlagCondition' => ACTIVE_CODE);
+
+					$rowUpdate =  $this->mTestCase->updateTestCaseDetail($paramUpdateDetail);
+					If(0 == $rowUpdate){
+						$errorFlag = true;
+						$error_message = ER_MSG_016;
+						break;
+					}
+				}
+
+				if(CHANGE_TYPE_ADD == $value->changeType 
+					|| CHANGE_TYPE_EDIT == $value->changeType){
+					$paramInsertDetail = (object) array(
+						'testCaseId' 	=> $testCaseId, 
+						'refInputId' 	=> $resultInputInfo->inputId, 
+						'refInputName' 	=> $keyInputName, 
+						'testData' 		=> $value->testData, 
+						'effectiveStartDate' => $newCurrentDate, 
+						'activeStatus' 	=> ACTIVE_CODE);
+					$resultInsert = $this->mTestCase->insertTestCaseDetail($paramInsertDetail, $user);
+				}
+			}
 		}//endforeach; (test case)
 		}
 
 		//**[Version Control of RTM]
+		if(!$errorFlag && !empty($affectedRTM)){
+		
+		//Get Latest RTM Info
+		$resultLastRTMInfo = $this->getLastRTMVersion($affectedProjectId);
+		$newRTMVersionNumber = (int)$resultLastRTMInfo->rtmVersionNumber + 1;
+		$oldRtmVersionId = $resultLastRTMInfo->rtmVersionId;
+		$oldRtmUpdateDate = $resultLastRTMInfo->updateDate;
 
-		$this->db->trans_complete();
+		//Update Disabled Old RTM Version
+		$paramUpdate = (object) array(
+			'effectiveEndDate' => $newCurrentDate,
+			'activeFlag' => UNACTIVE_CODE,
+			'updateDate' => $newCurrentDate,
+			'user' => $user,
+			'rtmVersionIdCondition' => $oldRtmVersionId,
+			'projectId' => $affectedProjectId,
+			'updateDateCondition' => $oldRtmUpdateDate);
+
+		$rowUpdate = $this->mRTM->updateRTMVersion($paramUpdate);
+		if(1 != $rowUpdate){
+			$errorFlag = true;
+			$error_message = ER_MSG_016;
+			break;
+		}
+
+		//Insert New RTM Version
+		$paramInsert = (object) array(
+			'projectId' 		 => $affectedProjectId,
+			'versionNo' 	 	 => $newRTMVersionNumber,
+			'effectiveStartDate' => $newCurrentDate, 
+			'activeFlag' 		 => ACTIVE_CODE,
+			'previousVersionId'  => $oldRtmVersionId);
+
+		$this->mRTM->insertRTMVersion($paramInsert, $user);
+
+		foreach($affectedRTM as $value){
+			$functionId = "";
+			$testCaseId = "";
+
+			//get Functional Requirement Info
+			$resultFRInfo = $this->mFR->searchExistFunctionalRequirement($value->functionNo, $affectedProjectId);
+			if(null == $resultFRInfo || 0 == count($resultFRInfo)){
+				$errorFlag = true;
+				$error_message = ER_MSG_016;
+				break;
+			}
+
+			$functionId = $resultFRInfo[0]['functionId'];
+
+			//get Test Case Info
+			$resultTCInfo = $this->mTestCase->searchExistTestCaseHeader($affectedProjectId, $value->testCaseNo);
+			if(null == $resultTCInfo || 0 == count($resultTCInfo)){
+				$errorFlag = true;
+				$error_message = ER_MSG_016;
+				break;
+			}
+
+			$testCaseId = $resultTCInfo->testCaseId;
+
+			//Insert RTM Info
+			if(CHANGE_TYPE_ADD == $value->changeType){
+				$paramInsert = (object) array(
+					'projectId' 			=> $affectedProjectId,
+					'functionId' 			=> $functionId,
+					'testCaseId' 			=> $testCaseId,
+					'effectiveStartDate' 	=> $newCurrentDate,
+					'activeFlag' 			=> ACTIVE_CODE);
+				$this->mRTM->insertRTMInfo($paramInsert, $user);
+			}
+
+			//Update RTM Info
+			if(CHANGE_TYPE_DELETE == $value->changeType){
+				$paramUpdate = (object) array(
+					'effectiveEndDate'  => $newCurrentDate,
+					'activeFlag' 		=> UNACTIVE_CODE,
+					'updateDate' 		=> $newCurrentDate,
+					'user' 				=> $user,
+					'projectId' 		=> $affectedProjectId,
+					'functionId' 		=> $functionId,
+					'testCaseId' 		=> $testCaseId);
+				$rowUpdate = $this->mRTM->updateRTMInfo($paramUpdate);
+				if(1 != $rowUpdate){
+					$errorFlag = true;
+					$error_message = ER_MSG_016;
+					break;
+				}
+			}
+		}
+		}
+
     	$trans_status = $this->db->trans_status();
 	    if($trans_status == FALSE || $errorFlag){
 	    	$this->db->trans_rollback();

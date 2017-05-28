@@ -106,9 +106,39 @@ class TestCase_model extends CI_Model{
 
 	function insertTestCaseVersion($param, $user){
 		$currentDateTime = date('Y-m-d H:i:s');
-		$sqlStr = "INSERT INTO M_TESTCASE_VERSION (testCaseId, testCaseVersionNumber, effectiveStartDate, effectiveEndDate, activeFlag, createDate, createUser, updateDate, updateUser) VALUES ('{$param->testCaseId}', '{$param->initialVersionNo}', '{$param->effectiveStartDate}', NULL, '{$param->activeStatus}', '{$currentDateTime}', '$user', '{$currentDateTime}', '$user')";
+		$previousVersionId = !empty($param->previousVersionId)? $param->previousVersionId : "NULL";
+		$sqlStr = "INSERT INTO M_TESTCASE_VERSION (testCaseId, testCaseVersionNumber, effectiveStartDate, effectiveEndDate, previousVersionId, activeFlag, createDate, createUser, updateDate, updateUser) VALUES ('{$param->testCaseId}', '{$param->initialVersionNo}', '{$param->effectiveStartDate}', NULL, $previousVersionId, '{$param->activeStatus}', '{$currentDateTime}', '$user', '{$currentDateTime}', '$user')";
 		$result = $this->db->query($sqlStr);
 		return $result;
+	}
+
+	function updateTestCaseVersion($param){
+		$effectiveEndDate = empty($param->effectiveEndDate)? "NULL": "'".$param->effectiveEndDate."'";
+
+		$sqlStr = "UPDATE M_TESTCASE_VERSION 
+			SET effectiveEndDate = $effectiveEndDate, 
+				activeFlag = '$param->activeFlag', 
+				updateDate = '$param->updateDate', 
+				updateUser = '$param->updateUser'  
+			WHERE testCaseId = $param->testCaseId 
+			AND testCaseVersionId = $param->testCaseVersionId 
+			AND updateDate = '$param->updateDateCondition'";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();	
+	}
+
+	function updateTestCaseDetail($param){
+		$effectiveEndDate = empty($param->effectiveEndDate)? "NULL": "'".$param->effectiveEndDate."'";
+		$sqlStr = "UPDATE M_TESTCASE_DETAIL
+			SET effectiveEndDate = $effectiveEndDate, 
+				activeFlag = '$param->activeFlag', 
+			 	updateDate = '$param->updateDate', 
+			 	updateUser = '$param->updateUser' 
+			WHERE testCaseId = $param->testCaseId 
+			AND refInputId 	= $param->inputId 
+			AND activeFlag 	= '$param->activeFlagCondition'";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
 	}
 
 	function uploadTestCaseInfo($param, $user){
