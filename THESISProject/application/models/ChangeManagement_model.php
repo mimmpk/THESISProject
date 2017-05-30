@@ -14,6 +14,7 @@ class ChangeManagement_model extends CI_Model{
 		$this->load->model('Miscellaneous_model', 'mMisc');
 		$this->load->model('TestCase_model', 'mTestCase');
 		$this->load->model('RTM_model', 'mRTM');
+		$this->load->model('Common_model', 'mCommon');
 	}
 
 	function searchTempFRInputChangeList($param){
@@ -93,8 +94,8 @@ class ChangeManagement_model extends CI_Model{
 		$default = !empty($param->default)? "'".$param->default."'" : "NULL";
 		$min = !empty($param->min)? "'".$param->min."'" : "NULL";
 		$max = !empty($param->max)? "'".$param->max."'" : "NULL";
-		$tableName = !empty($param->tableName)? "'".$param->tableName."'" : "NULL";
-		$columnName = !empty($param->columnName)? "'".$param->columnName."'" : "NULL";
+		$tableName = !empty($param->table)? "'".$param->table."'" : "NULL";
+		$columnName = !empty($param->column)? "'".$param->column."'" : "NULL";
 
 		$sqlStr = "INSERT INTO T_TEMP_CHANGE_LIST (userId, functionId, functionVersion, inputId, inputName, schemaVersionId, newDataType, newDataLength, newScaleLength, newUnique, newNotNull, newDefaultValue, newMinValue, newMaxValue, tableName, columnName, changeType, createUser, createDate) 
 			VALUES (
@@ -116,6 +117,87 @@ class ChangeManagement_model extends CI_Model{
 				$columnName,
 				'$param->changeType', '$param->user', '$currentDateTime')";
 
+		$result = $this->db->query($sqlStr);
+		return $result;
+	}
+
+	function insertChangeRequestHeader($param){
+		
+		$sqlStr = "INSERT INTO T_CHANGE_REQUEST_HEADER (changeRequestNo, changeUserId, changeDate, projectId, changeFunctionId, changeFunctionNo, changeFunctionVersion, changeStatus) VALUES ('$param->changeRequestNo', $param->changeUser, '$param->changeDate', $param->projectId, $param->changeFunctionId, '$param->changeFunctionNo', '$param->changeFunctionVersion', '$param->changeStatus')";
+		
+		$result = $this->db->query($sqlStr);
+		return $result;
+	}
+
+	function insertChangeRequestDetail($param){
+
+		$inputId = !empty($param->inputId)? $param->inputId : "NULL";
+		$schemaVersionId = !empty($param->schemaVersionId)? $param->schemaVersionId : "NULL";
+
+		$dataType = !empty($param->dataType)? "'".$param->dataType."'" : "NULL";
+		$dataLength = !empty($param->dataLength)? $param->dataLength : "NULL";
+		$scale = !empty($param->scale)? $param->scale : "NULL";
+		$unique = !empty($param->unique)? "'".$param->unique."'" : "NULL";
+		$notNull = !empty($param->notNull)? "'".$param->notNull."'" : "NULL";
+		$default = !empty($param->default)? "'".$param->default."'" : "NULL";
+		$min = !empty($param->min)? "'".$param->min."'" : "NULL";
+		$max = !empty($param->max)? "'".$param->max."'" : "NULL";
+		$tableName = !empty($param->tableName)? "'".$param->tableName."'" : "NULL";
+		$columnName = !empty($param->columnName)? "'".$param->columnName."'" : "NULL";
+
+		$sqlStr = "INSERT INTO T_CHANGE_REQUEST_DETAIL (changeRequestNo, sequenceNo, changeType, refInputId, refSchemaVersionId, inputName, dataType, dataLength, scale, constraintUnique, constraintNotNull, constraintDefault, constraintMin, constraintMax, refTableName, refColumnName) VALUES ('$param->changeRequestNo', $param->sequenceNo, '$param->changeType', $inputId, $schemaVersionId, '$param->inputName', $dataType, $dataLength, $scale, $unique, $notNull, $default, $min, $max, $tableName, $columnName)";
+		$result = $this->db->query($sqlStr);
+		return $result;
+	}
+
+	function insertChangeHistory_RequirementsHeader($param){
+		$sqlStr = "INSERT INTO T_CHANGE_HISTORY_REQ_HEADER (changeRequestNo, functionId, functionNo, oldFunctionVersion, newFunctionVersion) VALUES ('$param->changeRequestNo', '$param->functionNo', $param->functionId, $param->oldFnVersionNumber, $param->newFnVersionNumber)";
+		$result = $this->db->query($sqlStr);
+		if($result){
+			$query = $this->db->query("SELECT IDENT_CURRENT('T_CHANGE_HISTORY_REQ_HEADER') as last_id");
+			$resultId = $query->result();
+			return $resultId[0]->last_id;
+		}
+		return NULL;
+	}
+
+	function insertChangeHistory_RequirementsDetail($param){
+		$sqlStr = "INSERT INTO T_CHANGE_HISTORY_REQ_DETAIL (fnReqHistoryId, sequenceNo, changeType, inputName, refTableName, refColumnName) VALUES ($param->fnReqHistoryId, $param->sequenceNo, '$param->changeType', '$param->inputName', '$param->refTableName', '$param->refColumnName')";
+		$result = $this->db->query($sqlStr);
+		return $result;
+	}
+
+	function insertChangeHistory_Schema($param){
+		$oldVersionNumber = !empty($param->oldSchemaVersionNumber)? $param->oldSchemaVersionNumber : "NULL";
+		$newVersionNumber = !empty($param->newSchemaVersionNumber)? $param->newSchemaVersionNumber : "NULL";
+
+		$sqlStr = "INSERT INTO T_CHANGE_HISTORY_SCHEMA (changeRequestNo, sequenceNo, tableName, columnName, oldSchemaVersionNumber, newSchemaVersionNumber, changeType) VALUES ('$param->changeRequestNo', $param->sequenceNo, '$param->tableName', '$param->columnName', $oldVersionNumber, $newVersionNumber, '$param->changeType') ";
+		$result = $this->db->query($sqlStr);
+		return $result;
+	}
+
+	function insertChangeHistory_TestCase($param){
+		$oldTCVerNumber = !empty($param->oldTestCaseVersionNo)? $param->oldTestCaseVersionNo : "NULL";
+		$newTCVerNumber = !empty($param->newTestCaseVersionNo)? $param->newTestCaseVersionNo : "NULL";
+
+		$sqlStr = "INSERT INTO T_CHANGE_HISTORY_TESTCASE (changeRequestNo, testCaseId, testCaseNo, oldTestCaseVersionNumber, newTestCaseVersionNumber, changeType) VALUES ('$param->changeRequestNo', $param->testCaseId, '$param->testCaseNo', $oldTCVerNumber, $newTCVerNumber, '$param->changeType')";
+		$result = $this->db->query($sqlStr);
+		return $result;
+	}
+
+	function insertChangeHistory_RTMHeader($param){
+		$sqlStr = "INSERT INTO T_CHANGE_HISTORY_RTM_HEADER (changeRequestNo, projectId, oldVersionNumber, newVersionNumber) VALUES ('$param->changeRequestNo', $param->projectId, $param->oldVersionNumber, $param->newVersionNumber)";
+		$result = $this->db->query($sqlStr);
+		if($result){
+			$query = $this->db->query("SELECT IDENT_CURRENT('T_CHANGE_HISTORY_RTM_HEADER') as last_id");
+			$resultId = $query->result();
+			return $resultId[0]->last_id;
+		}
+		return NULL;
+	}
+
+	function insertChangeHistory_RTMDetail($param){
+		$sqlStr = "INSERT INTO T_CHANGE_HISTORY_RTM_DETAIL (rtmHistoryId, sequenceNo, functionId, testCaseId, changeType) VALUES ($param->rtmHistoryId, $param->sequenceNo, $param->functionId, $param->testCaseId, '$param->changeType')";
 		$result = $this->db->query($sqlStr);
 		return $result;
 	}
@@ -258,10 +340,66 @@ class ChangeManagement_model extends CI_Model{
 		return $dbSchemaDetail;
 	}
 
-	function controlVersionOfChangedData($changeResult, $connectionDB, $user, &$error_message){
-		//$this->db->trans_start(); //Starting Transaction
+	function getChangeRequestInformation($changeRequestNo){
+		$sqlStr = "SELECT 
+				h.changeRequestNo,
+				CONVERT(nvarchar, h.changeDate, 103) as changeDate,
+				CONCAT(u.firstname, '   ', u.lastname) as changeUser,
+				h.changeStatus,
+				h.changeFunctionNo,
+				h.changeFunctionVersion,
+				fh.functionDescription
+			FROM T_CHANGE_REQUEST_HEADER h 
+			INNER JOIN M_USERS u 
+			ON h.changeUserId = u.userId 
+			INNER JOIN M_FN_REQ_HEADER fh 
+			ON h.changeFunctionId = fh.functionId 
+			WHERE h.changeRequestNo = '$changeRequestNo'";
+		$result = $this->db->query($sqlStr);
+		return $result->first_row();
+	}
+
+	function getChangeRequestInputList($changeRequestNo){
+		$sqlStr = "SELECT *
+			FROM T_CHANGE_REQUEST_DETAIL
+			WHERE changeRequestNo = '$changeRequestNo' 
+			ORDER BY sequenceNo";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
+	function getChangeHistoryFnReqHeaderList($changeRequestNo){
+		$sqlStr = "SELECT * 
+			FROM T_CHANGE_HISTORY_REQ_HEADER 
+			WHERE changeRequestNo = '$changeRequestNo'
+			ORDER BY functionNo";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();	
+	}
+
+	function changeProcess($changeInfo, &$changeResult, $connectionDB, $user, &$error_message, &$changeRequestNo){
 		$this->db->trans_begin();
 
+		$resultSuccess = $this->controlVersionOfChangedData($changeResult, $connectionDB, $user, $error_message);
+
+		if($resultSuccess){
+			//Save ChangeRequest & ChangeHistory
+			$resultSuccess = $this->saveChangeRequestInformation($changeInfo, $changeResult, $user, $error_message, $changeRequestNo);
+		}
+
+    	$trans_status = $this->db->trans_status();
+	    if($trans_status == FALSE || !$resultSuccess){
+	    	$this->db->trans_rollback();
+	    	return false;
+	    }else{
+	   		$this->db->trans_commit();
+	   		return true;
+	    }
+	}
+
+	private function controlVersionOfChangedData(&$changeResult, $connectionDB, $user, &$error_message){
+		//$this->db->trans_start(); //Starting Transaction
+		
 		$errorFlag = false;
 		$affectedProjectId = $changeResult->projectInfo;
 		$affectedRequirements = $changeResult->affectedRequirement;
@@ -273,37 +411,48 @@ class ChangeManagement_model extends CI_Model{
 
 		//**[Version Control of Database Schema]
 		foreach($affectedSchemaList as $value){
-			if(empty($value->affectedAction)){
-				continue;
-			}
+			$oldDBVersionNumber = '';
 
 			$lastDBVersionInfo = $this->getLastDatabaseSchemaVersion($affectedProjectId, $value->tableName, $value->columnName);
-
-			if(0 < count($lastDBVersionInfo)){
-				$oldDBVersionId = $lastDBVersionInfo->schemaVersionId;
-				$oldDBVersionNumber = $lastDBVersionInfo->schemaVersionNumber;
-				$oldDBUpdateDate = $lastDBVersionInfo->updateDate;
-
-				//update old version
-				$dbParam = (object) array(
-					'tableName' => $value->tableName,
-					'columnName' => $value->columnName,
-					'currentDate' => $newCurrentDate,
-					'activeFlag' => UNACTIVE_CODE,
-					'user' => $user,
-					'projectId' => $affectedProjectId,
-					'oldSchemaVersionId' => $oldDBVersionId,
-					'oldUpdateDate' => $oldDBUpdateDate);
-				$rowUpdate = $this->mDB->updateDatabaseSchemaVersion($dbParam);
-				if(0 == $rowUpdate){
-					$errorFlag = true;
-					$error_message = ER_MSG_016;
-					break;
+			
+			if(empty($value->affectedAction)){
+				if(0 == count($lastDBVersionInfo)){
+					$newDBVersionNumber = INITIAL_VERSION;
+				}else{
+					$value->oldSchemaVersionNo = $lastDBVersionInfo->schemaVersionNumber;
+					$value->newSchemaVersionNo = '';
+					continue;
 				}
-				$newDBVersionNumber = (int)$oldDBVersionNumber + 1;
 			}else{
-				$newDBVersionNumber = INITIAL_VERSION;
+				if(0 < count($lastDBVersionInfo)){
+					$oldDBVersionId = $lastDBVersionInfo->schemaVersionId;
+					$oldDBVersionNumber = $lastDBVersionInfo->schemaVersionNumber;
+					$oldDBUpdateDate = $lastDBVersionInfo->updateDate;
+
+					//update old version
+					$dbParam = (object) array(
+						'tableName' => $value->tableName,
+						'columnName' => $value->columnName,
+						'currentDate' => $newCurrentDate,
+						'activeFlag' => UNACTIVE_CODE,
+						'user' => $user,
+						'projectId' => $affectedProjectId,
+						'oldSchemaVersionId' => $oldDBVersionId,
+						'oldUpdateDate' => $oldDBUpdateDate);
+					$rowUpdate = $this->mDB->updateDatabaseSchemaVersion($dbParam);
+					if(0 == $rowUpdate){
+						$errorFlag = true;
+						$error_message = ER_MSG_016;
+						break;
+					}
+					$newDBVersionNumber = (int)$oldDBVersionNumber + 1;
+				}else{
+					$newDBVersionNumber = INITIAL_VERSION;
+				}
 			}
+
+			$value->oldSchemaVersionNo = $oldDBVersionNumber;
+			$value->newSchemaVersionNo = $newDBVersionNumber;
 
 			//insert database schema data
 			$dbParam = (object) array(
@@ -493,6 +642,7 @@ class ChangeManagement_model extends CI_Model{
 		if(!$errorFlag){
 		foreach($affectedTestCase as $keyTestCaseNo => $testcaseInfoVal){
 			$testCaseId = '';
+			$oldTCVersionNumber = '';
 			$newTCVersionNumber = '';
 
 			if(CHANGE_TYPE_ADD == $testcaseInfoVal->changeType){
@@ -520,13 +670,19 @@ class ChangeManagement_model extends CI_Model{
 				$testCaseId = $resultLastTCVersion->testCaseId;
 				$oldTCVersionId = $resultLastTCVersion->testCaseVersionId;
 				$oldTCVersionNumber = (int)$resultLastTCVersion->testCaseVersionNumber;
-				$newTCVersionNumber = $oldTCVersionNumber + 1;
 				$oldUpdateDate = $resultLastTCVersion->updateDate;
 			}
+
+			$testcaseInfoVal->testCaseId = $testCaseId;
+			$testcaseInfoVal->oldVerNO = $oldTCVersionNumber;
+			$testcaseInfoVal->newVerNO = $newTCVersionNumber;
 
 			//Insert Test Case Version.
 			if(CHANGE_TYPE_ADD == $testcaseInfoVal->changeType 
 				|| CHANGE_TYPE_EDIT == $testcaseInfoVal->changeType){
+
+				$newTCVersionNumber = $oldTCVersionNumber + 1;
+
 				$paramInsert = (object) array(
 					'testCaseId' 		 => $testCaseId,
 					'initialVersionNo' 	 => $newTCVersionNumber,
@@ -608,6 +764,9 @@ class ChangeManagement_model extends CI_Model{
 		$oldRtmVersionId = $resultLastRTMInfo->rtmVersionId;
 		$oldRtmUpdateDate = $resultLastRTMInfo->updateDate;
 
+		$affectedRTM->oldRTMVerNO = $resultLastRTMInfo->rtmVersionNumber;
+		$affectedRTM->newRTMVerNO = $newRTMVersionNumber;
+
 		//Update Disabled Old RTM Version
 		$paramUpdate = (object) array(
 			'effectiveEndDate' => $newCurrentDate,
@@ -635,7 +794,7 @@ class ChangeManagement_model extends CI_Model{
 
 		$this->mRTM->insertRTMVersion($paramInsert, $user);
 
-		foreach($affectedRTM as $value){
+		foreach($affectedRTM->details as $value){
 			$functionId = "";
 			$testCaseId = "";
 
@@ -658,6 +817,10 @@ class ChangeManagement_model extends CI_Model{
 			}
 
 			$testCaseId = $resultTCInfo->testCaseId;
+
+			//set Function Id & Test case Id
+			$value->functionId = $functionId;
+			$value->testCaseId = $testCaseId;
 
 			//Insert RTM Info
 			if(CHANGE_TYPE_ADD == $value->changeType){
@@ -690,14 +853,177 @@ class ChangeManagement_model extends CI_Model{
 		}
 		}
 
-    	$trans_status = $this->db->trans_status();
-	    if($trans_status == FALSE || $errorFlag){
-	    	$this->db->trans_rollback();
-	    	return false;
-	    }else{
-	   		$this->db->trans_commit();
-	   		return true;
-	    }
+		//return result;
+		if($errorFlag) {
+			return false;
+		}else{
+			return true;
+		}
+		
+	}
+
+	private function saveChangeRequestInformation($changeInfo, $changeResult, $user, &$error_message, &$changeRequestNo = ''){
+		
+		$newCurrentDate = date('Y-m-d');
+
+		$affectedProjectId = $changeResult->projectInfo;
+		$affectedRequirements = $changeResult->affectedRequirement;
+		$affectedSchemaList = $changeResult->affectedSchema;
+		$affectedTestCase = $changeResult->affectedTestCase;
+		$affectedRTM = $changeResult->affectedRTM;
+
+		//1. save change request header.
+		$changeRequestNo = $this->mCommon->getChangeRequestNo(RUNNING_TYPE_CHANGE_REQUEST_NO);
+		if(empty($changeRequestNo)){
+			$error_message = ER_MSG_016;
+			return false;
+		}
+
+		$paramSearch = (object) array(
+			'userId' => $changeInfo->userId,
+			'functionId' => $changeInfo->functionId,
+			'functionVersion' => $changeInfo->functionVersion);
+		$tmpChangeList = $this->searchTempFRInputChangeList($paramSearch);
+		if(0 == count($tmpChangeList)){
+			$error_message = ER_MSG_016;
+			return false;
+		}
+
+		$resultFnReq = $this->db->query("SELECT functionNo FROM M_FN_REQ_HEADER WHERE functionId = $changeInfo->functionId")->row();
+
+		$paramInsert = (object) array(
+			'changeRequestNo' => $changeRequestNo,
+			'changeUser' => $changeInfo->userId,
+			'changeDate' => $newCurrentDate,
+			'projectId' => $changeInfo->projectId,
+			'changeFunctionId' => $changeInfo->functionId,
+			'changeFunctionNo' => $resultFnReq->functionNo,
+			'changeFunctionVersion' => $changeInfo->functionVersion,
+			'changeStatus' => '1');
+		$this->insertChangeRequestHeader($paramInsert);
+
+		//2. save change request details.
+		$i = 1;
+		foreach($tmpChangeList as $value){
+			$paramInsert = (object) array(
+				'changeRequestNo' => $changeRequestNo,
+				'sequenceNo' => $i++,
+				'changeType' => $value['changeType'],
+				'inputId' => $value['inputId'],
+				'inputName' => $value['inputName'], 
+				'schemaVersionId' => $value['schemaVersionId'],
+				'dataType' => $value['newDataType'],
+				'dataLength' => $value['newDataLength'],
+				'scale' => $value['newScaleLength'],
+				'unique' => $value['newUnique'],
+				'notNull' => $value['newNotNull'],
+				'default' => $value['newDefaultValue'],
+				'min' => $value['newMinValue'],
+				'max' => $value['newMaxValue'],
+				'tableName' => $value['tableName'],
+				'columnName' => $value['columnName']);
+			$this->insertChangeRequestDetail($paramInsert);
+		}
+
+		//3. save change history requirement header
+		foreach($affectedRequirements as $keyFunctionNo => $functionDetailValue){
+			
+			$existFR = $this->mFR->searchExistFunctionalRequirement($keyFunctionNo, $affectedProjectId);
+
+			$resultNewVersion = $this->searchRelatedNewVersion_FnReq($existFR[0]['functionId'], $functionDetailValue->functionVersion);
+
+			$paramInsert = (object) array(
+				'changeRequestNo' 	 => $changeRequestNo,
+				'functionNo'		 => $keyFunctionNo,
+				'functionId' 		 => $existFR[0]['functionId'],
+				'oldFnVersionNumber' => $functionDetailValue->functionVersion,
+				'newFnVersionNumber' => $resultNewVersion->functionVersionNumber);
+
+			$fnReqHistoryId = $this->insertChangeHistory_RequirementsHeader($paramInsert);
+			if(empty($fnReqHistoryId)){
+				$error_message = ER_MSG_016;
+				return false;
+			}
+
+			//3.1 save change history requirement detail
+			$i = 1;
+			foreach($functionDetailValue->functionInput as $keyInputName => $value){
+
+				$paramInsert = (object) array(
+				'fnReqHistoryId' 	 => $fnReqHistoryId,
+				'sequenceNo' 	 	 => $i++,
+				'changeType'  	 	 => $value->changeType,
+				'inputName' 	 	 => $keyInputName,
+				'refTableName' 	 	 => $value->refTableName,
+				'refColumnName' 	 => $value->refColumnName);
+
+				$this->insertChangeHistory_RequirementsDetail($paramInsert);
+			}
+		}
+
+		//4. save change history database schema
+		$i = 1;
+		foreach($affectedSchemaList as $value){
+			$paramInsert = (object) array(
+				'changeRequestNo' => $changeRequestNo,
+				'sequenceNo' => $i++,
+				'changeType' => $value->affectedAction,
+				'tableName'  => $value->tableName,
+				'columnName' => $value->columnName,
+				'oldSchemaVersionNumber' => $value->oldSchemaVersionNo,
+				'newSchemaVersionNumber' => $value->newSchemaVersionNo);
+
+			$this->insertChangeHistory_Schema($paramInsert);
+		}
+
+		//5. save change history test case
+		foreach($affectedTestCase as $keyTestCaseNo => $value){
+			$paramInsert = (object) array(
+				'changeRequestNo' => $changeRequestNo,
+				'testCaseId' => $value->testCaseId,
+				'testCaseNo' => $keyTestCaseNo,
+				'oldTestCaseVersionNo' => $value->oldVerNO,
+				'newTestCaseVersionNo' => $value->newVerNO,
+				'changeType' => $value->changeType);
+			$this->insertChangeHistory_TestCase($paramInsert);
+		}
+
+		//6. save change history RTM header and detail
+		if(null != $affectedRTM && 0 < count($affectedRTM)){
+
+			$paramInsert = (object) array(
+				'changeRequestNo' => $changeRequestNo,
+				'projectId' => $affectedProjectId,
+				'oldVersionNumber' => $affectedRTM->oldRTMVerNO,
+				'newVersionNumber' => $affectedRTM->newRTMVerNO);
+
+			$rtmHistoryId = $this->insertChangeHistory_RTMHeader($paramInsert);
+
+			$i = 1;
+			foreach($affectedRTM->details as $value){
+				$paramInsert = (object) array(
+					'rtmHistoryId' => $rtmHistoryId,
+					'sequenceNo' => $i++,
+					'functionId' => $value->functionId,
+					'testCaseId' => $value->testCaseId,
+					'changeType' => $value->changeType);
+				$this->insertChangeHistory_RTMDetail($paramInsert);
+			}
+		}
+
+		return true;
+	}
+
+	private function searchRelatedNewVersion_FnReq($functionId, $functionVersion){
+		$sqlStr = "SELECT b.functionVersionNumber
+			FROM M_FN_REQ_VERSION a
+			INNER JOIN M_FN_REQ_VERSION b
+			ON a.functionVersionId = b.previousVersionId
+			and a.functionId = b.functionId
+			WHERE a.functionId = $functionId 
+			AND a.functionVersionNumber = $functionVersion";
+		$result = $this->db->query($sqlStr);
+		return $result->row();
 	}
 }
 

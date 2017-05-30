@@ -12,6 +12,7 @@ class Common_model extends CI_Model{
 
 	function getChangeRequestNo($runningType){
 		$currentDate = date('Y-m-01');
+		$formatStr = "";
 		
 		$runningNo = 1;
 		$prefix = "CR-yymm";
@@ -22,7 +23,7 @@ class Common_model extends CI_Model{
 				p.prefix,
 				p.affix,
 				p.length,
-				v.runningNo
+				n.runningNo
 			FROM M_RUNNING_PREFIX p
 			INNER JOIN M_RUNNING_NO n
 			ON p.runningType = n.runningType
@@ -38,10 +39,12 @@ class Common_model extends CI_Model{
 			$affix 		= $result->affix;
 			$length 	= $result->length;
 
-			$data = array('runningNo' => (int)$runningNo + 1);
-			$this->db->where('runningType', $runningType);
-			$this->db->where('period', $currentDate);
-			$this->db->update('M_RUNNING_NO', $data);
+			$runningNo = (int)$runningNo + 1;
+			$sqlStr = "UPDATE M_RUNNING_NO 
+				SET runningNo = $runningNo
+				WHERE period = '$currentDate'
+				AND runningType = '$runningType'";
+			$result = $this->db->query($sqlStr);
 		}else{
 			//insert
 			$array = array(

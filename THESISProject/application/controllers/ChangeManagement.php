@@ -60,6 +60,7 @@ class ChangeManagement extends CI_Controller{
 		$error_message = '';
 
 		$functionNo = '';
+		$changeRequestNo = '';
 		$userId = $this->session->userdata('userId');
 		$projectId = $this->input->post('projectId');
 		$functionId = $this->input->post('functionId');
@@ -98,27 +99,32 @@ class ChangeManagement extends CI_Controller{
 			$changeResult = $this->callChangeAPI($param);
 			
 			/** 3.Control Version*/
+			/** 4.Save Change Request */
+			/** 5.Save Change History */
 			if(null != $changeResult && !empty($changeResult)){
 				$user = $this->session->userdata('username');
 
+				$changeInfo = (object) array(
+					'userId' => $userId,
+					'projectId' => $projectId,
+					'functionId' => $functionId,
+					'functionVersion' => $functionVersion);
+
 				$projectInfo = $this->mProject->searchProjectDetail($projectId);
-				$result = $this->mChange->controlVersionOfChangedData($changeResult, $projectInfo, $user, $error_message);
+				$result = $this->mChange->changeProcess($changeInfo, $changeResult, $projectInfo, $user, $error_message, $changeRequestNo);
 
-				if($result == true){
-					$success_message = "callChangeAPI";
-
-					/** 4.Save Change Request */
+				if($result == true){ //Change success
 					
-
-					/** 5.Save Change History */
-
-			
 					/** 6.Remove Test Change list */
-
+					$paramDelete = (object) array(
+						'userId' => $userId,
+						'functionId' => $functionId,
+						'functionVersion' => $functionVersion);
+					$this->mChange->deleteTempFRInputChangeList($paramDelete);
 
 					/** 7.Display Result */
+					$this->displayChangeResult($changeRequestNo);
 				}
-
 			}else{
 				$errorFlag = true;
 				$error_message = ER_MSG_016;
@@ -131,8 +137,38 @@ class ChangeManagement extends CI_Controller{
 
 		$data['success_message'] = $success_message;
 		$data['error_message'] = $error_message;
+		$this->reloadPage($error_message, $projectId, $functionId, $functionVersion);	
+	}
+
+	//When Successfully change Functional Requirement's Inputs
+	function displayChangeResult($changeRequestNo = ''){
+		$success_message = '';
+		$error_message = '';
+		$changeRequestInfo = array();
+		$changeInputList = array();
+
+		$affectedFnReqList = array();
+
+		if(!empty($changeRequestNo)){
+			//1.Get Change Information
+			$changeRequestInfo = $this->mChange->getChangeRequestInformation($changeRequestNo);
+			if(0 == count($changeRequestInfo)){
+				$error_message = ER_MSG_017;
+			}else{
+				$changeInputList = $this->mChange->getChangeRequestInputList($changeRequestNo);
+				$affectedFnReqList = $this->mChange->getChangeHistoryFnReqHeaderList($changeRequestNo);
+			}
+		}else{
+			$error_message = ER_MSG_011;
+		}
+
+		$data['changeInfo'] = $changeRequestInfo;
+		$data['changeInputList'] = $changeInputList;
+		$data['affectedFnReqList'] = $affectedFnReqList;
+
+		$data['success_message'] = $success_message;
+		$data['error_message'] = $error_message;
 		$this->openView($data, 'result');
-		//$this->reloadPage($error_message, $projectId, $functionId, $functionVersion);		
 	}
 
 	function reloadPage($errorMessage, $projectId, $functionId, $functionVersion = ''){
