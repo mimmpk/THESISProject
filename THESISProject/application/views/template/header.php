@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Welcome to Version Control System</title>
+	<title>VCS | Version Control System 0.1</title>
 	<link rel="icon" href="<?=base_url()?>/favicon.png" type="image">
 
  	<!-- Tell the browser to be responsive to screen width -->
@@ -13,7 +13,6 @@
 
 	<!-- Bootstrap 3.3.6 -->
 	<?php echo css_asset('bootstrap.min.css'); ?>
-
 	
 	
 	<!-- Font Awesome -->

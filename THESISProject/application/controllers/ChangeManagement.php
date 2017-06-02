@@ -124,6 +124,7 @@ class ChangeManagement extends CI_Controller{
 
 					/** 7.Display Result */
 					$this->displayChangeResult($changeRequestNo);
+					return false;
 				}
 			}else{
 				$errorFlag = true;
@@ -147,7 +148,10 @@ class ChangeManagement extends CI_Controller{
 		$changeRequestInfo = array();
 		$changeInputList = array();
 
+		$affectedRTM = array();
 		$affectedFnReqList = array();
+		$affectedSchemaList = array();
+		$affectedTestCaseList = array();
 
 		if(!empty($changeRequestNo)){
 			//1.Get Change Information
@@ -157,6 +161,9 @@ class ChangeManagement extends CI_Controller{
 			}else{
 				$changeInputList = $this->mChange->getChangeRequestInputList($changeRequestNo);
 				$affectedFnReqList = $this->mChange->getChangeHistoryFnReqHeaderList($changeRequestNo);
+				$affectedSchemaList = $this->mChange->getChangeHistoryDatabaseSchemaList($changeRequestNo);
+				$affectedTestCaseList = $this->mChange->getChangeHistoryTestCaseList($changeRequestNo);
+				$affectedRTM = $this->mChange->getChangeHistoryRTM($changeRequestNo);
 			}
 		}else{
 			$error_message = ER_MSG_011;
@@ -164,7 +171,10 @@ class ChangeManagement extends CI_Controller{
 
 		$data['changeInfo'] = $changeRequestInfo;
 		$data['changeInputList'] = $changeInputList;
+		$data['affectedRTM'] = $affectedRTM;
 		$data['affectedFnReqList'] = $affectedFnReqList;
+		$data['affectedSchemaList'] = $affectedSchemaList;
+		$data['affectedTestCaseList'] = $affectedTestCaseList;
 
 		$data['success_message'] = $success_message;
 		$data['error_message'] = $error_message;

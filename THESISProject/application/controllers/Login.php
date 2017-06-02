@@ -30,9 +30,12 @@ class Login extends CI_Controller {
 		$data['html'] = 'login_view';
 		/*$data['active_page'] = 'login';*/
 		$data['error_message'] = $error_message;
-		$this->load->view('template/header');
-		$this->load->view('template/body_singlePage',$data);
-		$this->load->view('template/footer');
+		
+		//$this->load->view('template/header');
+		//$this->load->view('template/body_singlePage',$data);
+		
+		$this->load->view('login_view',$data);
+		//this->load->view('template/footer');
 	}
 
 	public function doLogin(){

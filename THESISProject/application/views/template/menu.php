@@ -112,8 +112,8 @@
 		        			</a>
 		        		</li>
 		        		<li id="trns002">
-		        			<a href="#">
-		        				<i class="fa fa-circle-o"></i> Cancel Latest Change
+		        			<a href="<?php echo base_url(); ?>Cancellation/">
+		        				<i class="fa fa-circle-o"></i> Cancellation
 		        			</a>
 		        		</li>
 		        	</ul>

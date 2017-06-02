@@ -151,7 +151,7 @@ class ChangeManagement_model extends CI_Model{
 	}
 
 	function insertChangeHistory_RequirementsHeader($param){
-		$sqlStr = "INSERT INTO T_CHANGE_HISTORY_REQ_HEADER (changeRequestNo, functionId, functionNo, oldFunctionVersion, newFunctionVersion) VALUES ('$param->changeRequestNo', '$param->functionNo', $param->functionId, $param->oldFnVersionNumber, $param->newFnVersionNumber)";
+		$sqlStr = "INSERT INTO T_CHANGE_HISTORY_REQ_HEADER (changeRequestNo, functionId, functionNo, oldFunctionVersion, newFunctionVersion) VALUES ('$param->changeRequestNo', $param->functionId, '$param->functionNo', $param->oldFnVersionNumber, $param->newFnVersionNumber)";
 		$result = $this->db->query($sqlStr);
 		if($result){
 			$query = $this->db->query("SELECT IDENT_CURRENT('T_CHANGE_HISTORY_REQ_HEADER') as last_id");
@@ -369,12 +369,59 @@ class ChangeManagement_model extends CI_Model{
 	}
 
 	function getChangeHistoryFnReqHeaderList($changeRequestNo){
-		$sqlStr = "SELECT * 
-			FROM T_CHANGE_HISTORY_REQ_HEADER 
-			WHERE changeRequestNo = '$changeRequestNo'
-			ORDER BY functionNo";
+		$sqlStr = "SELECT c.*, f.functionDescription 
+			FROM T_CHANGE_HISTORY_REQ_HEADER c 
+			INNER JOIN M_FN_REQ_HEADER f 
+			ON c.functionId = f.functionId
+			WHERE c.changeRequestNo = '$changeRequestNo' 
+			ORDER BY c.functionNo";
 		$result = $this->db->query($sqlStr);
 		return $result->result_array();	
+	}
+
+	function getChangeHistoryDatabaseSchemaList($changeRequestNo){
+		$sqlStr = "SELECT * FROM T_CHANGE_HISTORY_SCHEMA 
+			WHERE changeRequestNo = '$changeRequestNo'
+			AND changeType <> ''
+			ORDER BY tableName, columnName";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();	
+	}
+
+	function getChangeHistoryTestCaseList($changeRequestNo){
+		$sqlStr = "SELECT ht.*, rh.functionNo  
+			FROM T_CHANGE_HISTORY_TESTCASE ht
+			INNER JOIN M_RTM r
+			ON ht.testCaseId = r.testCaseId
+			INNER JOIN M_FN_REQ_HEADER rh
+			ON r.functionId = rh.functionId
+			WHERE ht.changeRequestNo = '$changeRequestNo'
+			ORDER BY ht.testCaseNo";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();	
+	}
+
+	function getChangeHistoryRTM($changeRequestNo){
+		$sqlStr = "SELECT 
+				h.changeRequestNo, 
+				h.oldVersionNumber,
+				h.newVersionNumber,
+				d.testCaseId,
+				t.testCaseNo,
+				d.functionId,
+				r.functionNo,
+				d.changeType 
+			FROM T_CHANGE_HISTORY_RTM_HEADER h
+			INNER JOIN T_CHANGE_HISTORY_RTM_DETAIL d
+			ON h.rtmHistoryId = d.rtmHistoryId 
+			INNER JOIN M_FN_REQ_HEADER r
+			ON d.functionId = r.functionId
+			INNER JOIN M_TESTCASE_HEADER t
+			ON d.testCaseId = t.testCaseId
+			WHERE h.changeRequestNo = '$changeRequestNo'
+			ORDER BY r.functionNo, t.testCaseNo";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
 	}
 
 	function changeProcess($changeInfo, &$changeResult, $connectionDB, $user, &$error_message, &$changeRequestNo){
@@ -864,7 +911,7 @@ class ChangeManagement_model extends CI_Model{
 
 	private function saveChangeRequestInformation($changeInfo, $changeResult, $user, &$error_message, &$changeRequestNo = ''){
 		
-		$newCurrentDate = date('Y-m-d');
+		$newCurrentDate = date('Y-m-d H:i:s');
 
 		$affectedProjectId = $changeResult->projectInfo;
 		$affectedRequirements = $changeResult->affectedRequirement;
@@ -899,7 +946,7 @@ class ChangeManagement_model extends CI_Model{
 			'changeFunctionId' => $changeInfo->functionId,
 			'changeFunctionNo' => $resultFnReq->functionNo,
 			'changeFunctionVersion' => $changeInfo->functionVersion,
-			'changeStatus' => '1');
+			'changeStatus' => CHANGE_STATUS_CLOSE);
 		$this->insertChangeRequestHeader($paramInsert);
 
 		//2. save change request details.

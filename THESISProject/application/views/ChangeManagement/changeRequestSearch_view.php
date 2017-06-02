@@ -68,10 +68,10 @@
 					<h3 class="box-title">Functional Requirements List</h3>
 				</div>
 
-				<div class="box-body" style="margin-top: -10px;">
-					<table id="resultTbl" class="table table-bordered">
-						<thead>
-							<tr style="background: #CACFD2;">
+				<div class="box-body table-responsive no-padding" style="margin-top: -10px;">
+					<table id="resultTbl" class="table table-striped">
+						<tbody>
+							<tr>
 								<th>No.</th>
 								<th>Requirement ID</th>
 								<th>Requirement Description</th>
@@ -79,8 +79,6 @@
 								<th>Effective Start Date</th>
 								<th>Action</th>
 							</tr>
-						</thead>
-						<tbody>
 							<?php 
 			                $define = 1;
 			                foreach($functionList as $value): 

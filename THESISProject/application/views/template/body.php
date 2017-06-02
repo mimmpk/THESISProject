@@ -197,6 +197,23 @@
 			});
 			//**************************[End: Change Management]*************************
 
+
+			//**************************[Start: Change Cancellation]*************************
+
+
+			/*$('#cancelChange_form').on("submit", function(event){
+				event.preventDefault(); 
+
+				var reason = $('#inputReason').val();
+				if(null == reason || "" == reason){
+					$("#").addClass("myClass yourClass");
+					return false;
+				}else{
+
+				}
+			});*/
+			//**************************[End: Change Cancellation]*************************
+
 		});
     </script>
 </body>
