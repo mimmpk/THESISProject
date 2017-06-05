@@ -78,17 +78,39 @@ class Cancellation extends CI_Controller{
 		$projectId = $this->input->post('projectId');
 		$reason = $this->input->post('inputReason');
 
-		$this->FValidate->set_rules('inputReason', null, 'trim|required');
-		if($this->FValidate->run()){
-			$success_message = IF_MSG_001;
+		try{
+			$this->FValidate->set_rules('inputReason', null, 'trim|required');
+			if($this->FValidate->run()){
+				$success_message = IF_MSG_001;
 
-			
+				/** 1. Get Change Detail*/
+				$changeInfo = $this->mChange->getChangeRequestInformation($changeRequestNo);
+				$param = (object) array(
+					'projectId'  => $projectId,
+					'status' 	 => 1,
+					'functionId' => $changeInfo->changeFunctionId
+					);
+				$lastFRInfo = $this->mFR->searchFunctionalRequirementHeaderInfo($param);
 
-			
-		}else{
-			$error_message = ER_MSG_019;
+				/** 2. Call Change API */
+				$param = (object) array(
+					'projectId' 	  => $projectId,
+					'functionId' 	  => $changeInfo->changeFunctionId,
+					'functionNo' 	  => $changeInfo->changeFunctionNo,
+					'functionVersion' => $lastFRInfo[0]['functionVersion'],
+					'changeRequestNo' => $changeRequestNo,
+					'type' 			  => 2 //1 = Change, 2 = Cancel
+					);
+				$changeResult = $this->callChangeAPI($param);
+				
+				//var_dump($changeResult);
+				
+			}else{
+				$error_message = ER_MSG_019;
+			}
+		}catch(Exception $e) {
+			$error_message = $e->getMessage();
 		}
-
 
 		$data['keyParam'] = array(
 				'changeRequestNo' => $changeRequestNo, 
@@ -98,6 +120,7 @@ class Cancellation extends CI_Controller{
 		$this->getAllChangeRequestData($changeRequestNo, $projectId, $error_message, $data);
 
 		$data['error_message'] = $error_message;
+		$data['success_message'] = $success_message;
 		$this->openView($data, 'view');
 	}
 
@@ -139,6 +162,138 @@ class Cancellation extends CI_Controller{
 		$data['affectedSchemaList'] = $affectedSchemaList;
 		$data['affectedRTMList'] = $affectedRTMList;
 		return true;
+	}
+
+	function callChangeAPI($param){
+		$passData = array();
+		$allFRHeader = array();
+		$allFRDetail = array();
+		$allTCHeader = array();
+		$allTCDetail = array();
+		$allRTM = array();
+		$changeList = array();
+
+		$this->load->library('common');
+
+		$passData['callType'] = $param->type;
+		//1.Project Information
+		$projectInfo = $this->mProject->searchProjectDetail($param->projectId);
+		$passData['projectInfo'] = $param->projectId;
+		$passData['connectDatabaseInfo'] = array(
+			'databaseName' 	=> $projectInfo->databaseName, 
+			'hostname' 		=> $projectInfo->hostname, 
+			'port' 			=> $projectInfo->port, 
+			'username' 		=> $projectInfo->username, 
+			'password' 		=> $projectInfo->password);
+		
+		//2. All Functional Requirements Header data
+		$criteria = (object) array('projectId' => $param->projectId, 'status' => '1');
+		$frHeaderList = $this->mFR->searchFunctionalRequirementHeaderInfo($criteria);
+		foreach($frHeaderList as $value){
+			$allFRHeader[$value['functionNo']] = array(
+				'functionVersion' 	=> $value['functionVersion'], 
+				'functionDesc' 		=> $value['fnDesc']);
+		}
+		$passData['FRHeader'] = $allFRHeader;
+
+		//3. All Functional Requirements Detail data
+		$functionNo = '';
+		$frDetailList = $this->mFR->searchFunctionalRequirementDetail($criteria);
+		foreach($frDetailList as $value){
+			$allFRDetail[$value['functionNo']][$value['inputName']] = array( 
+				'dataType' 		=> $value['dataType'],
+				'dataLength' 	=> $value['dataLength'],
+				'scale' 		=> $value['decimalPoint'],
+				'unique' 		=> $value['constraintUnique'],
+				'notNull' 		=> $value['constraintNull'],
+				'default' 		=> $value['constraintDefault'],
+				'min' 			=> $value['constraintMinValue'],
+				'max' 			=> $value['constraintMaxValue'],
+				'tabelName' 	=> $value['tableName'],
+				'columnName' 	=> $value['columnName']);
+		}
+		$passData['FRDetail'] = $allFRDetail;
+
+		//4. All Test Case Header data
+		$tcHeaderList = $this->mTestCase->searchTestCaseInfoByCriteria($param->projectId, '1');
+		foreach($tcHeaderList as $value){
+			$allTCHeader[$value['testCaseNo']] = array(
+				'testCaseVersion' 	=> $value['testCaseVersion'], 
+				'testCaseDesc' 	 	=> $value['testCaseDescription'],
+				'expectedResult' 	=> $value['expectedResult']);
+		}
+		$passData['TCHeader'] = $allTCHeader;
+		
+		//5. All Test Case Detail data
+		$tcDetailList = $this->mTestCase->searchExistTestCaseDetail($param->projectId);
+		foreach ($tcDetailList as $value) {
+			$allTCDetail[$value['testCaseNo']][$value['refInputName']] = $value['testData'];
+		}
+		$passData['TCDetail'] = $allTCDetail;
+
+		//6. All RTM data
+		$rtmList = $this->mRTM->searchRTMInfoByCriteria($param->projectId);
+		foreach($rtmList as $value){
+			$allRTM = array('functionNo' => $value['functionNo'], 'testCaseNo' => $value['testCaseNo']);
+		}
+		$passData['RTM'] = $allRTM;
+
+		//7. Change Request Information
+
+		$detailInfo = $this->mChange->getChangeRequestInputList($param->changeRequestNo);
+		
+		$changeList = array(
+			'functionNo' => $param->functionNo, 
+			'functionVersion' => $param->functionVersion);
+		
+		foreach($detailInfo as $value){
+			$modifyFlag = EDIT_FLAG_ENABLE;
+
+			$changeType = $this->mMisc->searchMiscellaneous('convertChangeType', $value['changeType']);
+
+			$detail = array();
+			if(CHANGE_TYPE_EDIT == $changeType[0]['miscValue2']){
+				$detail = $this->mCancellation->getCancelChangeRequestInputDetail($value['sequenceNo']);
+			}else{
+				$detail = $value;
+
+				if(CHANGE_TYPE_DELETE == $changeType[0]['miscValue2']){
+					$param = (object) array(
+						'changeRequestNo' => $param->changeRequestNo, 
+						'tableName' 	  => $value['refTableName'], 
+						'columnName' 	  => $value['refColumnName']);
+					$result = $this->mCancellation->searchChangeHistoryDatabaseSchemaByCriteria($param);
+					if(empty($result->changeType)){
+						$modifyFlag = EDIT_FLAG_DISABLE;
+					}
+				}
+			}
+
+			$changeList['inputs'][] = array(
+				'changeType' 	=> $changeType[0]['miscValue2'],
+				'inputName' 	=> $detail['inputName'],
+				'dataType' 		=> $detail['dataType'],
+				'dataLength' 	=> $detail['dataLength'],
+				'scale' 		=> $detail['scale'],
+				'unique'	 	=> $detail['constraintUnique'],
+				'notNull' 		=> $detail['constraintNotNull'],
+				'default' 		=> $detail['constraintDefault'],
+				'min' 			=> $detail['constraintMin'],
+				'max' 			=> $detail['constraintMax'],
+				'tableName' 	=> $detail['refTableName'],
+				'columnName' 	=> $detail['refColumnName'],
+				'modifyFlag' 	=> $modifyFlag
+			);
+		}
+		$passData['changeRequestInfo'] = $changeList;
+
+		$url = 'http://localhost/StubService/ChangeAPI.php';
+
+		$json = json_decode($this->common->postCURL($url, $passData));
+	
+		return $json;
+
+		//echo '<br><hr><h2>'.$this->postCURL($url, $passData).'</h2><br><hr><br>';
 	}
 
 	private function openView($data, $view){

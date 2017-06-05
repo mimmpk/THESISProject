@@ -70,6 +70,28 @@ class FunctionalRequirement_model extends CI_Model {
 		return $result->row();
 	}
 
+	function searchFRInputDetailByCriteria($param){
+		if(null != $param->inputId && !empty($param->inputId)){
+			$where[] = "i.inputId = $param->inputId";
+		}
+
+		if(null != $param->schemaVersionId && !empty($param->schemaVersionId)){
+			$where[] = "d.schemaVersionId = $param->schemaVersionId";
+		}
+		$where_clause = implode(' AND ', $where);
+
+		$sqlStr = "
+			SELECT i.inputName, i.refTableName, i.refColumnName, d.dataType, d.dataLength, d.decimalPoint, d.constraintUnique, d.constraintNull, d.constraintDefault, d.constraintMinValue, d.constraintMaxValue
+			FROM M_FN_REQ_INPUT i
+			INNER JOIN M_DATABASE_SCHEMA_INFO d
+			ON i.refTableName = d.tableName
+			AND i.refColumnName = d.columnName
+			WHERE $where_clause";
+
+		$result = $this->db->query($sqlStr);
+		return $result->row_array();
+	}
+
 	function searchExistFRInputInFunctionalRequirement($param){
 		if(null != $param->functionId && !empty($param->functionId)){
 			$where[] = "h.functionId = $param->functionId";

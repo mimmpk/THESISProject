@@ -346,6 +346,7 @@ class ChangeManagement_model extends CI_Model{
 				CONVERT(nvarchar, h.changeDate, 103) as changeDate,
 				CONCAT(u.firstname, '   ', u.lastname) as changeUser,
 				h.changeStatus,
+				h.changeFunctionId,
 				h.changeFunctionNo,
 				h.changeFunctionVersion,
 				fh.functionDescription

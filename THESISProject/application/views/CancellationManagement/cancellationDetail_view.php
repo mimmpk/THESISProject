@@ -360,7 +360,7 @@
 		</div>
 	</div>
 
-	<div id="cancel_modal" class="modal fade" tabindex="-1" role="dialog">
+	<!-- <div id="cancel_modal" class="modal fade" tabindex="-1" role="dialog">
 		<div class="modal-dialog">
 			<div class="modal-content" style="border-radius:6px;">
 				<div class="modal-header">
@@ -370,9 +370,6 @@
         			<h4 class="modal-title">Change Cancellation</h4>
         			<form method="post" id="cancelChange_form" role="form">
 	        			<div class="modal-body">
-				        	
-				        		<input type="hidden" name="changeRequestNo" value="<?php echo $keyParam['changeRequestNo'] ?>">
-				        		<input type="hidden" name="projectId" value="<?php echo $keyParam['projectId'] ?>">
 				        		<div class="form-group" id="_inputForm">
 				        			<label>Please provide in this entry the reason for cancelling the change.</label>
 				        			<input type="text" class="form-control" id="inputReason" name="inputReason">
@@ -391,7 +388,7 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	</div> -->
 
 	<div class="row">
 		<div class="col-md-12">
