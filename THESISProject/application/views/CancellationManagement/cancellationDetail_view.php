@@ -60,7 +60,7 @@
 	                			<table class="table table-bordered" cellpadding="1px" cellspacing="1px">
 	                				<tr>
 	                					<td class="col-md-3" height="10" style="background: #F2F3F4;text-align: right;vertical-align: center;">
-        									<label for="fnReqNo" style="margin-right: 3px;margin-bottom: 0px;">Functional Requirement No. :</label>
+        									<label for="fnReqNo" style="margin-right: 3px;margin-bottom: 0px;">Functional Requirement ID:</label>
         								</td>
         								<td class="col-md-2" height="10" style="text-align: left;vertical-align: center;">
         									<label for="fnReqNo" style="margin-left: 5px;margin-bottom: 0px;"><?php echo isset($headerInfo['fnReqNo'])? $headerInfo['fnReqNo'] : "";  ?></label>

@@ -8,6 +8,10 @@ class Cancellation_model extends CI_Model{
 	
 	function __construct(){
 		parent::__construct();
+
+		$this->load->model('ChangeManagement_model', 'mChange');
+		$this->load->model('FunctionalRequirement_model', 'mFR');
+		$this->load->model('TestCase_model', 'mTestCase');
 	}
 
 	public function searchChangesInformationForCancelling($projectId = '', $changeRequestNo = ''){
@@ -46,7 +50,7 @@ class Cancellation_model extends CI_Model{
 		return $result->result_array();
 	}
 
-	function searchChangeHistoryDatabaseSchemaByCriteria($param){
+	public function searchChangeHistoryDatabaseSchemaByCriteria($param){
 		if(!empty($param->changeRequestNo)){
 			$where[] = "changeRequestNo = '$param->changeRequestNo'";
 		}
@@ -116,6 +120,249 @@ class Cancellation_model extends CI_Model{
 		return $result->row_array();
 	}
 
+	public function cancelProcess(&$changeResult, $changeRequestNo, &$error_message, $user){
+		$this->db->trans_begin();
+
+		$isSuccess = $this->controlVersionCaseCancellationRequest($changeResult, $changeRequestNo, $error_message, $user);
+
+
+
+		$trans_status = $this->db->trans_status();
+	    if($trans_status == FALSE || !$isSuccess){
+	    	$this->db->trans_rollback();
+	    	return false;
+	    }else{
+	   		$this->db->trans_commit();
+	   		return true;
+	    }
+	}
+
+	private function controlVersionCaseCancellationRequest(&$changeResult, $changeRequestNo, &$error_message, $user){
+		$errorFlag = false;
+		$affectedProjectId = $changeResult->projectInfo;
+		$affectedRequirements = $changeResult->affectedRequirement;
+		$affectedTestCase = $changeResult->affectedTestCase;
+
+		$newCurrentDate = date('Y-m-d H:i:s');
+
+		//[1. Revert Version of Functional Requirements]
+		$FnReqHeaderHistoryList = $this->mChange->getChangeHistoryFnReqHeaderList($changeRequestNo);
+
+		foreach($FnReqHeaderHistoryList as $value){
+			//1.1 Update Version of Functional Requirement Header 
+			$functionId = $value['functionId'];
+			$functionNo = $value['functionNo'];
+			$newFunctionVersion = $value['newFunctionVersion'];
+			$fnReqHistoryId = $value['fnReqHistoryId'];
+
+			$param = (object) array(
+				'functionId' => $functionId, 'functionVersionNumber' => $newFunctionVersion);
+			$latestFnReqInfo = $this->mFR->searchFunctionalRequirementVersionByCriteria($param);
+
+			$effectiveStartDate = $latestFnReqInfo->effectiveStartDate;
+			$previousFnReqVersionId = $latestFnReqInfo->previousVersionId;
+
+			//Get Previous Functional Requirement Info
+			$param = (object) array(
+				'functionId' => $functionId, 'functionVersionId' => $previousFnReqVersionId);
+			$previousFnReqInfo = $this->mFR->searchFunctionalRequirementVersionByCriteria($param);
+
+			$previousEffectiveEndDate = $previousFnReqInfo->effectiveEndDate;
+			$previousUpdateDate = $previousFnReqInfo->updateDate;
+
+			//A. Enable Previous Version
+			$paramUpdate = (object) array(
+				'effectiveEndDate' 		=> '',
+				'activeFlag' 			=> ACTIVE_CODE,
+				'currentDate' 			=> $newCurrentDate,
+				'user' 					=> $user,
+				'oldFunctionVersionId'  => $previousFnReqVersionId,
+				'functionId' 			=> $functionId,
+				'oldUpdateDate' 		=> $previousUpdateDate);
+			$rowUpdate = $this->mFR->updateFunctionalRequirementsVersion($paramUpdate);
+			if(1 !== $rowUpdate){
+				$error_message = ER_MSG_019;
+				return false;
+			}
+
+			//B. Delete Latest Version
+			$paramDelete = (object) array(
+				'functionId' => $functionId, 
+				'functionVersionId' => $latestFnReqInfo->functionVersionId);
+			$rowDelete = $this->mFR->deleteFunctionalRequirementHeader($paramDelete);
+			if(1 !== $rowDelete){
+				$error_message = ER_MSG_019;
+				return false;
+			}
+
+			//1.2 Update Version of Functional Requirement Detail 
+			$FnReqDetailHistoryList = $this->mChange->getChangeHistoryFnReqDetailList($fnReqHistoryId);
+			foreach($FnReqDetailHistoryList as $detail){
+				$inputInfo = $this->mFR->searchFRInputInformation($affectedProjectId, $detail['inputName']);
+
+				$inputId = $inputInfo->inputId;
+
+				if(CHANGE_TYPE_ADD == $detail['changeType'] 
+					|| CHANGE_TYPE_EDIT == $detail['changeType']){
+					//A. Delete Latest Version
+					$paramDelete = (object) array(
+						'functionId' 		 => $functionId,
+						'inputId' 	 		 => $inputId,
+						'effectiveStartDate' => $effectiveStartDate);
+					$rowDelete = $this->mFR->deleteFunctionalRequirementDetail($paramDelete);
+					if(1 !== $rowDelete){
+						$error_message = ER_MSG_019;
+						return false;
+					}
+				}
+
+				if(CHANGE_TYPE_DELETE == $detail['changeType'] 
+					|| CHANGE_TYPE_EDIT == $detail['changeType']){
+					//B. Enable Previous Version
+					$paramUpdate = (object) array(
+						'effectiveEndDate' 	=> '',
+						'activeFlag' 		=> ACTIVE_CODE,
+						'currentDate' 		=> $newCurrentDate,
+						'user' 				=> $user,
+						'functionId' 		=> $functionId,
+						'inputId' 			=> $inputId,
+						'endDateCondition' 	=> $previousEffectiveEndDate);
+					$rowUpdate = $this->mFR->updateFunctionalRequirementsDetail($paramUpdate);
+					if(1 !== $rowUpdate){
+						$error_message = ER_MSG_019;
+						return false;
+					}
+				}
+			}
+		} //End FR
+
+		//[2. Revert Version of Test Cases]
+		$testCaseHistoryList = $this->mChange->getChangeHistoryTestCaseList($changeRequestNo);
+		foreach($testCaseHistoryList as $value) {
+			//2.1 Update Version of Header
+			$testCaseId = $value['testCaseId'];
+			$changeType = $value['changeType'];
+			$oldVersion = $value['oldTestCaseVersionNumber'];
+			$newVersion = $value['newTestCaseVersionNumber'];
+
+			if(CHANGE_TYPE_ADD == $changeType){
+				//A.Delete latest version
+				$testCaseVersionInfo = $this->mTestCase->searchTestCaseVersionInformationByCriteria($testCaseId, $newVersion);
+
+				$paramDelete = (object) array(
+					'testCaseId' => $testCaseId, 'testCaseVersionNumber' => $newVersion);
+				$rowDelete = $this->mTestCase->deleteTestCaseVersion($paramDelete);
+				if(1 !== $rowDelete){
+					$error_message = ER_MSG_019;
+					return false;
+				}
+
+				//B.Delete Details (all)
+				$paramDelete = (object) array(
+					'testCaseId' => $testCaseId, 
+					'effectiveStartDate' => $testCaseVersionInfo->effectiveStartDate);
+				$rowDelete = $this->mTestCase->deleteTestCaseDetail($paramDelete);
+				if(0 == $rowDelete){
+					$error_message = ER_MSG_019;
+					return false;
+				}
+			}
+
+			if(CHANGE_TYPE_DELETE == $changeType){
+				//A.Update previous version
+				$testCaseVersionInfo = $this->mTestCase->searchTestCaseVersionInformationByCriteria($testCaseId, $oldVersion);
+
+				$testCaseVersionId = $testCaseVersionInfo->testCaseVersionId;
+				$effectiveEndDate = $testCaseVersionInfo->effectiveEndDate;
+				$updateDate = $testCaseVersionInfo->updateDate;
+
+				$paramUpdate = (object) array(
+					'effectiveEndDate' 	  => '',
+					'activeFlag' 		  => ACTIVE_CODE,
+					'updateDate' 		  => $newCurrentDate,
+					'updateUser' 		  => $user,
+					'testCaseId' 		  => $testCaseId,
+					'testCaseVersionId'   => $testCaseVersionId,
+					'updateDateCondition' => $updateDate);
+				$rowUpdate = $this->mTestCase->updateTestCaseVersion($paramUpdate);
+				if(1 !== $rowUpdate){
+					$error_message = ER_MSG_019;
+					return false;
+				}
+
+				//B. Update Detail (all)
+				$paramUpdate = (object) array(
+					'effectiveEndDate' 	  => '',
+					'activeFlag' 		  => ACTIVE_CODE,
+					'updateDate' 		  => $newCurrentDate,
+					'updateUser' 		  => $user,
+					'testCaseId' 		  => $testCaseId,
+					'endDateCondition' 	  => $effectiveEndDate);
+				$rowUpdate = $this->mTestCase->updateTestCaseDetail($paramUpdate);
+				if(0 == $rowUpdate){
+					$error_message = ER_MSG_019;
+					return false;
+				}
+			}
+
+			if(CHANGE_TYPE_EDIT == $changeType){
+
+				$testCaseVersionInfo = $this->mTestCase->searchTestCaseVersionInformationByCriteria($testCaseId, $newVersion);
+
+				$testCaseVersionId = $testCaseVersionInfo->testCaseVersionId;
+				$previousVersionId = $testCaseVersionInfo->previousVersionId;
+				$effectiveStartDate = $testCaseVersionInfo->effectiveStartDate;
+				$updateDate = $testCaseVersionInfo->updateDate;
+
+				//A.Delete Latest Version
+				$paramDetail = (object) array(
+					'testCaseId' => $testCaseId,
+					'testCaseVersionId' => $testCaseVersionId);
+				$rowDelete = $this->mTestCase->deleteTestCaseVersion($paramDelete);
+				if(1 != $rowDelete){
+					$error_message = ER_MSG_019;
+					return false;
+				}
+
+				//B.Update Previous Version
+				$paramUpdate = (object) array(
+					'effectiveEndDate' 	  => '',
+					'activeFlag' 		  => ACTIVE_CODE,
+					'updateDate' 		  => $newCurrentDate,
+					'updateUser' 		  => $user,
+					'testCaseId' 		  => $testCaseId,
+					'testCaseVersionId'   => $previousVersionId,
+					'updateDateCondition' => $updateDate);
+				$rowUpdate = $this->mTestCase->updateTestCaseVersion($paramUpdate);
+				if(1 !== $rowUpdate){
+					$error_message = ER_MSG_019;
+					return false;
+				}
+
+				//C.Update Specific Detail
+				$paramDelete = (object) array(
+					'testCaseId' => $testCaseId,
+					'effectiveStartDate' => $effectiveStartDate);
+				$rowDelete = $this->mTestCase->deleteTestCaseDetail($paramDelete);
+
+				$paramUpdate = (object) array(
+					'effectiveEndDate' 	=> '',
+					'activeFlag' 		=> ACTIVE_CODE,
+					'updateDate' 		=> $newCurrentDate,
+					'updateUser' 		=> $user,
+					'testCaseId' 		=> $testCaseId,
+					'endDateCondition' 	=> $effectiveStartDate);
+				$rowUpdate = $this->mTestCase->updateTestCaseDetail($paramUpdate);
+			}
+
+		} //End Test Case
+
+		//[3. Database Schema]
+
+		//[4. RTM]
+
+		return true;
+	}
 }
 
 ?>

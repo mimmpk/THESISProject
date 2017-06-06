@@ -85,6 +85,19 @@ class TestCase_model extends CI_Model{
 		return $result->row();
 	}
 
+	function searchTestCaseVersionInformationByCriteria($param){
+		$sqlStr = "SELECT 
+			h.testCaseId, h.testCaseNo, v.testCaseVersionId, v.testCaseVersionNumber, 
+			v.previousVersionId, v.effectiveStartDate, v.effectiveEndDate, v.updateDate
+			FROM M_TESTCASE_HEADER h
+			INNER JOIN M_TESTCASE_VERSION v
+			ON h.testCaseId = v.testCaseId
+			WHERE h.testCaseId = $param->testCaseId
+			AND v.testCaseVersionNumber = $param->testCaseVersionNumber";
+		$result = $this->db->query($sqlStr);
+		return $result->row();
+	}
+
 	function insertTestCaseHeader($param, $user){
 		$currentDateTime = date('Y-m-d H:i:s');
 		$sqlStr = "INSERT INTO M_TESTCASE_HEADER (testCaseNo, testCaseDescription, expectedResult, projectId, createDate, createUser, updateDate, updateUser) VALUES ('{$param->testCaseNo}', '{$param->testCaseDescription}', '{$param->expectedResult}', {$param->projectId}, '{$currentDateTime}', '$user', '{$currentDateTime}', '$user')";
@@ -129,20 +142,72 @@ class TestCase_model extends CI_Model{
 
 	function updateTestCaseDetail($param){
 		$effectiveEndDate = empty($param->effectiveEndDate)? "NULL": "'".$param->effectiveEndDate."'";
+
+		if(null != $param->testCaseId && !empty($param->testCaseId)){
+			$where[] = "testCaseId = $param->testCaseId";
+		}
+
+		if(null != $param->inputId && !empty($param->inputId)){
+			$where[] = "refInputId 	= $param->inputId";
+		}
+
+		if(null != $param->activeFlagCondition && !empty($param->activeFlagCondition)){
+			$where[] = "activeFlag 	= '$param->activeFlagCondition'";
+		}
+
+		if(null != $param->endDateCondition && !empty($param->endDateCondition)){
+			$where[] = "effectiveEndDate = '$param->endDateCondition'";
+		}
+		$where_condition = implode(" AND ", $where);
+
 		$sqlStr = "UPDATE M_TESTCASE_DETAIL
 			SET effectiveEndDate = $effectiveEndDate, 
 				activeFlag = '$param->activeFlag', 
 			 	updateDate = '$param->updateDate', 
 			 	updateUser = '$param->updateUser' 
-			WHERE testCaseId = $param->testCaseId 
-			AND refInputId 	= $param->inputId 
-			AND activeFlag 	= '$param->activeFlagCondition'";
+			WHERE $where_condition";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
+	function deleteTestCaseVersion($param){
+		if(null != $param->testCaseId && !empty($param->testCaseId)){
+			$where[] = "testCaseId = $param->testCaseId";
+		}
+		if(null != $param->testCaseVersionId && !empty($param->testCaseVersionId)){
+			$where[] = "testCaseVersionId = $param->testCaseVersionId";
+		}
+		if(null != $param->testCaseVersionNumber && !empty($param->testCaseVersionNumber)){
+			$where[] = "testCaseVersionNumber = $param->testCaseVersionNumber";
+		}
+		$where_condition = implode(" AND ", $where);
+
+		$sqlStr = "DELETE FROM M_TESTCASE_VERSION WHERE $where_condition";
+
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();	
+	}
+
+	function deleteTestCaseDetail($param){
+		if(null != $param->testCaseId && !empty($param->testCaseId)){
+			$where[] = "testCaseId = $param->testCaseId";
+		}
+		if(null != $param->inputId && !empty($param->inputId)){
+			$where[] = "inputId = $param->inputId";
+		}
+		if(null != $param->effectiveStartDate && !empty($param->effectiveStartDate)){
+			$where[] = "effectiveStartDate = '$param->effectiveStartDate'";
+		}
+		$where_condition = implode(" AND ", $where);
+		
+		$sqlStr = "DELETE FROM M_TESTCASE_DETAIL WHERE $where_condition";
+		
 		$result = $this->db->query($sqlStr);
 		return $this->db->affected_rows();
 	}
 
 	function uploadTestCaseInfo($param, $user){
-		$this->db->trans_start(); //Starting Transaction
+		$this->db->trans_begin(); //Starting Transaction
 
 		$testCaseId = '';
 		$effectiveStartDate = date('Y-m-d H:i:s');
@@ -172,7 +237,6 @@ class TestCase_model extends CI_Model{
 			}
 		}
 
-		$this->db->trans_complete();
     	$trans_status = $this->db->trans_status();
 	    if($trans_status == FALSE){
 	    	$this->db->trans_rollback();

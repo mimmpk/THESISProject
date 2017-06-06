@@ -70,4 +70,51 @@
 			</div>
 		</div>
 	</div>
+	<div class="row">
+		<div class="col-md-12">
+			<div class="box box-danger">
+				<div class="box-header ui-sortable-handle">
+					<i class="ion ion-clipboard"></i>
+					<h3 class="box-title">To Do List</h3>
+				</div>
+				<div class="box-body">
+					<ui class="todo-list ui-sortable">
+						<li class="done">
+							<span class="handle ui-sortable-handle">
+								<i class="fa fa-ellipsis-v"></i>
+								<i class="fa fa-ellipsis-v"></i>
+							</span>
+							<input type="checkbox">
+							<span class="text">Master Screen</span>
+						</li>
+						<li class="done">
+							<span class="handle ui-sortable-handle">
+								<i class="fa fa-ellipsis-v"></i>
+								<i class="fa fa-ellipsis-v"></i>
+							</span>
+							<input type="checkbox">
+							<span class="text">Change Request Screen</span>
+						</li>
+						<li class="">
+							<span class="handle ui-sortable-handle">
+								<i class="fa fa-ellipsis-v"></i>
+								<i class="fa fa-ellipsis-v"></i>
+							</span>
+							<input type="checkbox">
+							<span class="text">Latest Change Cancellation Screen</span>
+						</li>
+						<li>
+							<span class="handle ui-sortable-handle">
+								<i class="fa fa-ellipsis-v"></i>
+								<i class="fa fa-ellipsis-v"></i>
+							</span>
+							<input type="checkbox">
+							<span class="text">ปัญหาเรื่องการอ่านภาษาไทย</span>
+						</li>
+						
+					</ui>
+				</div>
+			</div>
+		</div>
+	</div>
 </section>

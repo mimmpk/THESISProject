@@ -140,6 +140,98 @@ class DatabaseSchema_model extends CI_Model{
 		$result = $this->db->query($sqlStr);
 		return $this->db->affected_rows();
 	}
+
+	function getSchemaFromDatabaseTarget($connectionDB, $tableName, $columnName){
+		$dbSchemaDetail = array();
+
+		$serverName = $connectionDB->hostname;
+		$uid = $connectionDB->username;
+		$pwd = $connectionDB->password;
+		$databaseName = $connectionDB->databaseName;
+
+		$connectionInfo = array( "UID" => $uid, "PWD" => $pwd, "Database" => $databaseName); 
+
+		/* Connect using SQL Server Authentication. */    
+		$conn = sqlsrv_connect( $serverName, $connectionInfo);
+
+		$sqlStr = "
+			SELECT 
+				isc.TABLE_NAME,
+				isc.COLUMN_NAME, 
+				isc.DATA_TYPE,
+				isc.CHARACTER_MAXIMUM_LENGTH,
+				isc.NUMERIC_PRECISION,
+				isc.NUMERIC_SCALE,
+				isc.COLUMN_DEFAULT,
+				CASE WHEN isc.IS_NULLABLE = 'YES' THEN 'N' ELSE 'Y' END as IS_NOTNULL,
+				CASE WHEN istc1.CONSTRAINT_NAME IS NULL THEN 'N' ELSE 'Y' END as IS_UNIQUE,
+				CASE WHEN istc3.CONSTRAINT_NAME IS NULL THEN 'N' ELSE 'Y' END as IS_PRIMARY_KEY,
+				istc2.CONSTRAINT_NAME as CHECK_CONSTRAINT_NAME
+			FROM INFORMATION_SCHEMA.COLUMNS isc
+			LEFT JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE iscc
+			ON isc.COLUMN_NAME = iscc.COLUMN_NAME
+			LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS istc1
+			ON iscc.CONSTRAINT_NAME = istc1.CONSTRAINT_NAME
+			AND istc1.CONSTRAINT_TYPE = 'UNIQUE'
+			LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS istc2
+			ON iscc.CONSTRAINT_NAME = istc2.CONSTRAINT_NAME
+			AND istc2.CONSTRAINT_TYPE = 'CHECK'
+			LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS istc3
+			ON iscc.CONSTRAINT_NAME = istc3.CONSTRAINT_NAME
+			AND istc3.CONSTRAINT_TYPE = 'PRIMARY KEY'
+			WHERE isc.COLUMN_NAME = '$columnName' AND isc.TABLE_NAME = '$tableName'";
+		$stmt = sqlsrv_query( $conn, $sqlStr);
+
+		if($stmt === false){
+		    die(print_r(sqlsrv_errors(), true));
+		}else{
+			//echo "Statement executed.<br>\n"; 
+		    while($row = sqlsrv_fetch_array( $stmt, SQLSRV_FETCH_NUMERIC)){
+		    	$dbSchemaDetail = array(
+		    		'tableName' 			=> $row[0],
+		    		'columnName' 			=> $row[1],
+		    		'dataType' 				=> $row[2],
+		    		'charecterLength' 		=> $row[3],
+		    		'numericPrecision' 		=> $row[4],
+		    		'numericScale' 			=> $row[5],
+		    		'columnDefault' 		=> $row[6],
+		    		'isNotNull' 			=> $row[7],
+		    		'isUnique' 				=> $row[8],
+		    		'isPrimaryKey'			=> $row[9],
+		    		'checkConstraintName' 	=> $row[10],
+		    		'minValue'				=> '',
+		    		'maxValue'				=> ''
+		    	);
+			}
+
+			//Check Does the column has CHECK_CONSTRAINT or not?
+			if(!empty($dbSchemaDetail['checkConstraintName'])){
+				$constraintName = $dbSchemaDetail['checkConstraintName'];
+			    $min = 0.0;
+			    $max = 0.0;
+			    $procedure_params = array(
+			    	array(&$constraintName, SQLSRV_PARAM_IN),
+					array(&$min, SQLSRV_PARAM_OUT),
+					array(&$max, SQLSRV_PARAM_OUT)
+					);
+			    $sqlStr = "{call getCheckConstraint(?, ?, ?)}";
+				$stmt2 = sqlsrv_query($conn, $sqlStr, $procedure_params);
+				if($stmt2 === false){  
+				     die( print_r( sqlsrv_errors(), true));  
+				}else{
+					//print_r("Min: " .$min. "\nMax: ". $max);
+					$dbSchemaDetail['minValue'] = $min;
+					$dbSchemaDetail['maxValue'] = $max;
+				}
+				sqlsrv_free_stmt($stmt2);
+			}
+		} 
+
+		/* Free statement and connection resources. */
+		sqlsrv_free_stmt($stmt);    
+		sqlsrv_close($conn); 
+		return $dbSchemaDetail;
+	}
 }
 
 ?>

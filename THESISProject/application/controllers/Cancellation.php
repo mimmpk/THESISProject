@@ -83,7 +83,7 @@ class Cancellation extends CI_Controller{
 			if($this->FValidate->run()){
 				$success_message = IF_MSG_001;
 
-				/** 1. Get Change Detail*/
+				/** 1. Get Change Details */
 				$changeInfo = $this->mChange->getChangeRequestInformation($changeRequestNo);
 				$param = (object) array(
 					'projectId'  => $projectId,
@@ -102,8 +102,13 @@ class Cancellation extends CI_Controller{
 					'type' 			  => 2 //1 = Change, 2 = Cancel
 					);
 				$changeResult = $this->callChangeAPI($param);
+
+				/** 3. Control Version */
 				
-				//var_dump($changeResult);
+
+				/** 4. Update Change Request's Status */
+
+				/** 5. Display Result */
 				
 			}else{
 				$error_message = ER_MSG_019;
@@ -164,7 +169,7 @@ class Cancellation extends CI_Controller{
 		return true;
 	}
 
-	function callChangeAPI($param){
+	private function callChangeAPI($param){
 		$passData = array();
 		$allFRHeader = array();
 		$allFRDetail = array();

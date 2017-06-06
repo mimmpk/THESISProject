@@ -220,6 +220,28 @@ class FunctionalRequirement_model extends CI_Model {
 		return $result->row();
 	}
 
+	function searchFunctionalRequirementVersionByCriteria($param){
+		if(null != $param->functionId && !empty($param->functionId)){
+			$where[] = "functionId = $param->functionId";
+		}
+
+		if(null != $param->functionVersionId && !empty($param->functionVersionId)){
+			$where[] = "functionVersionId = $param->functionVersionId";
+		}
+
+		if(null != $param->functionVersionNumber && !empty($param->functionVersionNumber)){
+			$where[] = "functionVersionNumber = $param->functionVersionNumber";
+		}
+
+		$where_condition = implode(" AND ", $where);
+
+		$sqlStr = "SELECT * 
+			FROM M_FN_REQ_VERSION
+			WHERE $where_condition";
+		$result = $this->db->query($sqlStr);
+		return $result->row();
+	}
+
 	function insertFRHeader($param){
 		$currentDateTime = date('Y-m-d H:i:s');
 		$sqlStr = "INSERT INTO M_FN_REQ_HEADER (functionNo, functionDescription, projectId, createDate, createUser, updateDate, updateUser) VALUES ('{$param->functionNo}', '{$param->functionDescription}', {$param->projectId}, '$currentDateTime', '{$param->user}', '$currentDateTime', '{$param->user}')";
@@ -267,8 +289,10 @@ class FunctionalRequirement_model extends CI_Model {
 	}
 
 	function updateFunctionalRequirementsVersion($param){
+		$effectiveEndDate = !empty($param->effectiveEndDate)? "'".$param->effectiveEndDate."'": "NULL";
+
 		$sqlstr = "UPDATE M_FN_REQ_VERSION 
-			SET effectiveEndDate = '$param->effectiveEndDate', 
+			SET effectiveEndDate = $effectiveEndDate, 
 				activeFlag = '$param->activeFlag', 
 				updateDate = '$param->currentDate', 
 				updateUser = '$param->user' 
@@ -281,15 +305,52 @@ class FunctionalRequirement_model extends CI_Model {
 	}
 
 	function updateFunctionalRequirementsDetail($param){
+
+		$effectiveEndDate = !empty($param->effectiveEndDate)? "'".$param->effectiveEndDate."'" : "NULL";
+
+		if(null != $param->functionId && !empty($param->functionId)){
+			$where[] = "functionId = $param->functionId";
+		}
+
+		if(null != $param->inputId && !empty($param->inputId)){
+			$where[] = "inputId = $param->inputId";
+		}
+
+		if(null != $param->oldSchemaVersionId && !empty($param->oldSchemaVersionId)){
+			$where[] = "schemaVersionId = $param->oldSchemaVersionId";
+		}
+
+		if(null != $param->endDateCondition && !empty($param->endDateCondition)){
+			$where[] = "effectiveEndDate = $param->endDateCondition";
+		}
+		$where_condition = implode(" AND ", $where);
+
 		$sqlStr = "UPDATE M_FN_REQ_DETAIL
-			SET effectiveEndDate = '$param->effectiveEndDate',
+			SET effectiveEndDate = $effectiveEndDate,
 				activeFlag = '$param->activeFlag',
 				updateDate = '$param->currentDate',
 				updateUser = '$param->user'
+			WHERE $where_condition";
+		
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
+	function deleteFunctionalRequirementHeader($param){
+		$sqlStr = "DELETE FROM M_FN_REQ_VERSION
+			WHERE functionId = $param->functionId
+			AND functionVersionId = $param->functionVersionId";
+
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
+	function deleteFunctionalRequirementDetail($param){
+		$sqlStr = "DELETE FROM M_FN_REQ_DETAIL
 			WHERE functionId = $param->functionId
 			AND inputId = $param->inputId
-			AND schemaVersionId = $param->oldSchemaVersionId";
-		
+			AND effectiveStartDate = $param->effectiveStartDate";
+
 		$result = $this->db->query($sqlStr);
 		return $this->db->affected_rows();
 	}

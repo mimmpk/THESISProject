@@ -246,98 +246,6 @@ class ChangeManagement_model extends CI_Model{
 			AND activeFlag = '1'";
 		$result = $this->db->query($sqlStr);	
 		return $result->row();
-	}	
-
-	function getSchemaFromDatabaseTarget($connectionDB, $tableName, $columnName){
-		$dbSchemaDetail = array();
-
-		$serverName = $connectionDB->hostname;
-		$uid = $connectionDB->username;
-		$pwd = $connectionDB->password;
-		$databaseName = $connectionDB->databaseName;
-
-		$connectionInfo = array( "UID" => $uid, "PWD" => $pwd, "Database" => $databaseName); 
-
-		/* Connect using SQL Server Authentication. */    
-		$conn = sqlsrv_connect( $serverName, $connectionInfo);
-
-		$sqlStr = "
-			SELECT 
-				isc.TABLE_NAME,
-				isc.COLUMN_NAME, 
-				isc.DATA_TYPE,
-				isc.CHARACTER_MAXIMUM_LENGTH,
-				isc.NUMERIC_PRECISION,
-				isc.NUMERIC_SCALE,
-				isc.COLUMN_DEFAULT,
-				CASE WHEN isc.IS_NULLABLE = 'YES' THEN 'N' ELSE 'Y' END as IS_NOTNULL,
-				CASE WHEN istc1.CONSTRAINT_NAME IS NULL THEN 'N' ELSE 'Y' END as IS_UNIQUE,
-				CASE WHEN istc3.CONSTRAINT_NAME IS NULL THEN 'N' ELSE 'Y' END as IS_PRIMARY_KEY,
-				istc2.CONSTRAINT_NAME as CHECK_CONSTRAINT_NAME
-			FROM INFORMATION_SCHEMA.COLUMNS isc
-			LEFT JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE iscc
-			ON isc.COLUMN_NAME = iscc.COLUMN_NAME
-			LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS istc1
-			ON iscc.CONSTRAINT_NAME = istc1.CONSTRAINT_NAME
-			AND istc1.CONSTRAINT_TYPE = 'UNIQUE'
-			LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS istc2
-			ON iscc.CONSTRAINT_NAME = istc2.CONSTRAINT_NAME
-			AND istc2.CONSTRAINT_TYPE = 'CHECK'
-			LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS istc3
-			ON iscc.CONSTRAINT_NAME = istc3.CONSTRAINT_NAME
-			AND istc3.CONSTRAINT_TYPE = 'PRIMARY KEY'
-			WHERE isc.COLUMN_NAME = '$columnName' AND isc.TABLE_NAME = '$tableName'";
-		$stmt = sqlsrv_query( $conn, $sqlStr);
-
-		if($stmt === false){
-		    die(print_r(sqlsrv_errors(), true));
-		}else{
-			//echo "Statement executed.<br>\n"; 
-		    while($row = sqlsrv_fetch_array( $stmt, SQLSRV_FETCH_NUMERIC)){
-		    	$dbSchemaDetail = array(
-		    		'tableName' 			=> $row[0],
-		    		'columnName' 			=> $row[1],
-		    		'dataType' 				=> $row[2],
-		    		'charecterLength' 		=> $row[3],
-		    		'numericPrecision' 		=> $row[4],
-		    		'numericScale' 			=> $row[5],
-		    		'columnDefault' 		=> $row[6],
-		    		'isNotNull' 			=> $row[7],
-		    		'isUnique' 				=> $row[8],
-		    		'isPrimaryKey'			=> $row[9],
-		    		'checkConstraintName' 	=> $row[10],
-		    		'minValue'				=> '',
-		    		'maxValue'				=> ''
-		    	);
-			}
-
-			//Check Does the column has CHECK_CONSTRAINT or not?
-			if(!empty($dbSchemaDetail['checkConstraintName'])){
-				$constraintName = $dbSchemaDetail['checkConstraintName'];
-			    $min = 0.0;
-			    $max = 0.0;
-			    $procedure_params = array(
-			    	array(&$constraintName, SQLSRV_PARAM_IN),
-					array(&$min, SQLSRV_PARAM_OUT),
-					array(&$max, SQLSRV_PARAM_OUT)
-					);
-			    $sqlStr = "{call getCheckConstraint(?, ?, ?)}";
-				$stmt2 = sqlsrv_query($conn, $sqlStr, $procedure_params);
-				if($stmt2 === false){  
-				     die( print_r( sqlsrv_errors(), true));  
-				}else{
-					//print_r("Min: " .$min. "\nMax: ". $max);
-					$dbSchemaDetail['minValue'] = $min;
-					$dbSchemaDetail['maxValue'] = $max;
-				}
-				sqlsrv_free_stmt($stmt2);
-			}
-		} 
-
-		/* Free statement and connection resources. */
-		sqlsrv_free_stmt($stmt);    
-		sqlsrv_close($conn); 
-		return $dbSchemaDetail;
 	}
 
 	function getChangeRequestInformation($changeRequestNo){
@@ -376,6 +284,15 @@ class ChangeManagement_model extends CI_Model{
 			ON c.functionId = f.functionId
 			WHERE c.changeRequestNo = '$changeRequestNo' 
 			ORDER BY c.functionNo";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();	
+	}
+
+	function getChangeHistoryFnReqDetailList($fnReqHistoryId){
+		$sqlStr = "SELECT *
+			FROM T_CHANGE_HISTORY_REQ_DETAIL
+			WHERE fnReqHistoryId = $fnReqHistoryId
+			ORDER BY sequenceNo";
 		$result = $this->db->query($sqlStr);
 		return $result->result_array();	
 	}
@@ -428,7 +345,7 @@ class ChangeManagement_model extends CI_Model{
 	function changeProcess($changeInfo, &$changeResult, $connectionDB, $user, &$error_message, &$changeRequestNo){
 		$this->db->trans_begin();
 
-		$resultSuccess = $this->controlVersionOfChangedData($changeResult, $connectionDB, $user, $error_message);
+		$resultSuccess = $this->controlVersionCaseChangeRequest($changeResult, $connectionDB, $user, $error_message);
 
 		if($resultSuccess){
 			//Save ChangeRequest & ChangeHistory
@@ -445,7 +362,7 @@ class ChangeManagement_model extends CI_Model{
 	    }
 	}
 
-	private function controlVersionOfChangedData(&$changeResult, $connectionDB, $user, &$error_message){
+	private function controlVersionCaseChangeRequest(&$changeResult, $connectionDB, $user, &$error_message){
 		//$this->db->trans_start(); //Starting Transaction
 		
 		$errorFlag = false;
@@ -520,7 +437,7 @@ class ChangeManagement_model extends CI_Model{
 			}
 
 			//insert database schema detail**(get direct from database target)
-			$dbSchemaDetail = $this->getSchemaFromDatabaseTarget($connectionDB, $value->tableName, $value->columnName);
+			$dbSchemaDetail = $this->mDB->getSchemaFromDatabaseTarget($connectionDB, $value->tableName, $value->columnName);
 			if(!empty($dbSchemaDetail)){
 				$dataLength = '';
 				$scaleLength = '';
@@ -706,6 +623,7 @@ class ChangeManagement_model extends CI_Model{
 					$error_message = ER_MSG_016;
 					break;
 				}
+				$oldTCVersionId = '';
 				$newTCVersionNumber = INITIAL_VERSION;
 			}else{
 				$resultLastTCVersion = $this->getLastTestCaseVersion($affectedProjectId, $keyTestCaseNo, $testcaseInfoVal->testCaseVersion);
