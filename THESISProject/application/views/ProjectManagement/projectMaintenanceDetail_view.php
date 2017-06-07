@@ -95,7 +95,7 @@
             					<div class="form-group">
             						<div align="left" style="margin-left: -10px;">
             						<?php $var = ('1' == $projectInfo->startFlag)? 'disabled' : ''; ?>
-            							<a onclick="startProject();" class="btn btn-app btn-default <?php echo $var;?>" <?php echo $var;?>>
+            							<a onclick="startProject();" class="btn btn-app btn-default <?php echo $var;?>">
 			                				<i class="fa fa-play"></i> Start Project
 			                			</a>
             						</div>

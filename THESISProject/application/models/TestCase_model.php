@@ -143,19 +143,19 @@ class TestCase_model extends CI_Model{
 	function updateTestCaseDetail($param){
 		$effectiveEndDate = empty($param->effectiveEndDate)? "NULL": "'".$param->effectiveEndDate."'";
 
-		if(null != $param->testCaseId && !empty($param->testCaseId)){
+		if(isset($param->testCaseId) && !empty($param->testCaseId)){
 			$where[] = "testCaseId = $param->testCaseId";
 		}
 
-		if(null != $param->inputId && !empty($param->inputId)){
+		if(isset($param->inputId) && !empty($param->inputId)){
 			$where[] = "refInputId 	= $param->inputId";
 		}
 
-		if(null != $param->activeFlagCondition && !empty($param->activeFlagCondition)){
+		if(isset($param->activeFlagCondition) && !empty($param->activeFlagCondition)){
 			$where[] = "activeFlag 	= '$param->activeFlagCondition'";
 		}
 
-		if(null != $param->endDateCondition && !empty($param->endDateCondition)){
+		if(isset($param->endDateCondition) && !empty($param->endDateCondition)){
 			$where[] = "effectiveEndDate = '$param->endDateCondition'";
 		}
 		$where_condition = implode(" AND ", $where);
@@ -171,13 +171,13 @@ class TestCase_model extends CI_Model{
 	}
 
 	function deleteTestCaseVersion($param){
-		if(null != $param->testCaseId && !empty($param->testCaseId)){
+		if(isset($param->testCaseId) && !empty($param->testCaseId)){
 			$where[] = "testCaseId = $param->testCaseId";
 		}
-		if(null != $param->testCaseVersionId && !empty($param->testCaseVersionId)){
+		if(isset($param->testCaseVersionId) && !empty($param->testCaseVersionId)){
 			$where[] = "testCaseVersionId = $param->testCaseVersionId";
 		}
-		if(null != $param->testCaseVersionNumber && !empty($param->testCaseVersionNumber)){
+		if(isset($param->testCaseVersionNumber) && !empty($param->testCaseVersionNumber)){
 			$where[] = "testCaseVersionNumber = $param->testCaseVersionNumber";
 		}
 		$where_condition = implode(" AND ", $where);
@@ -189,13 +189,13 @@ class TestCase_model extends CI_Model{
 	}
 
 	function deleteTestCaseDetail($param){
-		if(null != $param->testCaseId && !empty($param->testCaseId)){
+		if(isset($param->testCaseId)  && !empty($param->testCaseId)){
 			$where[] = "testCaseId = $param->testCaseId";
 		}
-		if(null != $param->inputId && !empty($param->inputId)){
+		if(isset($param->inputId) && !empty($param->inputId)){
 			$where[] = "inputId = $param->inputId";
 		}
-		if(null != $param->effectiveStartDate && !empty($param->effectiveStartDate)){
+		if(isset($param->effectiveStartDate) && !empty($param->effectiveStartDate)){
 			$where[] = "effectiveStartDate = '$param->effectiveStartDate'";
 		}
 		$where_condition = implode(" AND ", $where);

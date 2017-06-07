@@ -44,6 +44,22 @@ class RTM_model extends CI_Model{
 		return $result->row();
 	}
 
+	function searchRTMVersionInfoByCriteria($param){
+		$sqlStr = "SELECT 
+			new.rtmVersionId as new_rtmVersionId, 
+			new.effectiveStartDate, 
+			new.effectiveEndDate, 
+			old.rtmVersionId as old_rtmVersionId, 
+			old.updateDate as old_updateDate
+			FROM M_RTM_VERSION new
+			INNER JOIN M_RTM_VERSION old
+			ON new.previousVersionId = old.rtmVersionId
+			WHERE new.projectId = {$param->projectId}
+			AND new.rtmVersionNumber = {$param->rtmVersionNumber}";
+		$result = $this->db->query($sqlStr);
+		return $result->row();
+	}	
+
 	function insertRTMInfo($param, $user){
 		$currentDateTime = date('Y-m-d H:i:s');
 		$sqlStr = "INSERT INTO M_RTM (projectId, functionId, testCaseId, effectiveStartDate, effectiveEndDate, activeFlag, createDate, createUser, updateDate, updateUser) VALUES ($param->projectId, $param->functionId, $param->testCaseId, '$param->effectiveStartDate', NULL, '$param->activeFlag', '$currentDateTime', '$user', '$currentDateTime', '$user') ";
@@ -61,8 +77,9 @@ class RTM_model extends CI_Model{
 	}
 
 	function updateRTMInfo($param){
+		$effectiveEndDate = !empty($param->effectiveEndDate)? "'".$param->effectiveEndDate."'": "NULL";
 		$sqlStr = "UPDATE M_RTM
-			SET effectiveEndDate = '$param->effectiveEndDate',
+			SET effectiveEndDate = $effectiveEndDate,
 				activeFlag = '$param->activeFlag',
 				updateDate = '$param->updateDate',
 				updateUser = '$param->user'
@@ -74,8 +91,10 @@ class RTM_model extends CI_Model{
 	}
 
 	function updateRTMVersion($param){
+		$effectiveEndDate = !empty($param->effectiveEndDate)? "'".$param->effectiveEndDate."'": "NULL";
+
 		$sqlStr = "UPDATE M_RTM_VERSION
-			SET effectiveEndDate = '$param->effectiveEndDate',
+			SET effectiveEndDate = $effectiveEndDate,
 				activeFlag = '$param->activeFlag',
 				updateDate = '$param->updateDate',
 				updateUser = '$param->user'
@@ -86,10 +105,25 @@ class RTM_model extends CI_Model{
 		return $this->db->affected_rows();
 	}
 
-	function uploadRTM($param, $user){
-		$this->db->trans_start(); //Starting Transaction
-		$this->db->trans_strict(FALSE);
+	function deleteRTMVersion($param){
+		$sqlStr = "DELETE FROM M_RTM_VERSION
+			WHERE projectId = $param->projectId
+			AND rtmVersionId = $param->rtmVersionId";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
 
+	function deleteRTMInfo($param){
+		$sqlStr = "DELETE FROM M_RTM
+			WHERE projectId = {$param->projectId}
+			AND functionId = {$param->fucntionId}
+			AND testCaseId = {$param->testCaseId}";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();	
+	}
+
+	function uploadRTM($param, $user){
+		$this->db->trans_begin(); //Starting Transaction
 		$effectiveStartDate = '';
 		
 		//Check Existing RTM Version
@@ -107,7 +141,6 @@ class RTM_model extends CI_Model{
 			$resultInsertRTMInfo = $this->insertRTMInfo($value, $user);
 		}
 
-		$this->db->trans_complete();
     	$trans_status = $this->db->trans_status();
 	    if($trans_status == FALSE){
 	    	$this->db->trans_rollback();

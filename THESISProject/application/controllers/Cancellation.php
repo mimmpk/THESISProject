@@ -14,6 +14,7 @@ class Cancellation extends CI_Controller{
 		$this->load->model('Cancellation_model', 'mCancellation');
 
 		$this->load->library('form_validation', null, 'FValidate');
+		$this->load->library('session');
 	}
 
 	public function index(){
@@ -66,11 +67,14 @@ class Cancellation extends CI_Controller{
 			$error_message = ER_MSG_011;
 		}
 
+		$data['mode'] = '';
+		$data['reason'] = '';
 		$data['error_message'] = $error_message;
 		$this->openView($data, 'view');
 	}
 
 	public function cancel(){
+		$mode = '0'; // 0 = error, 1 = success
 		$error_message = '';
 		$success_message = '';
 
@@ -80,9 +84,8 @@ class Cancellation extends CI_Controller{
 
 		try{
 			$this->FValidate->set_rules('inputReason', null, 'trim|required');
+			
 			if($this->FValidate->run()){
-				$success_message = IF_MSG_001;
-
 				/** 1. Get Change Details */
 				$changeInfo = $this->mChange->getChangeRequestInformation($changeRequestNo);
 				$param = (object) array(
@@ -104,11 +107,22 @@ class Cancellation extends CI_Controller{
 				$changeResult = $this->callChangeAPI($param);
 
 				/** 3. Control Version */
-				
-
 				/** 4. Update Change Request's Status */
+				$user = $this->session->userdata('username');
+
+				$processData = array(
+					'user' 				  => $user, 
+					'changeRequestNo' 	  => $changeRequestNo, 
+					'reason' 			  => $reason,
+					'updateDateCondition' => $changeInfo->updateDate);
+
+				$controlVersionResult = $this->mCancellation->cancelProcess($changeResult, $error_message, $processData);
 
 				/** 5. Display Result */
+				if($controlVersionResult == true){
+					$mode = '1';
+					$success_message = IF_MSG_001;
+				}
 				
 			}else{
 				$error_message = ER_MSG_019;
@@ -118,12 +132,14 @@ class Cancellation extends CI_Controller{
 		}
 
 		$data['keyParam'] = array(
-				'changeRequestNo' => $changeRequestNo, 
-				'projectId' 	  => $projectId);
+			'changeRequestNo' => $changeRequestNo, 
+			'projectId' 	  => $projectId);
 
 		//Get All Change Request Data
 		$this->getAllChangeRequestData($changeRequestNo, $projectId, $error_message, $data);
 
+		$data['mode'] = $mode;
+		$data['reason'] = $reason;
 		$data['error_message'] = $error_message;
 		$data['success_message'] = $success_message;
 		$this->openView($data, 'view');
@@ -139,10 +155,11 @@ class Cancellation extends CI_Controller{
 					'changeRequestNo' 	=> $changeHeaderResult[0]['changeRequestNo'],
 					'changeUser' 		=> $changeHeaderResult[0]['changeUser'],
 					'changeDate' 		=> $changeHeaderResult[0]['changeDate'],
+					'changeStatus'		=> $changeHeaderResult[0]['changeStatusMisc'],
 					'fnReqNo' 			=> $changeHeaderResult[0]['changeFunctionNo'],
 					'fnReqVer' 			=> $changeHeaderResult[0]['changeFunctionVersion'],
 					'fnReqDesc' 		=> $changeHeaderResult[0]['functionDescription'],
-					'isLatestChange'	=> $changeHeaderResult[0]['isLatestChange']	);
+					'isLatestChange'	=> $changeHeaderResult[0]['isLatestChange']);
 
 				//search change detail
 				$detailInfo = $this->mChange->getChangeRequestInputList($changeRequestNo);

@@ -225,11 +225,11 @@ class FunctionalRequirement_model extends CI_Model {
 			$where[] = "functionId = $param->functionId";
 		}
 
-		if(null != $param->functionVersionId && !empty($param->functionVersionId)){
+		if(isset($param->functionVersionId) && !empty($param->functionVersionId)){
 			$where[] = "functionVersionId = $param->functionVersionId";
 		}
 
-		if(null != $param->functionVersionNumber && !empty($param->functionVersionNumber)){
+		if(isset($param->functionVersionNumber) && !empty($param->functionVersionNumber)){
 			$where[] = "functionVersionNumber = $param->functionVersionNumber";
 		}
 
@@ -308,20 +308,20 @@ class FunctionalRequirement_model extends CI_Model {
 
 		$effectiveEndDate = !empty($param->effectiveEndDate)? "'".$param->effectiveEndDate."'" : "NULL";
 
-		if(null != $param->functionId && !empty($param->functionId)){
+		if(isset($param->functionId) && !empty($param->functionId)){
 			$where[] = "functionId = $param->functionId";
 		}
 
-		if(null != $param->inputId && !empty($param->inputId)){
+		if(isset($param->inputId) && !empty($param->inputId)){
 			$where[] = "inputId = $param->inputId";
 		}
 
-		if(null != $param->oldSchemaVersionId && !empty($param->oldSchemaVersionId)){
+		if(isset($param->oldSchemaVersionId) && !empty($param->oldSchemaVersionId)){
 			$where[] = "schemaVersionId = $param->oldSchemaVersionId";
 		}
 
-		if(null != $param->endDateCondition && !empty($param->endDateCondition)){
-			$where[] = "effectiveEndDate = $param->endDateCondition";
+		if(isset($param->endDateCondition) && !empty($param->endDateCondition)){
+			$where[] = "effectiveEndDate = '$param->endDateCondition'";
 		}
 		$where_condition = implode(" AND ", $where);
 
@@ -349,7 +349,7 @@ class FunctionalRequirement_model extends CI_Model {
 		$sqlStr = "DELETE FROM M_FN_REQ_DETAIL
 			WHERE functionId = $param->functionId
 			AND inputId = $param->inputId
-			AND effectiveStartDate = $param->effectiveStartDate";
+			AND effectiveStartDate = '$param->effectiveStartDate'";
 
 		$result = $this->db->query($sqlStr);
 		return $this->db->affected_rows();

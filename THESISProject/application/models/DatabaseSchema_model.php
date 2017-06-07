@@ -61,16 +61,29 @@ class DatabaseSchema_model extends CI_Model{
 			INNER JOIN M_DATABASE_SCHEMA_VERSION dv
 			ON di.schemaVersionId = dv.schemaVersionId
 			WHERE di.projectId = $projectId
-			AND di.tableName = '$tableName'
-			AND di.columnName =  '$columnName'
+			AND di.tableName  = '$tableName'
+			AND di.columnName = '$columnName'
 			AND dv.activeFlag = '1'";
 		$result = $this->db->query($sqlStr);
 		return $result->row();
 	}
 
+	function searchDatabaseSchemaVersionInformationByCriteria($param){
+		$sqlStr = "SELECT v.tableName, v.columnName, v.schemaVersionId, v.schemaVersionNumber, 
+			v.effectiveStartDate, v.effectiveEndDate, v.previousSchemaVersionId
+			FROM M_DATABASE_SCHEMA_VERSION v
+			INNER JOIN M_DATABASE_SCHEMA_INFO i
+			ON v.schemaVersionId = i.schemaVersionId
+			WHERE v.projectId = $param->projectId
+			AND v.tableName = '$param->tableName'
+			AND v.columnName = '$param->columnName'
+			AND v.schemaVersionNumber = $param->versionNumber";
+		$result = $this->db->query($sqlStr);
+		return $result->row();
+	}
+
 	function uploadDatabaseSchema($param, $user, $projectId){
-		$this->db->trans_start(); //Starting Transaction
-		$this->db->trans_strict(FALSE);
+		$this->db->trans_begin(); //Starting Transaction
 
 		foreach($param as $value){
 			//Insert Database Schema Version
@@ -83,7 +96,6 @@ class DatabaseSchema_model extends CI_Model{
 			}
 		}
 		
-		$this->db->trans_complete();
     	$trans_status = $this->db->trans_status();
 	    if($trans_status == FALSE){
 	    	$this->db->trans_rollback();
@@ -125,18 +137,51 @@ class DatabaseSchema_model extends CI_Model{
 	}
 
 	function updateDatabaseSchemaVersion($param){
-		$currentDateTime = date('Y-m-d H:i:s');
-		$sqlStr = "UPDATE M_DATABASE_SCHEMA_VERSION
-			SET effectiveEndDate = '$param->currentDate', 
-				activeFlag = '$param->activeFlag', 
-				updateDate = '$currentDateTime', 
-				updateUser = '$param->user' 
-			WHERE projectId = $param->projectId 
-			AND tableName = '$param->tableName' 
-			AND columnName = '$param->columnName' 
-			AND schemaVersionId = $param->oldSchemaVersionId 
-			AND updateDate = '$param->oldUpdateDate'";
+		$effectiveEndDate = !empty($param->effectiveEndDate)? "'".$param->effectiveEndDate."'": "NULL";
 
+		if(isset($param->projectId) && !empty($param->projectId)){
+			$where[] = "projectId = $param->projectId ";
+		}
+		if(isset($param->tableName) && !empty($param->tableName)){
+			$where[] = "tableName = '$param->tableName'";
+		}
+		if(isset($param->columnName) && !empty($param->columnName)){
+			$where[] = "columnName = '$param->columnName'";
+		}
+		if(isset($param->oldSchemaVersionId) && !empty($param->oldSchemaVersionId)){
+			$where[] = "schemaVersionId = $param->oldSchemaVersionId";
+		}
+		if(isset($param->oldUpdateDate) && !empty($param->oldUpdateDate)){
+			$where[] = "updateDate = '$param->oldUpdateDate'";
+		}
+		$where_clause = implode(" AND ", $where);
+
+		$sqlStr = "UPDATE M_DATABASE_SCHEMA_VERSION
+			SET effectiveEndDate = $effectiveEndDate, 
+				activeFlag = '$param->activeFlag', 
+				updateDate = '$param->currentDate', 
+				updateUser = '$param->user' 
+			WHERE $where_clause";
+
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
+	function deleteDatabaseSchemaVersion($param){
+		$sqlStr = "DELETE FROM M_DATABASE_SCHEMA_VERSION
+			WHERE projectId = $param->projectId
+			AND tableName = '$param->tableName'
+			AND columnName = '$param->columnName' 
+			AND schemaVersionId = $param->schemaVersionId";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
+	function deleteDatabaseSchemaInfo($param){
+		$sqlStr = "DELETE FROM M_DATABASE_SCHEMA_INFO
+			WHERE tableName = '$param->tableName'
+			AND columnName = '$param->columnName' 
+			AND schemaVersionId = $param->schemaVersionId";
 		$result = $this->db->query($sqlStr);
 		return $this->db->affected_rows();
 	}

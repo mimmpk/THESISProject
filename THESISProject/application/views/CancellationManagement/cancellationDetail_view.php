@@ -39,11 +39,17 @@
                 					<?php echo isset($headerInfo['changeRequestNo'])? $headerInfo['changeRequestNo']: ""; ?>
                 					</b>
                 					<small class="pull-right">
+                						Status:
+                						<b><?php echo isset($headerInfo['changeStatus'])? $headerInfo['changeStatus']: "";  ?></b>
+                						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                						
                 						Change User: 
                 						<b><?php echo isset($headerInfo['changeUser'])? $headerInfo['changeUser']: "";  ?></b>
                 						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                						
                 						Change Date: 
                 						<b><?php echo isset($headerInfo['changeDate'])? $headerInfo['changeDate']: "";  ?></b>
+                						
                 						<?php if(isset($headerInfo['isLatestChange']) && 'Y' == $headerInfo['isLatestChange']){ ?>
                 							<img src="<?php echo base_url() ?>assets/img/label_black_new.png" style="width: 35px;height: 35px;">
                 						<?php } ?>
@@ -401,9 +407,15 @@
 							<div class="col-sm-12">
 								<div class="form-group" id="_inputForm">
 				        			<label>Please provide in this entry the reason for cancelling the change.</label>
-				        			<input type="text" class="form-control" id="inputReason" name="inputReason">
+
+				        			<?php 
+				        			$disableFlag = (!empty($mode) && '1' == $mode)? 'disabled':'';
+				        			?>
+
+				        			<input type="text" class="form-control" id="inputReason" name="inputReason" value="<?php echo $reason ?>" <?php echo $disableFlag; ?>>
 				        			<?php echo form_error('inputReason', '<font color="red">','</font><br>'); ?>
-				        			<button type="submit" class="btn btn-danger" onclick="changeCancellation()" style="margin-top: 5px;">
+
+				        			<button type="submit" class="btn btn-danger <?php echo $disableFlag;?>" onclick="changeCancellation()" style="margin-top: 5px;" <?php echo $disableFlag; ?>>
 					            		<i class="fa fa-fw fa-undo"></i>
 					            		Cancel Change
 					            	</button>
@@ -415,18 +427,4 @@
 	      	</form>	
 		</div>
 	</div>
-
-	<!-- <script type="text/javascript">
-		function changeCancellation(){
-			var message = "Are you sure to cancel this change request?";
-			if(confirm(message)){
-				var reason = $('#inputReason').val();
-				if(null == reason || "" == reason){
-					var d = document.getElementById("_inputForm");
-					d.className += " has-error";
-					return false;
-				}
-			}
-		}
-	</script> -->
 </section>

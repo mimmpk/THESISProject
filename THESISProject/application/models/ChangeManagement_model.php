@@ -123,7 +123,7 @@ class ChangeManagement_model extends CI_Model{
 
 	function insertChangeRequestHeader($param){
 		
-		$sqlStr = "INSERT INTO T_CHANGE_REQUEST_HEADER (changeRequestNo, changeUserId, changeDate, projectId, changeFunctionId, changeFunctionNo, changeFunctionVersion, changeStatus) VALUES ('$param->changeRequestNo', $param->changeUser, '$param->changeDate', $param->projectId, $param->changeFunctionId, '$param->changeFunctionNo', '$param->changeFunctionVersion', '$param->changeStatus')";
+		$sqlStr = "INSERT INTO T_CHANGE_REQUEST_HEADER (changeRequestNo, changeUserId, changeDate, projectId, changeFunctionId, changeFunctionNo, changeFunctionVersion, changeStatus, createUser, createDate, updateUser, updateDate) VALUES ('$param->changeRequestNo', $param->changeUser, '$param->changeDate', $param->projectId, $param->changeFunctionId, '$param->changeFunctionNo', '$param->changeFunctionVersion', '$param->changeStatus', '$param->user', '$param->currentDate', '$param->user', '$param->currentDate')";
 		
 		$result = $this->db->query($sqlStr);
 		return $result;
@@ -196,6 +196,18 @@ class ChangeManagement_model extends CI_Model{
 		return NULL;
 	}
 
+	function updateChangeRequestHeader($param){
+		$sqlStr = "UPDATE T_CHANGE_REQUEST_HEADER
+			SET changeStatus = '$param->status',
+				reason 		 = '$param->reason',
+				updateDate 	 = '$param->updateDate',
+				updateUser 	 = '$param->user'
+			WHERE changeRequestNo = '$param->changeRequestNo'
+			AND updateDate = '$param->updateDateCondition'";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
 	function insertChangeHistory_RTMDetail($param){
 		$sqlStr = "INSERT INTO T_CHANGE_HISTORY_RTM_DETAIL (rtmHistoryId, sequenceNo, functionId, testCaseId, changeType) VALUES ($param->rtmHistoryId, $param->sequenceNo, $param->functionId, $param->testCaseId, '$param->changeType')";
 		$result = $this->db->query($sqlStr);
@@ -257,7 +269,8 @@ class ChangeManagement_model extends CI_Model{
 				h.changeFunctionId,
 				h.changeFunctionNo,
 				h.changeFunctionVersion,
-				fh.functionDescription
+				fh.functionDescription,
+				h.updateDate
 			FROM T_CHANGE_REQUEST_HEADER h 
 			INNER JOIN M_USERS u 
 			ON h.changeUserId = u.userId 
@@ -342,6 +355,16 @@ class ChangeManagement_model extends CI_Model{
 		return $result->result_array();
 	}
 
+	function getChangeHistoryRTMDetail($changeRequestNo){
+		$sqlStr = "SELECT h.changeRequestNo, h.projectId, h.oldVersionNumber, h.newVersionNumber, d.functionId, d.testCaseId, d.changeType 
+			FROM T_CHANGE_HISTORY_RTM_HEADER h
+			INNER JOIN T_CHANGE_HISTORY_RTM_DETAIL d
+			ON h.rtmHistoryId = d.rtmHistoryId
+			WHERE h.changeRequestNo = '$changeRequestNo'";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
 	function changeProcess($changeInfo, &$changeResult, $connectionDB, $user, &$error_message, &$changeRequestNo){
 		$this->db->trans_begin();
 
@@ -396,6 +419,7 @@ class ChangeManagement_model extends CI_Model{
 
 					//update old version
 					$dbParam = (object) array(
+						'effectiveEndDate' => $newCurrentDate,
 						'tableName' => $value->tableName,
 						'columnName' => $value->columnName,
 						'currentDate' => $newCurrentDate,
@@ -865,7 +889,9 @@ class ChangeManagement_model extends CI_Model{
 			'changeFunctionId' => $changeInfo->functionId,
 			'changeFunctionNo' => $resultFnReq->functionNo,
 			'changeFunctionVersion' => $changeInfo->functionVersion,
-			'changeStatus' => CHANGE_STATUS_CLOSE);
+			'changeStatus' => CHANGE_STATUS_CLOSE,
+			'user' => $user,
+			'currentDate' => $newCurrentDate);
 		$this->insertChangeRequestHeader($paramInsert);
 
 		//2. save change request details.
