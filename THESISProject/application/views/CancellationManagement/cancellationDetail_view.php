@@ -26,7 +26,6 @@
 			</div>
 			<?php } ?>
 
-
 			<div class="box box-solid">
                 <div class="box-body">
                 	<div class="row">
@@ -40,7 +39,9 @@
                 					</b>
                 					<small class="pull-right">
                 						Status:
-                						<b><?php echo isset($headerInfo['changeStatus'])? $headerInfo['changeStatus']: "";  ?></b>
+                						<span class="label label-info">
+                							<b><?php echo isset($headerInfo['changeStatus'])? $headerInfo['changeStatus']: "";  ?></b>
+                						</span>
                 						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 						
                 						Change User: 
@@ -55,7 +56,6 @@
                 						<?php } ?>
                 					</small>
                 				</h2>
-
                 			</div>
                 		</div>
                 	</div>
@@ -408,14 +408,10 @@
 								<div class="form-group" id="_inputForm">
 				        			<label>Please provide in this entry the reason for cancelling the change.</label>
 
-				        			<?php 
-				        			$disableFlag = (!empty($mode) && '1' == $mode)? 'disabled':'';
-				        			?>
-
-				        			<input type="text" class="form-control" id="inputReason" name="inputReason" value="<?php echo $reason ?>" <?php echo $disableFlag; ?>>
+				        			<input type="text" class="form-control" id="inputReason" name="inputReason" value="<?php echo $reason ?>">
 				        			<?php echo form_error('inputReason', '<font color="red">','</font><br>'); ?>
 
-				        			<button type="submit" class="btn btn-danger <?php echo $disableFlag;?>" onclick="changeCancellation()" style="margin-top: 5px;" <?php echo $disableFlag; ?>>
+				        			<button type="submit" class="btn btn-danger" onclick="changeCancellation()" style="margin-top: 5px;">
 					            		<i class="fa fa-fw fa-undo"></i>
 					            		Cancel Change
 					            	</button>

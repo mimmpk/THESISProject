@@ -16,16 +16,20 @@ class Cancellation_model extends CI_Model{
 		$this->load->model('RTM_model', 'mRTM');
 	}
 
-	public function searchChangesInformationForCancelling($projectId = '', $changeRequestNo = ''){
-		$where = "";
+	public function searchChangesInformationForCancelling($param){
 		
-		if(null != $projectId && !empty($projectId)){
-			$where .= "AND h.projectId = $projectId ";
+		if(isset($param->projectId) && !empty($param->projectId)){
+			$where[] = "h.projectId = $param->projectId";
 		}
 
-		if(null != $changeRequestNo && !empty($changeRequestNo)){
-			$where .= "AND h.changeRequestNo = '$changeRequestNo' ";
+		if(isset($param->changeRequestNo) && !empty($param->changeRequestNo)){
+			$where[] = "h.changeRequestNo = '$param->changeRequestNo'";
 		}
+
+		if(isset($param->changeStatus) && !empty($param->changeStatus)){
+			$where[] = "h.changeStatus = '$param->changeStatus'";
+		}
+		$where_condition = implode(" AND ", $where);
 
 		$sqlStr = "
 			SELECT 
@@ -38,11 +42,12 @@ class Cancellation_model extends CI_Model{
 				CASE WHEN h.changeRequestNo = (
 					SELECT TOP 1 changeRequestNo
 					FROM T_CHANGE_REQUEST_HEADER 
-					WHERE projectId = $projectId
+					WHERE projectId = $param->projectId
 					ORDER by changeDate desc) THEN 'Y' ELSE 'N' 
 				END as isLatestChange,
 				h.changeStatus,
-				m.miscDescription as changeStatusMisc
+				m.miscDescription as changeStatusMisc,
+				h.reason
 			FROM T_CHANGE_REQUEST_HEADER h 
 			INNER JOIN M_USERS u 
 			ON h.changeUserId = u.userId
@@ -51,7 +56,7 @@ class Cancellation_model extends CI_Model{
 			LEFT JOIN M_MISCELLANEOUS m
 			ON m.miscValue1 = h.changeStatus
 			AND m.miscData = 'changeRequestStatus'
-			WHERE h.changeStatus = 'CLS' $where 
+			WHERE $where_condition
 			ORDER BY h.changeDate desc";
 		$result = $this->db->query($sqlStr);
 		return $result->result_array();
@@ -281,7 +286,14 @@ class Cancellation_model extends CI_Model{
 					return false;
 				}
 
-				//B.Delete Details (all)
+				//B.Delete Header
+				$rowDelete = $this->mTestCase->deleteTestCaseHeader($testCaseId);
+				if(1 !== $rowDelete){
+					$error_message = ER_MSG_019;
+					return false;
+				}
+
+				//C.Delete Details(all)
 				$paramDelete = (object) array(
 					'testCaseId' => $testCaseId, 
 					'effectiveStartDate' => $testCaseVersionInfo->effectiveStartDate);

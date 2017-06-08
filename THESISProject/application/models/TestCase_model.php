@@ -188,6 +188,13 @@ class TestCase_model extends CI_Model{
 		return $this->db->affected_rows();	
 	}
 
+	function deleteTestCaseHeader($testCaseId){
+		$sqlStr = "DELETE FROM M_TESTCASE_HEADER
+			WHERE testCaseId = $testCaseId";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
 	function deleteTestCaseDetail($param){
 		if(isset($param->testCaseId)  && !empty($param->testCaseId)){
 			$where[] = "testCaseId = $param->testCaseId";

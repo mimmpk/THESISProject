@@ -77,8 +77,7 @@
 						</span>
 					</a>
 		          	<ul class="treeview-menu" id="dashboard">
-			            <li id="dhbs001"><a href="#"><i class="fa fa-circle-o"></i> Dashboard v1</a></li>
-			            <li id="dhbs002"><a href="#"><i class="fa fa-circle-o"></i> Dashboard v2</a></li>
+			            <li id="dhbs001"><a href="<?php echo base_url(); ?>Dashboard/"><i class="fa fa-circle-o"></i> Dashboard</a></li>
 		          	</ul>
 		        </li>
 		        <li class="treeview">
@@ -126,6 +125,28 @@
 					  		<i class="fa fa-angle-left pull-right"></i>
 						</span>
 		        	</a>
+		        	<ul class="treeview-menu" id="versionManagement">
+		        		<li id="trns003">
+		        			<a href="<?php echo base_url(); ?>VersionManagement_FnReq/">
+		        				<i class="fa fa-circle-o"></i> Functional Requirements
+		        			</a>
+		        		</li>
+		        		<li id="trns004">
+		        			<a href="<?php echo base_url(); ?>VersionManagement_TestCase/">
+		        				<i class="fa fa-circle-o"></i> Test Cases
+		        			</a>
+		        		</li>
+		        		<li id="trns005">
+		        			<a href="<?php echo base_url(); ?>VersionManagement_Schema/">
+		        				<i class="fa fa-circle-o"></i> Database Schema
+		        			</a>
+		        		</li>
+		        		<li id="trns006">
+		        			<a href="<?php echo base_url(); ?>VersionManagement_RTM/">
+		        				<i class="fa fa-circle-o"></i> RTM
+		        			</a>
+		        		</li>
+		        	</ul>
 		        </li>
       		</ul>
 	    </section>

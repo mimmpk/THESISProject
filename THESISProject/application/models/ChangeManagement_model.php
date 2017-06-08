@@ -431,7 +431,7 @@ class ChangeManagement_model extends CI_Model{
 					$rowUpdate = $this->mDB->updateDatabaseSchemaVersion($dbParam);
 					if(0 == $rowUpdate){
 						$errorFlag = true;
-						$error_message = ER_MSG_016;
+						$error_message = str_replace("{0}", "Database Schema", ER_MSG_016);
 						break;
 					}
 					$newDBVersionNumber = (int)$oldDBVersionNumber + 1;
@@ -456,7 +456,7 @@ class ChangeManagement_model extends CI_Model{
 				$schemaVersionId = $resultInsert;
 			}else{
 				$errorFlag = true;
-				$error_message = ER_MSG_016;
+				$error_message = str_replace("{0}", "Database Schema", ER_MSG_016);
 				break;
 			}
 
@@ -520,7 +520,7 @@ class ChangeManagement_model extends CI_Model{
 				$oldFunctionId = $existFR[0]['functionId'];
 			}else{
 				$errorFlag = true;
-				$error_message = ER_MSG_016;
+				$error_message = str_replace("{0}", "Functional Requirements", ER_MSG_016);
 				break;
 			}
 
@@ -560,16 +560,16 @@ class ChangeManagement_model extends CI_Model{
 			$rowUpdate = $this->mFR->updateFunctionalRequirementsVersion($param);
 			if(0 == $rowUpdate){
 				$errorFlag = true;
-				$error_message = ER_MSG_016;
+				$error_message = str_replace("{0}", "Functional Requirements", ER_MSG_016);
 				break;
 			}
 
-			//3.2 Create new input of FR information(case: never has input before.)
+			//3.2 Create new input of FR information
 			foreach($functionInfoVal->functionInput as $keyInputName => $value){
 
 				$resultExistInput = $this->mFR->searchFRInputInformation($affectedProjectId, $keyInputName);
 				if(null == $resultExistInput || 0 == count($resultExistInput)){
-					//insert new input
+					//insert new input (case: never has input before)
 					$paramFRInput = (object) array(
 						'projectId' => $affectedProjectId,
 						'inputName' => $keyInputName,
@@ -585,7 +585,9 @@ class ChangeManagement_model extends CI_Model{
 						'functionId' => $oldFunctionId,
 						'inputName' => $keyInputName);
 					$resultFRInput = $this->mFR->searchExistFRInputInFunctionalRequirement($paramFRInputCondition);
-					$oldSchemaVersionId = $resultFRInput[0]['schemaVersionId'];
+					if(null != $resultFRInput && 0 < count($resultFRInput)){
+						$oldSchemaVersionId = $resultFRInput[0]['schemaVersionId'];
+					}
 				}
 
 				//find latest version of reference schema that related with function's input
@@ -619,7 +621,7 @@ class ChangeManagement_model extends CI_Model{
 					$resultUpdate = $this->mFR->updateFunctionalRequirementsDetail($paramFRDetail);
 					if(0 == $resultUpdate){
 						$errorFlag = true;
-						$error_message = ER_MSG_016;
+						$error_message = str_replace("{0}", "Functional Requirements", ER_MSG_016);
 						break 2;
 					}
 				}
@@ -644,7 +646,7 @@ class ChangeManagement_model extends CI_Model{
 				$testCaseId = $this->mTestCase->insertTestCaseHeader($param, $user);
 				if(null == $testCaseId){
 					$errorFlag = true;
-					$error_message = ER_MSG_016;
+					$error_message = str_replace("{0}", "Test Case", ER_MSG_016);
 					break;
 				}
 				$oldTCVersionId = '';
@@ -653,7 +655,7 @@ class ChangeManagement_model extends CI_Model{
 				$resultLastTCVersion = $this->getLastTestCaseVersion($affectedProjectId, $keyTestCaseNo, $testcaseInfoVal->testCaseVersion);
 				if(null == $resultLastTCVersion || 0 == count($resultLastTCVersion)){
 					$errorFlag = true;
-					$error_message = ER_MSG_016;
+					$error_message = str_replace("{0}", "Test Case", ER_MSG_016);
 					break;
 				}
 
@@ -696,7 +698,7 @@ class ChangeManagement_model extends CI_Model{
 				$rowUpdate = $this->mTestCase->updateTestCaseVersion($paramUpdate);
 				if(0 == $rowUpdate){
 					$errorFlag = true;
-					$error_message = ER_MSG_016;
+					$error_message = str_replace("{0}", "Test Case", ER_MSG_016);
 					break;
 				}
 			}
@@ -707,7 +709,7 @@ class ChangeManagement_model extends CI_Model{
 				$resultInputInfo = $this->mFR->searchFRInputInformation($affectedProjectId, $keyInputName);
 				if(null == $resultInputInfo || 0 == count($resultInputInfo)){
 					$errorFlag = true;
-					$error_message = ER_MSG_016;
+					$error_message = str_replace("{0}", "Test Case", ER_MSG_016);
 					break 2;
 				}
 
@@ -725,7 +727,7 @@ class ChangeManagement_model extends CI_Model{
 					$rowUpdate =  $this->mTestCase->updateTestCaseDetail($paramUpdateDetail);
 					If(0 == $rowUpdate){
 						$errorFlag = true;
-						$error_message = ER_MSG_016;
+						$error_message = str_replace("{0}", "Test Case", ER_MSG_016);
 						break;
 					}
 				}
@@ -770,7 +772,7 @@ class ChangeManagement_model extends CI_Model{
 		$rowUpdate = $this->mRTM->updateRTMVersion($paramUpdate);
 		if(1 != $rowUpdate){
 			$errorFlag = true;
-			$error_message = ER_MSG_016;
+			$error_message = str_replace("{0}", "RTM", ER_MSG_016);
 			break;
 		}
 
@@ -792,7 +794,7 @@ class ChangeManagement_model extends CI_Model{
 			$resultFRInfo = $this->mFR->searchExistFunctionalRequirement($value->functionNo, $affectedProjectId);
 			if(null == $resultFRInfo || 0 == count($resultFRInfo)){
 				$errorFlag = true;
-				$error_message = ER_MSG_016;
+				$error_message = str_replace("{0}", "RTM", ER_MSG_016);
 				break;
 			}
 
@@ -802,7 +804,7 @@ class ChangeManagement_model extends CI_Model{
 			$resultTCInfo = $this->mTestCase->searchExistTestCaseHeader($affectedProjectId, $value->testCaseNo);
 			if(null == $resultTCInfo || 0 == count($resultTCInfo)){
 				$errorFlag = true;
-				$error_message = ER_MSG_016;
+				$error_message = str_replace("{0}", "RTM", ER_MSG_016);
 				break;
 			}
 
@@ -836,7 +838,7 @@ class ChangeManagement_model extends CI_Model{
 				$rowUpdate = $this->mRTM->updateRTMInfo($paramUpdate);
 				if(1 != $rowUpdate){
 					$errorFlag = true;
-					$error_message = ER_MSG_016;
+					$error_message = str_replace("{0}", "RTM", ER_MSG_016);
 					break;
 				}
 			}
@@ -865,7 +867,7 @@ class ChangeManagement_model extends CI_Model{
 		//1. save change request header.
 		$changeRequestNo = $this->mCommon->getChangeRequestNo(RUNNING_TYPE_CHANGE_REQUEST_NO);
 		if(empty($changeRequestNo)){
-			$error_message = ER_MSG_016;
+			$error_message = str_replace("{0}", "Change Request", ER_MSG_016);
 			return false;
 		}
 
@@ -875,7 +877,7 @@ class ChangeManagement_model extends CI_Model{
 			'functionVersion' => $changeInfo->functionVersion);
 		$tmpChangeList = $this->searchTempFRInputChangeList($paramSearch);
 		if(0 == count($tmpChangeList)){
-			$error_message = ER_MSG_016;
+			$error_message = str_replace("{0}", "Change Request", ER_MSG_016);
 			return false;
 		}
 
@@ -933,7 +935,7 @@ class ChangeManagement_model extends CI_Model{
 
 			$fnReqHistoryId = $this->insertChangeHistory_RequirementsHeader($paramInsert);
 			if(empty($fnReqHistoryId)){
-				$error_message = ER_MSG_016;
+				$error_message = str_replace("{0}", "Change Request", ER_MSG_016);
 				return false;
 			}
 

@@ -30,7 +30,10 @@ class Cancellation extends CI_Controller{
 		$projectId = $this->input->post('inputProject');
 		$this->FValidate->set_rules('inputProject', null, 'required');
 		if($this->FValidate->run()){
-			$changeList = $this->mCancellation->searchChangesInformationForCancelling($projectId);
+			$criteria = (object) array(
+				'projectId' 	=> $projectId,
+				'changeStatus' 	=> CHANGE_STATUS_CLOSE);
+			$changeList = $this->mCancellation->searchChangesInformationForCancelling($criteria);
 			if(0 == count($changeList)){
 				$error_message = ER_MSG_006;
 			}
@@ -67,14 +70,12 @@ class Cancellation extends CI_Controller{
 			$error_message = ER_MSG_011;
 		}
 
-		$data['mode'] = '';
 		$data['reason'] = '';
 		$data['error_message'] = $error_message;
 		$this->openView($data, 'view');
 	}
 
 	public function cancel(){
-		$mode = '0'; // 0 = error, 1 = success
 		$error_message = '';
 		$success_message = '';
 
@@ -120,8 +121,8 @@ class Cancellation extends CI_Controller{
 
 				/** 5. Display Result */
 				if($controlVersionResult == true){
-					$mode = '1';
-					$success_message = IF_MSG_001;
+					$this->displayResult($changeRequestNo, $projectId);
+					return false;
 				}
 				
 			}else{
@@ -138,43 +139,84 @@ class Cancellation extends CI_Controller{
 		//Get All Change Request Data
 		$this->getAllChangeRequestData($changeRequestNo, $projectId, $error_message, $data);
 
-		$data['mode'] = $mode;
 		$data['reason'] = $reason;
 		$data['error_message'] = $error_message;
 		$data['success_message'] = $success_message;
 		$this->openView($data, 'view');
 	}
 
+	private function displayResult($changeRequestNo, $projectId){
+		$success_message = '';
+		$error_message = '';
+		$reason = '';
+
+		$criteria = (object) array(
+				'projectId' 	  => $projectId,
+				'changeStatus' 	  => CHANGE_STATUS_CANCEL,
+				'changeRequestNo' => $changeRequestNo);
+		$changeHeaderResult = $this->mCancellation->searchChangesInformationForCancelling($criteria);
+		if(0 < count($changeHeaderResult)){
+			$headerInfo = array(
+				'changeRequestNo' 	=> $changeHeaderResult[0]['changeRequestNo'],
+				'changeUser' 		=> $changeHeaderResult[0]['changeUser'],
+				'changeDate' 		=> $changeHeaderResult[0]['changeDate'],
+				'changeStatus'		=> $changeHeaderResult[0]['changeStatusMisc'],
+				'fnReqNo' 			=> $changeHeaderResult[0]['changeFunctionNo'],
+				'fnReqVer' 			=> $changeHeaderResult[0]['changeFunctionVersion'],
+				'fnReqDesc' 		=> $changeHeaderResult[0]['functionDescription'],
+				'isLatestChange'	=> $changeHeaderResult[0]['isLatestChange']);
+			
+			$reason = $changeHeaderResult[0]['reason'];
+			
+			//search change detail
+			$detailInfo = $this->mChange->getChangeRequestInputList($changeRequestNo);
+
+			$success_message = IF_MSG_001;
+		}else{
+			$error_message = ER_MSG_017;
+		}
+
+		$data['headerInfo'] = $headerInfo;
+		$data['detailInfo'] = $detailInfo;
+
+		$data['reason'] = $reason;
+		$data['error_message'] = $error_message;
+		$data['success_message'] = $success_message;
+		$this->openView($data, 'result');
+	}
+
 	private function getAllChangeRequestData($changeRequestNo, $projectId, &$error_message, &$data){
 
-		$resultList = array();
+		$criteria = (object) array(
+				'projectId' 	  => $projectId,
+				'changeStatus' 	  => CHANGE_STATUS_CLOSE,
+				'changeRequestNo' => $changeRequestNo);
+		$changeHeaderResult = $this->mCancellation->searchChangesInformationForCancelling($criteria);
+		if(0 < count($changeHeaderResult)){
+			$headerInfo = array(
+				'changeRequestNo' 	=> $changeHeaderResult[0]['changeRequestNo'],
+				'changeUser' 		=> $changeHeaderResult[0]['changeUser'],
+				'changeDate' 		=> $changeHeaderResult[0]['changeDate'],
+				'changeStatus'		=> $changeHeaderResult[0]['changeStatusMisc'],
+				'fnReqNo' 			=> $changeHeaderResult[0]['changeFunctionNo'],
+				'fnReqVer' 			=> $changeHeaderResult[0]['changeFunctionVersion'],
+				'fnReqDesc' 		=> $changeHeaderResult[0]['functionDescription'],
+				'isLatestChange'	=> $changeHeaderResult[0]['isLatestChange']);
 
-		$changeHeaderResult = $this->mCancellation->searchChangesInformationForCancelling($projectId, $changeRequestNo);
-			if(0 < count($changeHeaderResult)){
-				$headerInfo = array(
-					'changeRequestNo' 	=> $changeHeaderResult[0]['changeRequestNo'],
-					'changeUser' 		=> $changeHeaderResult[0]['changeUser'],
-					'changeDate' 		=> $changeHeaderResult[0]['changeDate'],
-					'changeStatus'		=> $changeHeaderResult[0]['changeStatusMisc'],
-					'fnReqNo' 			=> $changeHeaderResult[0]['changeFunctionNo'],
-					'fnReqVer' 			=> $changeHeaderResult[0]['changeFunctionVersion'],
-					'fnReqDesc' 		=> $changeHeaderResult[0]['functionDescription'],
-					'isLatestChange'	=> $changeHeaderResult[0]['isLatestChange']);
+			//search change detail
+			$detailInfo = $this->mChange->getChangeRequestInputList($changeRequestNo);
 
-				//search change detail
-				$detailInfo = $this->mChange->getChangeRequestInputList($changeRequestNo);
+			$affectedFnReqList = $this->mChange->getChangeHistoryFnReqHeaderList($changeRequestNo);
 
-				$affectedFnReqList = $this->mChange->getChangeHistoryFnReqHeaderList($changeRequestNo);
+			$affectedTCList = $this->mChange->getChangeHistoryTestCaseList($changeRequestNo);
 
-				$affectedTCList = $this->mChange->getChangeHistoryTestCaseList($changeRequestNo);
+			$affectedSchemaList = $this->mChange->getChangeHistoryDatabaseSchemaList($changeRequestNo);
 
-				$affectedSchemaList = $this->mChange->getChangeHistoryDatabaseSchemaList($changeRequestNo);
-
-				$affectedRTMList = $this->mChange->getChangeHistoryRTM($changeRequestNo);
-			}else{
-				$error_message = ER_MSG_017;
-				return false;
-			}
+			$affectedRTMList = $this->mChange->getChangeHistoryRTM($changeRequestNo);
+		}else{
+			$error_message = ER_MSG_017;
+			return false;
+		}
 
 		$data['headerInfo'] = $headerInfo;
 		$data['detailInfo'] = $detailInfo;

@@ -95,13 +95,21 @@
 							<input type="checkbox">
 							<span class="text">Change Request Screen</span>
 						</li>
-						<li class="">
+						<li class="done">
 							<span class="handle ui-sortable-handle">
 								<i class="fa fa-ellipsis-v"></i>
 								<i class="fa fa-ellipsis-v"></i>
 							</span>
 							<input type="checkbox">
 							<span class="text">Latest Change Cancellation Screen</span>
+						</li>
+						<li>
+							<span class="handle ui-sortable-handle">
+								<i class="fa fa-ellipsis-v"></i>
+								<i class="fa fa-ellipsis-v"></i>
+							</span>
+							<input type="checkbox">
+							<span class="text">Test Data When revert version</span>
 						</li>
 						<li>
 							<span class="handle ui-sortable-handle">

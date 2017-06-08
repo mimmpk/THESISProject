@@ -30,14 +30,14 @@ class Common_model extends CI_Model{
 			WHERE p.runningType = '$runningType'
 			AND n.period = '$currentDate'";
 		$result = $this->db->query($sqlStr);
-		if(0 < count($result->num_rows())){
+		if(null != $result && 0 < count($result->result_array())){
 			//update
-			$result = $result->row();
+			$runningInfo = $result->row();
 			
-			$runningNo 	= $result->runningNo;
-			$prefix 	= $result->prefix;
-			$affix 		= $result->affix;
-			$length 	= $result->length;
+			$runningNo 	= $runningInfo->runningNo;
+			$prefix 	= $runningInfo->prefix;
+			$affix 		= $runningInfo->affix;
+			$length 	= $runningInfo->length;
 
 			$runningNo = (int)$runningNo + 1;
 			$sqlStr = "UPDATE M_RUNNING_NO 
@@ -47,13 +47,8 @@ class Common_model extends CI_Model{
 			$result = $this->db->query($sqlStr);
 		}else{
 			//insert
-			$array = array(
-		        'runningType' => $runningType,
-		        'period' => $currentDate,
-		        'runningNo' => 1
-			);
-			$this->db->set($array);
-			$this->db->insert('M_RUNNING_NO');
+			$sqlStr = "INSERT INTO M_RUNNING_NO(runningType, period, runningNo) VALUES ('$runningType', '$currentDate', 1)";
+			$result = $this->db->query($sqlStr);
 		}
 		$formatStr = $this->setFormat($prefix, $affix, $length, $runningNo);
 		return $formatStr;

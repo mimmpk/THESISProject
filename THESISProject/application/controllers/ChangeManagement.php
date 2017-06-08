@@ -50,6 +50,7 @@ class ChangeManagement extends CI_Controller{
 	}
 
 	function viewFunctionDetail($projectId, $functionId){
+		//var_dump(str_replace("{0}", "Database Schema", ER_MSG_016));
 		$this->reloadPage('', $projectId, $functionId);
 	}
 
@@ -65,7 +66,7 @@ class ChangeManagement extends CI_Controller{
 		$functionId = $this->input->post('functionId');
 		$functionVersion = $this->input->post('functionVersion');
 
-		$this->load->library('common');
+		//$this->load->library('common');
 		
 		try{
 			/** 1.Validate
@@ -100,7 +101,7 @@ class ChangeManagement extends CI_Controller{
 				'userId'		  => $userId,
 				'type' 	 		  => 1 //1 = Change, 2 = Cancel
 				);
-			$changeResult = $this->common->callChangeAPI($param);
+			$changeResult = $this->callChangeAPI($param);
 			
 			/** 3.Control Version*/
 			/** 4.Save Change Request */
@@ -132,7 +133,7 @@ class ChangeManagement extends CI_Controller{
 				}
 			}else{
 				$errorFlag = true;
-				$error_message = ER_MSG_016;
+				$error_message = str_replace("{0}", "Change Result", ER_MSG_016);
 			}
 
 		}catch(Exception $e){
@@ -168,6 +169,8 @@ class ChangeManagement extends CI_Controller{
 				$affectedSchemaList = $this->mChange->getChangeHistoryDatabaseSchemaList($changeRequestNo);
 				$affectedTestCaseList = $this->mChange->getChangeHistoryTestCaseList($changeRequestNo);
 				$affectedRTM = $this->mChange->getChangeHistoryRTM($changeRequestNo);
+
+				$success_message = IF_MSG_002;
 			}
 		}else{
 			$error_message = ER_MSG_011;
@@ -726,8 +729,8 @@ class ChangeManagement extends CI_Controller{
 			$referTableName = $resultInputInfo->refTableName;
 			$referColumnName = $resultInputInfo->refColumnName;
 			
-			if($referTableName != strtoupper($tableName)
-				|| $referColumnName != strtoupper($columnName)){
+			if($referTableName != strtoupper($param->table)
+				|| $referColumnName != strtoupper($param->column)){
 				$errorMsg = ER_TRN_004;
 				return false;
 			}else{
@@ -876,7 +879,7 @@ class ChangeManagement extends CI_Controller{
 
 		$this->load->library('common');
 
-
+		$passData['callType'] = $param->type;
 		//1.Project Information
 		$projectInfo = $this->mProject->searchProjectDetail($param->projectId);
 		$passData['projectInfo'] = $param->projectId;
