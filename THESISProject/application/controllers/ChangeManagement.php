@@ -976,7 +976,6 @@ class ChangeManagement extends CI_Controller{
 		$url = 'http://localhost/StubService/ChangeAPI.php';
 
 		$json = json_decode($this->common->postCURL($url, $passData));
-	
 		return $json;
 
 		//echo '<br><hr><h2>'.$this->postCURL($url, $passData).'</h2><br><hr><br>';

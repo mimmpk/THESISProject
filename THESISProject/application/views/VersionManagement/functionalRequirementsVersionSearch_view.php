@@ -1,12 +1,12 @@
 <section class="content-header">
 	<h1>
 		<span class="glyphicon glyphicon-list-alt"></span>
-		Functional Requirements Version Inquiry
+		Inquiry Functional Requirements by Version 
 	</h1>
 	<ol class="breadcrumb">
 		<li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
 		<li><a href="#">Version Management</a></li>
-		<li class="active">Functional Requirements Version Inquiry</li>
+		<li class="active">Inquiry Functional Requirements by Version </li>
 	</ol>
 
 	<!-- Main content -->
@@ -101,7 +101,7 @@
 	<div class="row">
 		<div class="col-md-12">
 			<div class="box box-success box-solid">
-				<div class="box-body">
+				<div class="box-body" style="padding: 3px;">
 					<div class="row">
 						<div class="col-sm-3">
 							<div class="form-group">
@@ -132,18 +132,23 @@
 								<dl>
 									<dt>Status:</dt>
 									<dd>
-									<?php echo ("1" == $resultVersionInfo->activeFlag? constant("ACTIVE_STATUS"): constant("UNACTIVE_STATUS")); ?>
+									<?php 
+									if("1" == $resultVersionInfo->activeFlag){
+										echo "<span class='badge bg-green'>".constant("ACTIVE_STATUS")."</span>";
+									}else{
+										echo "<span class='badge bg-red'>".constant("UNACTIVE_STATUS")."</span>";
+									} ?>
 									</dd>
 								</dl>
 							</div>
 						</div>
 					</div>
 				</div>
-				<div class="box-body no-padding">
+				<div class="box-body no-padding table-responsive">
 					<div class="row">
 						<div class="col-sm-12">
 							<div class="form-group">
-								<table class="table table-striped" style="margin-top: -20px;">
+								<table class="table table-striped">
 									<tbody>
 										<tr>
                 							<th>#</th>
@@ -154,7 +159,7 @@
                 							<th>Unique</th>
                 							<th>NOT NULL</th>
                 							<th>Default</th>
-                							<th>Min</th>
+                							<th >Min</th>
                 							<th>Max</th>
                 							<th>Table</th>
                 							<th>Column</th>

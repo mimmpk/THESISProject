@@ -67,6 +67,101 @@ class VersionManagement_model extends CI_Model{
 		$result = $this->db->query($sqlStr);
 		return $result->result_array();
 	}
+
+	public function searchRelatedTestCases($param){
+		$sqlStr = "SELECT th.*
+			FROM M_TESTCASE_HEADER th
+			WHERE th.projectId = $param->projectId";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
+	public function searchRelatedTestCaseVersion($param){
+		$sqlStr = "SELECT 
+				th.testCaseId,
+				th.testCaseNo,
+				tv.testCaseVersionId,
+				tv.testCaseVersionNumber
+			FROM M_TESTCASE_HEADER th
+			INNER JOIN M_TESTCASE_VERSION tv
+			ON th.testCaseId = tv.testCaseId
+			WHERE th.testCaseId = $param->testCaseId
+			ORDER BY tv.testCaseVersionNumber";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
+	public function searchTestCaseDetailByVersion($param){
+		$sqlStr = "SELECT 
+				th.testCaseId, 
+				th.testCaseNo, 
+				th.testCaseDescription, 
+				th.expectedResult,
+				td.refInputName, 
+				td.testData
+			FROM M_TESTCASE_HEADER th
+			INNER JOIN M_TESTCASE_DETAIL td
+			on th.testCaseId = td.testCaseId
+			WHERE th.testCaseId = $param->testCaseId
+			AND td.effectiveStartDate <= '$param->targetDate'
+			AND (td.effectiveEndDate  >= '$param->targetDate' OR td.effectiveEndDate is null)
+			AND (td.effectiveEndDate  != '$param->targetDate' OR td.effectiveEndDate is null)
+			ORDER BY td.sequenceNo";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
+	public function searchRelatedTableName($param){
+		$sqlStr = "SELECT distinct tableName
+			FROM M_DATABASE_SCHEMA_INFO
+			WHERE projectId = $param->projectId";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
+	public function searchRelatedColumnName($param){
+		$sqlStr = "SELECT distinct columnName
+			FROM M_DATABASE_SCHEMA_INFO
+			WHERE projectId = $param->projectId
+			AND tableName = '$param->tableName'
+			ORDER BY columnName";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();	
+	}
+
+	public function searchRelatedColumnVersion($param){
+		$sqlStr = "SELECT tableName, columnName, schemaVersionId, schemaVersionNumber
+			FROM M_DATABASE_SCHEMA_VERSION
+			WHERE projectId = $param->projectId
+			AND tableName= '$param->tableName'
+			AND columnName = '$param->columnName'
+			order by schemaVersionNumber";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
+	public function searchDatabaseSchemaDetailByVersion($param){
+		if(){
+			$where[] = "projectId = $param->projectId";
+		}
+		if(){
+			$where[] = "tableName= '$param->tableName'";
+		}
+		if(){
+			$where[]
+		}
+		if(){
+			$where[]
+		}
+		$where_condition = implode(" AND ", $where);
+		
+		$sqlStr = "SELECT *
+			FROM M_DATABASE_SCHEMA_INFO
+			WHERE $where_condition";
+
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
 }
 
 ?>

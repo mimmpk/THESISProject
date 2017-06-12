@@ -34,6 +34,7 @@ class TestCase_model extends CI_Model{
 			ON th.testCaseId = r.testCaseId
 			LEFT JOIN M_FN_REQ_HEADER h
 			ON r.functionId = h.functionId
+			WHERE $where_clause
 			ORDER BY th.testCaseNo, tv.testCaseVersionNumber";
 		$result = $this->db->query($sqlStr);
 		return $result->result_array();
@@ -86,14 +87,24 @@ class TestCase_model extends CI_Model{
 	}
 
 	function searchTestCaseVersionInformationByCriteria($param){
+		if(isset($param->testCaseId) && !empty($param->testCaseId)){
+			$where[] = "h.testCaseId = $param->testCaseId";
+		}
+		if(isset($param->testCaseVersionNumber) && !empty($param->testCaseVersionNumber)){
+			$where[] = "v.testCaseVersionNumber = $param->testCaseVersionNumber";
+		}
+		if(isset($param->testCaseVersionId) && !empty($param->testCaseVersionId)){
+			$where[] = "v.testCaseVersionId = $param->testCaseVersionId";
+		}
+		$where_condition = implode(" AND ", $where);
+		
 		$sqlStr = "SELECT 
 			h.testCaseId, h.testCaseNo, v.testCaseVersionId, v.testCaseVersionNumber, 
-			v.previousVersionId, v.effectiveStartDate, v.effectiveEndDate, v.updateDate
+			v.previousVersionId, v.effectiveStartDate, v.effectiveEndDate, v.updateDate, v.activeFlag
 			FROM M_TESTCASE_HEADER h
 			INNER JOIN M_TESTCASE_VERSION v
 			ON h.testCaseId = v.testCaseId
-			WHERE h.testCaseId = $param->testCaseId
-			AND v.testCaseVersionNumber = $param->testCaseVersionNumber";
+			WHERE $where_condition";
 		$result = $this->db->query($sqlStr);
 		return $result->row();
 	}

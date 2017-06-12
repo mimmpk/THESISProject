@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
 * Functional Requirement Version Management
+* Create Date: 2017-06-08
 */
 class VersionManagement_FnReq extends CI_Controller{
 	
@@ -14,7 +15,6 @@ class VersionManagement_FnReq extends CI_Controller{
 		$this->load->model('FunctionalRequirement_model', 'mFR');
 
 		$this->load->library('form_validation', null, 'FValidate');
-		$this->load->library('session');
 	}
 
 	public function index(){
@@ -123,7 +123,7 @@ class VersionManagement_FnReq extends CI_Controller{
 		$data['active_page'] = 'trns003';
 		
 		$this->load->view('template/header');
-		$this->load->view('VersionManagement/functionalRequirementsVersion_view', $data);
+		$this->load->view('VersionManagement/bodyFunctionalRequirementsVersion_view', $data);
 		$this->load->view('template/footer');
 
 		//$this->load->view('template/body', $data);
