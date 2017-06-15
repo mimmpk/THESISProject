@@ -25,7 +25,7 @@
 	            					<label for="inputProjectName">Project's name
 	            						<span style="color:red;">*</span>:
 	            					</label>
-	        						<select name="inputProjectName" class="form-control select2" style="width: 100%;" value="<?php echo $formData->selectedProjectId ?>">
+	        						<select id="inputProjectName" name="inputProjectName" class="form-control select2" style="width: 100%;" value="<?php echo $formData->selectedProjectId ?>">
 	        							<option value="">--Please Select--</option>
 	        							<?php if(null != $projectCombo) {  ?>
 	        							<?php foreach($projectCombo as $value): ?>
@@ -39,24 +39,12 @@
             					</div>
         					</div>
             				<div class="form-group">
-    							<div class="col-sm-6">
-    								<label for="inputStatus">Test Case's Status: </label>
-	            					&nbsp;&nbsp;&nbsp;
-		            				<label>
-					                	<input type="radio" name="inputStatus" class="minimal" value="1" <?php echo set_radio('inputStatus', '1', TRUE); ?>>
-					                	Active 
-					                </label>
-					                <label>
-					                	<input type="radio" name="inputStatus" class="minimal" value="0" <?php echo set_radio('inputStatus', '0'); ?>>
-					                	Inactive
-					                </label>
-					                 <label>
-					                	<input type="radio" name="inputStatus" class="minimal" value="2" <?php echo set_radio('inputStatus', '2'); ?>>
-					                	All
-					                </label>
-    							</div>
-    							<div class="col-sm-6">
+    							<div class="col-sm-12">
     								<div align="right">
+    									<button type="button" class="btn bg-olive" style="width: 100px;" onclick="doOpenAddMoreScreen();">
+											<i class="fa fa-plus"></i> 
+											Import
+										</button>
 	            						<a href="<?php echo base_url(); ?>TestCaseManagement/reset/">
 	            							<button type="button" class="btn bg-orange" style="width: 100px;">
 	            							<i class="fa fa-refresh"></i> 
@@ -84,56 +72,44 @@
 			<div class="box box-success" style="margin-top: -10px;">
 				<div class="box-header">
 					<h3 class="box-title">Search Result</h3>
-					<div class="pull-right">
-						<button type="button" class="btn bg-olive btn-sm" style="width: 100px;" onclick="doOpenAddMoreScreen();">
-							<i class="fa fa-plus"></i> Add more
-						</button>
-					</div>
 				</div>
 
 				<div class="box-body" style="margin-top: -10px;">
-					<table id="resultTbl" class="table table-bordered tableResult">
-						<thead>
+					<table id="resultTbl" class="table table-bordered">
+						<tbody>
 			            	<tr style="background: #CACFD2;">
-								<th>No.</th>
+								<th>#</th>
 								<th>Test Case ID</th>
+								<th>Test Case Description</th>
 								<th>Test Case Version</th>
-								<th>Relate Functional Requirement ID</th>
-								<th>Effective Start Date</th>
-								<th>Effective End Date</th>
+								<th>Related Functional Requirement ID</th>
 								<th>Status</th>
-								<th>Action</th>
 			                </tr>
-		                </thead>
 		                <?php if(null != $resultList and 0 < count($resultList)){ ?>
-			                <tbody>
-			                	<?php 
-				                $define = 1;
-				                foreach($resultList as $value): 
-				                	$classRow = (0 == $define%2)? 'even' : 'odd'; ?>
-				                	<tr class="<?php echo $classRow; ?>">
-				                		<td><?php echo $define++; ?></td>
-				                		<td><?php echo $value['testCaseNo'] ?></td>
-				                		<td><?php echo $value['testCaseVersion'] ?></td>
-				                		<td>
-				                			<?php echo (!empty($value['functionNo']))? $value['functionNo'].' : '.$value['functionDescription']: '';?>
-				                		</td>
-				                		<td><?php echo $value['effectiveStartDate'] ?></td>
-				                		<td><?php echo $value['effectiveEndDate'] ?></td>
-				                		<td><?php if('0' == $value['activeFlag'] ) { ?>
-				                			<span class="label label-danger">
-				                				<?php echo UNACTIVE_STATUS; ?>
-				                			</span>
-				                			<?php } else { ?>
-				                			<span class="label label-success">
-				                				<?php echo ACTIVE_STATUS; ?>
-				                			</span>
-				                			<?php } ?>
-				                		</td>
-				                		<td></td>
-				                	</tr>
-				                <?php endforeach; ?>
-			                </tbody>
+		                	<?php 
+			                $define = 1;
+			                foreach($resultList as $value): 
+			                	$classRow = (0 == $define%2)? 'even' : 'odd'; ?>
+			                	<tr class="<?php echo $classRow; ?>">
+			                		<td><?php echo $define++; ?></td>
+			                		<td><?php echo $value['testCaseNo'] ?></td>
+			                		<td><?php echo $value['testCaseDescription'] ?></td>
+			                		<td><?php echo $value['testCaseVersion'] ?></td>
+			                		<td>
+			                			<?php echo (!empty($value['functionNo']))? $value['functionNo'].' : '.$value['functionDescription']: '';?>
+			                		</td>
+			                		<td><?php if('0' == $value['activeFlag'] ) { ?>
+			                			<span class="label label-danger">
+			                				<?php echo UNACTIVE_STATUS; ?>
+			                			</span>
+			                			<?php } else { ?>
+			                			<span class="label label-success">
+			                				<?php echo ACTIVE_STATUS; ?>
+			                			</span>
+			                			<?php } ?>
+			                		</td>
+			                	</tr>
+			                <?php endforeach; ?>
 		                <?php } else { ?>
 		                	<tr>
 		                		<td colspan="8" style="text-align: center;">
@@ -141,6 +117,7 @@
 		                		</td>
 		                	</tr>
 		                <?php } ?>
+		                </tbody>
 					</table>
 				</div>
 			</div>
@@ -150,8 +127,14 @@
 	<?php } ?>
 	<script type="text/javascript">
 		function doOpenAddMoreScreen(){
-			var projectId = $('#selectedProjectId').val();
-			window.location  = baseUrl + "TestCaseManagement/addMore/" + projectId;
+			var projectId = $('#inputProjectName').val();
+			if('' != projectId){
+				window.location  = baseUrl + "TestCaseManagement/addMore/" + projectId;
+				return false;
+			}else{
+				alert("Please select project's name!");
+				return false;
+			}
 		}
 	</script>
 </section>

@@ -23,10 +23,14 @@ class DatabaseSchema_model extends CI_Model{
 				dv.schemaVersionNumber,
 				CONVERT(nvarchar, dv.effectiveStartDate, 103) as effectiveStartDate,
 				COALESCE(CONVERT(nvarchar, dv.effectiveEndDate, 103), '-') as effectiveEndDate,
-				dv.activeFlag
+				dv.activeFlag,
+				CONVERT(nvarchar, dv.createDate, 120) as createDate,
+				CONCAT(u.firstname, ' ', u.lastname) as createUser
 			FROM M_DATABASE_SCHEMA_INFO di 
 			INNER JOIN M_DATABASE_SCHEMA_VERSION dv
 			ON di.schemaVersionId = dv.schemaVersionId
+			LEFT JOIN M_USERS u
+			ON dv.createUser = u.username
 			WHERE $where_clause
 			ORDER BY di.tableName, di.columnName, dv.schemaVersionNumber";
 

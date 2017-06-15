@@ -31,11 +31,10 @@ class TestCaseManagement extends CI_Controller{
 		$resultList = null;
 
 		$projectId = $this->input->post('inputProjectName');
-		$status = $this->input->post('inputStatus');
 
 		$this->FValidate->set_rules('inputProjectName', null, 'required');
 		if($this->FValidate->run()){
-			$resultList = $this->mTestCase->searchTestCaseInfoByCriteria($projectId, $status);
+			$resultList = $this->mTestCase->searchTestCaseInfoByCriteria($projectId, ACTIVE_CODE);
 
 			$data['selectedProjectId'] = $projectId;
 			$data['searchFlag'] = 'Y';

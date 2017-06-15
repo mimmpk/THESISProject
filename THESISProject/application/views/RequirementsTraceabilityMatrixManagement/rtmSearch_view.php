@@ -25,7 +25,7 @@
             						<label for="inputProjectName">Project's name
 	            						<span style="color:red;">*</span>:
 	            					</label>
-	            					<select name="inputProjectName" class="form-control select2" style="width: 100%;" value="<?php echo $formData->selectedProjectId ?>">
+	            					<select id="inputProjectName" name="inputProjectName" class="form-control select2" style="width: 100%;" value="<?php echo $formData->selectedProjectId ?>">
 	        							<option value="">--Please Select--</option>
 	        							<?php if(null != $projectCombo) {  ?>
 	        							<?php foreach($projectCombo as $value): ?>
@@ -39,6 +39,10 @@
             					</div>
             					<div class="form-group">
 	    							<div align="right">
+	    								<button type="button" class="btn bg-olive" style="width: 100px;" onclick="doOpenAddMoreScreen();">
+											<i class="fa fa-plus"></i> 
+											Import
+										</button>
 	            						<a href="<?php echo base_url(); ?>RTM/reset/">
 	            							<button type="button" class="btn bg-orange" style="width: 100px;">
 	            							<i class="fa fa-refresh"></i> 
@@ -66,35 +70,31 @@
 			<div class="box box-success" style="margin-top: -10px;">
 				<div class="box-header">
 					<h3 class="box-title">Search Result</h3>
-					<div class="pull-right">
-						<button type="button" class="btn bg-olive btn-sm" style="width: 100px;" onclick="doOpenAddMoreScreen();">
-							<i class="fa fa-plus"></i> Add more
-						</button>
-					</div>
 				</div>
 				
 				<div class="box-body" style="margin-top: -10px;">
 					<table id="resultTbl" class="table table-bordered tableResult">
-						<thead>
+						<tbody>
 			            	<tr style="background: #CACFD2;">
-								<th width="10%">No.</th>
-								<th width="45%">Functional Requirement ID</th>
-								<th width="45%">Test Case ID.</th>
+								<th class="col-sm-1">#</th>
+								<th class="col-sm-4">Functional Requirement ID</th>
+								<th class="col-sm-3">Test Case ID</th>
+								<th class="col-sm-2">Create Date</th>
+								<th class="col-sm-2">Create User</th>
 			                </tr>
-		                </thead>
 		                <?php if(null != $searchResultList and 0 < count($searchResultList)){ ?>
-		                	 <tbody>
 			                	<?php 
 				                $define = 1;
 				                foreach($searchResultList as $value): 
 				                	$classRow = (0 == $define%2)? 'even' : 'odd'; ?>
 					                <tr class="<?php echo $classRow; ?>">
-					                	<td width="10%"><?php echo $define++; ?></td>
-					                	<td width="45%"><?php echo $value['functionNo'] ?></td>
-					                	<td width="45%"><?php echo $value['testCaseNo'] ?></td>
+					                	<td><?php echo $define++; ?></td>
+					                	<td><?php echo $value['functionNo'] ?></td>
+					                	<td><?php echo $value['testCaseNo'] ?></td>
+					                	<td><?php echo $value['createDate'] ?></td>
+					                	<td><?php echo $value['createUser'] ?></td>
 					                </tr>
 				            	<?php endforeach; ?>
-				            </tbody>
 		                <?php } else { ?>
 		                	<tr>
 		                		<td colspan="8" style="text-align: center;">
@@ -102,6 +102,7 @@
 		                		</td>
 		                	</tr>
 		                <?php } ?>
+		                 </tbody>
 					</table>
 				</div>
 			</div>
@@ -111,8 +112,14 @@
 	<?php } ?>
 	<script type="text/javascript">
 		function doOpenAddMoreScreen(){
-			var projectId = $('#selectedProjectId').val();
-			window.location  = baseUrl + "RTM/addMore/" + projectId;
+			var projectId = $('#inputProjectName').val();
+			if('' != projectId){
+				window.location  = baseUrl + "RTM/addMore/" + projectId;
+				return false;
+			}else{
+				alert("Please select project's name!");
+				return false;
+			}
 		}
 	</script>
 </section>

@@ -23,6 +23,13 @@ class Dashboard extends CI_Controller {
 		$data['html'] = 'dashboard_view';
 		$data['active_title'] = 'dashboard';
 		$data['active_page'] = 'dhbs001';
+
+
+		//1. Get Number of Project, FnReq, TestCase, DatabaseSchema
+
+		//2. Get Latest Change Information
+
+
 		$this->load->view('template/header');
 		$this->load->view('template/body',$data);
 		$this->load->view('template/footer');

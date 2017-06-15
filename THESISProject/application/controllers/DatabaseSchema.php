@@ -30,11 +30,10 @@ class DatabaseSchema extends CI_Controller{
 		$resultList = null;
 
 		$projectId = trim($this->input->post('inputProjectName'));
-		$status = trim($this->input->post('inputStatus'));
 
 		$this->FValidate->set_rules('inputProjectName', null, 'required');
 		if($this->FValidate->run()){
-			$resultList = $this->mDbSchema->searchDatabaseSchemaByCriteria($projectId, $status);
+			$resultList = $this->mDbSchema->searchDatabaseSchemaByCriteria($projectId, ACTIVE_CODE);
 
 			$data['selectedProjectId'] = $projectId;
 			$data['searchFlag'] = 'Y';

@@ -12,8 +12,8 @@ class Project_model extends CI_Model {
 		if(isset($projectName) && $projectName != "" && !empty($projectName)){
 			$where[] = "projectName like '%".$this->ms_escape_string($projectName)."%'";
 		}
-		if(isset($projectNameAlias) && $projectNameAlias != "" && !empty($projectNameAlias)){
-			$where[] = "projectNameAlias like '%".$this->ms_escape_string($projectNameAlias)."%'";
+		if(isset($projectAlias) && $projectAlias != "" && !empty($projectAlias)){
+			$where[] = "projectNameAlias like '%".$this->ms_escape_string($projectAlias)."%'";
 		}
 		if(isset($startDateFrom) && $startDateFrom != "" && !empty($startDateFrom)){
 			$date = DateTime::createFromFormat($format, $startDateFrom);
@@ -59,7 +59,7 @@ class Project_model extends CI_Model {
 	function searchActiveProjectCombobox(){
 		$queryStr = "SELECT projectId, projectName, projectNameAlias 
 			FROM M_PROJECT 
-			WHERE activeFlag = '1' 
+			WHERE activeFlag = '1' AND startFlag <> '1'
 			ORDER BY projectName";
 		$result = $this->db->query($queryStr);
 		return $result->result_array();

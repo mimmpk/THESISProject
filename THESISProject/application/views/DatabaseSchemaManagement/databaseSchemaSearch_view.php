@@ -23,7 +23,7 @@
             				<div class="col-sm-12">
             					<div class="form-group">
             						<label for="inputProjectName">Project's name<span style="color:red;">*</span>:</label>
-            						<select name="inputProjectName" class="form-control select2" style="width: 100%;" value="<?php echo $formData->projectId ?>">
+            						<select id="inputProjectName" name="inputProjectName" class="form-control select2" style="width: 100%;" value="<?php echo $formData->projectId ?>">
 										<option value="">--Please Select--</option>
 	            						<?php if(null != $projectCombo) {  ?>
 	            						<?php foreach($projectCombo as $value): ?>
@@ -37,24 +37,12 @@
             					</div>
             				</div>
             				<div class="form-group">
-	        					<div class="col-sm-6"> 
-	        						<label for="inputStatus">Database Schema Status: </label>
-	            					&nbsp;&nbsp;&nbsp;
-		            				<label>
-					                	<input type="radio" name="inputStatus" class="minimal" value="1" <?php echo set_radio('inputStatus', '1', TRUE); ?>>
-					                	Active 
-					                </label>
-					                <label>
-					                	<input type="radio" name="inputStatus" class="minimal" value="0" <?php echo set_radio('inputStatus', '0'); ?>>
-					                	Inactive
-					                </label>
-					                 <label>
-					                	<input type="radio" name="inputStatus" class="minimal" value="2" <?php echo set_radio('inputStatus', '2'); ?>>
-					                	All
-					                </label>
-	        					</div>
-	        					<div class="col-sm-6"> 
+	        					<div class="col-sm-12"> 
 	        						<div align="right">
+	        							<button type="button" class="btn bg-olive" style="width: 100px;" onclick="doOpenAddMoreScreen();">
+											<i class="fa fa-plus"></i> 
+											Import
+										</button>
 	            						<a href="<?php echo base_url(); ?>DatabaseSchema/reset/">
 	            							<button type="button" class="btn bg-orange" style="width: 100px;">
 	            							<i class="fa fa-refresh"></i> 
@@ -82,29 +70,21 @@
 			<div class="box box-success" style="margin-top: -10px;">
 				<div class="box-header">
 					<h3 class="box-title">Search Result</h3>
-					<div class="pull-right">
-						<button type="button" class="btn bg-olive btn-sm" style="width: 100px;" onclick="doOpenAddMoreScreen();">
-							<i class="fa fa-plus"></i> Add more
-						</button>
-					</div>
 				</div>
 
 				<div class="box-body" style="margin-top: -10px;">
 					<table id="resultTbl" class="table table-bordered">
-						<thead>
-			            	<tr style="background: #CACFD2;">
+						<tbody>			            	
+							<tr style="background: #CACFD2;">
 								<th>No.</th>
 								<th>Table Name</th>
 								<th>Column Name</th>
 								<th>Version</th>
-								<th>Effective Start Date</th>
-								<th>Effective End Date</th>
 								<th>Status</th>
-								<th>Action</th>
+								<th>Create Date</th>
+								<th>Create User</th>
 			                </tr>
-		                </thead>
 		                <?php if(null != $resultList and 0 < count($resultList)){ ?>
-		                	<tbody>
 		                	 	<?php 
 				                $define = 1;
 				                foreach($resultList as $value): 
@@ -114,8 +94,6 @@
 					                	<td><?php echo $value['tableName'] ?></td>
 					                	<td><?php echo $value['columnName'] ?></td>
 					                	<td><?php echo $value['schemaVersionNumber'] ?></td>
-					                	<td style="text-align: right;"><?php echo $value['effectiveStartDate'] ?></td>
-					                	<td style="text-align: right;"><?php echo $value['effectiveEndDate'] ?></td>
 					                	<td><?php if('0' == $value['activeFlag'] ) { ?>
 				                			<span class="label label-danger">
 				                				<?php echo UNACTIVE_STATUS; ?>
@@ -126,10 +104,10 @@
 				                			</span>
 				                			<?php } ?>
 				                		</td>
-				                		<td></td>
+				                		<td><?php echo $value['createDate'] ?></td>
+				                		<td><?php echo $value['createUser'] ?></td>
 					                </tr>
 				            	<?php endforeach; ?>
-		                	</tbody>
 		                <?php } else { ?>
 		                	<tr>
 		                		<td colspan="8" style="text-align: center;">
@@ -137,6 +115,7 @@
 		                		</td>
 		                	</tr>
 		                <?php } ?>
+		                </tbody>
 					</table>
 				</div>
 			</div>
@@ -146,8 +125,15 @@
 	<?php } ?>
 	<script type="text/javascript">
 		function doOpenAddMoreScreen(){
-			var projectId = $('#selectedProjectId').val();
-			window.location  = baseUrl + "DatabaseSchema/addMore/" + projectId;
+			var projectId = $('#inputProjectName').val();
+			if('' != projectId){
+				window.location  = baseUrl + "DatabaseSchema/addMore/" + projectId;
+				return false;
+			}else{
+				alert("Please select project's name!");
+				return false;
+			}
+			
 		}
 	</script>
 </section>

@@ -23,16 +23,21 @@
       				<li class="dropdown user user-menu">
       					<a href="#" class="dropdown-toggle" data-toggle="dropdown">
       						<img src="<?php echo base_url(); ?>/assets/img/avatar02.png" class="user-image">
-          					<span class="hidden-xs"><?php echo $this->session->userdata('username') ?></span>
+          					<span class="hidden-xs">
+          						<?php echo $this->session->userdata('firstName')."  ".$this->session->userdata('lastName') ?>
+          					</span>
       					</a>
       					<ul class="dropdown-menu">
   						<!-- User image -->
   						<li class="user-header">
-  							<img src="<?php echo base_url(); ?>/assets/img/avatar02.png" class="img-circle" alt="User Image">
   							<p>
-				                Session Id:
+  								Username: 
+  								<small><?php echo $this->session->userdata('username'); ?></small>
+  							</p>
+  							<p>
+  								Session Id:
 				                <small><?php echo $this->session->session_id; ?></small>
-			                </p>
+  							</p>
   						</li>
   						<li class="user-footer">
   							<div class="pull-right">
@@ -61,7 +66,9 @@
 				  <img src="<?php echo base_url(); ?>/assets/img/avatar02-1.png" class="img-circle">
 				</div>
 				<div class="pull-left info">
-				  <p>Parichat Kiatphao</p>
+				  <p>
+				  	<?php echo $this->session->userdata('firstName')."  ".$this->session->userdata('lastName') ?>
+				  </p>
 				  <i class="fa fa-circle text-success"></i> Online
 				</div>
 			</div>

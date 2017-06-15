@@ -23,7 +23,7 @@
 	            			<div class="col-sm-12">
 	            				<div class="form-group">
 	            					<label for="inputProjectName">Project's name<span style="color:red;">*</span>:</label>
-	            					<select name="inputProjectName" class="form-control select2" style="width: 100%;" value="<?php echo $formData->projectName ?>">
+	            					<select id="inputProjectName" name="inputProjectName" class="form-control select2" style="width: 100%;" value="<?php echo $formData->projectName ?>">
 										<option value="">--Please Select--</option>
 	            						<?php if(null != $projectCombo) {  ?>
 	            						<?php foreach($projectCombo as $value): ?>
@@ -38,7 +38,7 @@
 	            				</div>
 		            		</div>
 		            		<div class="form-group">
-	        					<div class="col-sm-6"> 
+	        					<!-- <div class="col-sm-6"> 
 	        						<label for="inputStatus">Functional Requirements Status: </label>
 	            					&nbsp;&nbsp;&nbsp;
 		            				<label>
@@ -53,9 +53,13 @@
 					                	<input type="radio" name="inputStatus" class="minimal" value="2" <?php echo set_radio('inputStatus', '2'); ?>>
 					                	All
 					                </label>
-	        					</div>
-	        					<div class="col-sm-6"> 
+	        					</div> -->
+	        					<div class="col-sm-12">
 	        						<div align="right">
+	        							<button type="button" class="btn bg-olive" style="width: 100px;" onclick="doOpenAddMoreScreen();">
+											<i class="fa fa-plus"></i> 
+											Import
+										</button>
 	            						<a href="<?php echo base_url(); ?>FunctionalRequirement/reset/">
 	            							<button type="button" class="btn bg-orange" style="width: 100px;">
 	            							<i class="fa fa-refresh"></i> 
@@ -83,27 +87,19 @@
 			<div class="box box-success" style="margin-top: -10px;">
 				<div class="box-header">
 					<h3 class="box-title">Search Result</h3>
-					<div class="pull-right">
-						<button type="button" class="btn bg-olive btn-sm" style="width: 100px;" onclick="doOpenAddMoreScreen();">
-							<i class="fa fa-plus"></i> Add more
-						</button>
-					</div>
 				</div>
 
 				<div class="box-body" style="margin-top: -10px;">
 					<table id="resultTbl" class="table table-bordered">
-						<thead>
+						<tbody>
 			            	<tr style="background: #CACFD2;">
-								<th>No.</th>
-								<th>Requirement ID</th>
-								<th>Requirement Description</th>
+								<th>#</th>
+								<th>Functional Requirement ID</th>
+								<th>Functional Requirement Description</th>
 								<th>Version</th>
 								<th>Status</th>
-								<th>Action</th>
 			                </tr>
-		                </thead>
 		                <?php if(null != $result and 0 < count($result)){ ?>
-			                <tbody>
 			                <?php 
 			                $define = 1;
 			                foreach($result as $value): 
@@ -122,12 +118,12 @@
 			                		<td></td>
 			                	</tr>
 			                <?php endforeach; ?>
-			                </tbody>
 		                <?php } else { ?>
 		                	<tr>
 		                		<td colspan="6" style="text-align: center;"><span style="color: red;">Search Not Found!!</span></td>
 		                	</tr>
 		                <?php } ?>
+		                </tbody>
 					</table>
 				</div>
 			</div>
@@ -137,8 +133,14 @@
 	<?php } ?>
 	<script type="text/javascript">
 		function doOpenAddMoreScreen(){
-			var projectId = $('#selectedProjectId').val();
-			window.location  = baseUrl + "FunctionalRequirement/addMore/" + projectId;
+			var projectId = $('#inputProjectName').val();
+			if('' != projectId){
+				window.location  = baseUrl + "FunctionalRequirement/addMore/" + projectId;
+				return false;
+			}else{
+				alert("Please select project's name!");
+				return false;
+			}
 		}
 	</script>
 </section>

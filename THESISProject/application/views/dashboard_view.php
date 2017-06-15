@@ -62,15 +62,39 @@
 						Latest Change
 					</h3>
 				</div>
-			</div>
-			<div class="box-body">
-				<div class="table-responsive">
-					
+				<div class="box-body">
+					<div class="table-responsive">
+						<table class="table table-striped">
+							<tbody>
+								<tr>
+									<th>#</th>
+									<th>Project</th>
+									<th>Change Request No.</th>
+									<th>Change Date</th>
+									<th>Change User</th>
+									<th>Status</th>
+								</tr>
+								<tr>
+									<td>1</td>
+									<td>SIS: Student Information System</td>
+									<td>CR-1706001</td>
+									<td>17-Jun-2017</td>
+									<td>TEST USER 01</td>
+									<td>closed</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</div>
+				<!-- <div class="box-footer clearfix">
+					<ul class="pagination pagination-sm no-margin pull-right">
+						
+					</ul>
+				</div> -->
 			</div>
 		</div>
 	</div>
-	<div class="row">
+	<!-- <div class="row">
 		<div class="col-md-12">
 			<div class="box box-danger">
 				<div class="box-header ui-sortable-handle">
@@ -124,5 +148,5 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	</div> -->
 </section>

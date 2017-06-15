@@ -26,7 +26,7 @@ class FunctionalRequirement_model extends CI_Model {
 				CAST(FRH.functionDescription AS VARBINARY(MAX)) as fnDesc, 
 				FRV.functionVersionNumber as functionVersion, 
 				FRV.activeFlag as functionStatus,
-				CONVERT(nvarchar, FRV.effectiveStartDate , 103) as effectiveStartDate
+				CONVERT(nvarchar, FRV.effectiveStartDate , 120) as effectiveStartDate
 			FROM M_FN_REQ_HEADER FRH 
 			INNER JOIN M_FN_REQ_VERSION FRV 
 			ON FRH.functionId = FRV.functionId 

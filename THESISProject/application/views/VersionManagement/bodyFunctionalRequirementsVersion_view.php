@@ -17,7 +17,7 @@
 				var projectId = $(this).val();
 				if('' != projectId){
 					$.ajax({
-						url: baseUrl+'/VersionManagement_FnReq/getRelatedFnReq/',
+						url: baseUrl+'VersionManagement_FnReq/getRelatedFnReq/',
 						data: {projectId : projectId},
 						type: 'POST',
 						success: function(result){

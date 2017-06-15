@@ -13,12 +13,16 @@ class RTM_model extends CI_Model{
 	function searchRTMInfoByCriteria($projectId){
 		$sqlStr = "SELECT 
 				f.functionNo,
-				t.testCaseNo
+				t.testCaseNo,
+				CONVERT(nvarchar, r.createDate, 120) as createDate,
+				CONCAT(u.firstname, '  ', u.lastname) as createUser
 			FROM M_RTM r
 			INNER JOIN M_FN_REQ_HEADER f
 			ON r.functionId = f.functionId
 			INNER JOIN M_TESTCASE_HEADER t
 			ON r.testCaseId = t.testCaseId
+			LEFT JOIN M_USERS u
+			ON r.createUser = u.username
 			WHERE r.projectId = '$projectId'
 			AND r.activeFlag = '1'";
 
@@ -40,6 +44,15 @@ class RTM_model extends CI_Model{
 			FROM M_RTM_VERSION 
 			WHERE projectId = $projectId
 			AND activeFlag = '1'";
+		$result = $this->db->query($sqlStr);
+		return $result->row();
+	}
+
+	function searchRTMVersionInfo($param){
+		$sqlStr = "SELECT *
+			FROM M_RTM_VERSION 
+			WHERE projectId = $param->projectId
+			AND rtmVersionId = $param->rtmVersionId";
 		$result = $this->db->query($sqlStr);
 		return $result->row();
 	}

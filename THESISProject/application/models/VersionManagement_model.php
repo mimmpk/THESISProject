@@ -141,24 +141,54 @@ class VersionManagement_model extends CI_Model{
 	}
 
 	public function searchDatabaseSchemaDetailByVersion($param){
-		if(){
-			$where[] = "projectId = $param->projectId";
+		if(isset($param->projectId) && !empty($param->projectId)){
+			$where[] = "i.projectId = $param->projectId";
 		}
-		if(){
-			$where[] = "tableName= '$param->tableName'";
+		if(isset($param->tableName) && !empty($param->tableName)){
+			$where[] = "i.tableName = '$param->tableName'";
 		}
-		if(){
-			$where[]
+		if(isset($param->columnName) && !empty($param->columnName)){
+			$where[] = "i.columnName = '$param->columnName'";
 		}
-		if(){
-			$where[]
+		if(isset($param->schemaVersionId) && !empty($param->schemaVersionId)){
+			$where[] = "v.schemaVersionId = $param->schemaVersionId";
 		}
 		$where_condition = implode(" AND ", $where);
 		
-		$sqlStr = "SELECT *
-			FROM M_DATABASE_SCHEMA_INFO
-			WHERE $where_condition";
+		$sqlStr = "SELECT i.*, v.schemaVersionId, v.schemaVersionNumber, v.activeFlag
+			FROM M_DATABASE_SCHEMA_INFO i
+			INNER JOIN M_DATABASE_SCHEMA_VERSION v
+			ON i.tableName = v.tableName
+			AND i.columnName = v.columnName
+			AND i.schemaVersionId = v.schemaVersionId
+			WHERE $where_condition
+			ORDER BY tableName, columnName, schemaVersionNumber";
 
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
+	public function searchRelatedRTMVersion($projectId){
+		$sqlStr = "SELECT * 
+			FROM M_RTM_VERSION 
+			WHERE projectId = $projectId 
+			ORDER BY rtmVersionNumber";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
+	public function searchRTMDetailByVersion($param){
+		$sqlStr = "SELECT r.*, fh.functionNo, th.testCaseNo
+			FROM M_RTM r
+			INNER JOIN M_FN_REQ_HEADER fh
+			ON r.functionId = fh.functionId
+			INNER JOIN M_TESTCASE_HEADER th
+			ON r.testCaseId = th.testCaseId
+			WHERE r.projectId = $param->projectId
+			AND r.effectiveStartDate <= '$param->targetDate'
+			AND (r.effectiveEndDate  >= '$param->targetDate' OR r.effectiveEndDate is null)
+			AND (r.effectiveEndDate != '$param->targetDate' OR r.effectiveEndDate is null)
+			ORDER BY fh.functionNo, th.testCaseNo";
 		$result = $this->db->query($sqlStr);
 		return $result->result_array();
 	}

@@ -97,7 +97,9 @@
 			                		<?php echo $value['functionVersion'] ?>
 			                	</td>
 			                	<td style="text-align: center;width: 15%;">
-			                		<?php echo $value['effectiveStartDate'] ?>
+			                		<?php 
+			                			echo $value['effectiveStartDate'];
+			                		?>
 			                	</td>
 			                	<td style="text-align: center;width: 10%;">
 			                		<button type="button" class="btn btn-block bg-orange btn-xs" onclick="viewFunctionDetail(<?php echo $value['functionId']; ?>)">

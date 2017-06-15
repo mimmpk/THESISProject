@@ -14,7 +14,7 @@ class FunctionalRequirement extends CI_Controller {
 	}
 
 	public function index(){
-		$formObj = (object) array('projectName' => '', 'fnStatus' => '');
+		$formObj = (object) array('projectName' => '');
 		$data['error_message'] = '';
 		$data['searchFlag'] = '';
 		$data['formData'] = $formObj;
@@ -26,19 +26,18 @@ class FunctionalRequirement extends CI_Controller {
 		$error_message = '';
 		$result = null;
 		$projectId = trim($this->input->post('inputProjectName'));
-		$status = trim($this->input->post('inputStatus'));
 
 		//var_dump("project_id=".$projectId." status=".$status);
 		$this->FValidate->set_rules('inputProjectName', null, 'required');
 		if($this->FValidate->run()){
-			$param = (object) array('projectId' => $projectId, 'status' => $status);
+			$param = (object) array('projectId' => $projectId, 'status' => ACTIVE_CODE);
 			$result = $this->FR->searchFunctionalRequirementHeaderInfo($param);
 			
 			$data['selectedProjectId'] = $projectId;
 			$data['searchFlag'] = 'Y';
 		}
 
-		$formObj = (object) array('projectName' => $projectId, 'fnStatus' => $status);
+		$formObj = (object) array('projectName' => $projectId);
 		$data['formData'] = $formObj;
 		$data['error_message'] = $error_message;
 		$data['result'] = $result;
