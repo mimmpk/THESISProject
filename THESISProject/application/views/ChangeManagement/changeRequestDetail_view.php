@@ -158,7 +158,7 @@
                 									<?php echo $value['columnName']; ?>
                 								</td>
                 								<td>
-                									<?php $keyId = $projectInfo->projectId."|".$value['inputId']."|".$value['schemaVersionId']; ?>
+                									<?php $keyId = $projectInfo->projectId."|".$value['inputId']."|".$value['schemaVersionId']."|".$hfield['functionId']; ?>
                 									
                 									<button type="button" name="edit" id="<?php echo $keyId; ?>" class="btn btn-warning btn-xs view" >Edit</button>
                 									<button type="button" name="delete" id="<?php echo $keyId; ?>" class="btn btn-danger btn-xs delete" >Delete</button>

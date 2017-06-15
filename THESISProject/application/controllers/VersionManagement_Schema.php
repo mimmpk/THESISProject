@@ -110,6 +110,10 @@ class VersionManagement_Schema extends CI_Controller{
 		$this->openView($data);
 	}
 
+	public function reset(){
+		$this->index();
+	}
+
 	private function initialComboBox($projectId, $tableName, $columnName, &$data){
 		$data['projectCombo'] = $this->mProj->searchStartProjectCombobox();
 		if(null != $projectId && !empty($projectId)){

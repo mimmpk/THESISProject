@@ -34,7 +34,7 @@ class Cancellation_model extends CI_Model{
 		$sqlStr = "
 			SELECT 
 				h.changeRequestNo,
-				CONVERT(nvarchar, h.changeDate, 103) as changeDate,
+				CONVERT(nvarchar, h.changeDate, 120) as changeDate,
 				CONCAT(u.firstname, '   ', u.lastname) as changeUser,
 				h.changeFunctionNo,
 				h.changeFunctionVersion,
@@ -354,7 +354,7 @@ class Cancellation_model extends CI_Model{
 				$updateDate = $testCaseVersionInfo->updateDate;
 
 				//A.Delete Latest Version
-				$paramDetail = (object) array(
+				$paramDelete = (object) array(
 					'testCaseId' => $testCaseId,
 					'testCaseVersionId' => $testCaseVersionId);
 				$rowDelete = $this->mTestCase->deleteTestCaseVersion($paramDelete);

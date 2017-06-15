@@ -266,7 +266,7 @@ class ChangeManagement extends CI_Controller{
 		if(null !== $keyId && !empty($keyId)){
 			$keyList = explode("|", $keyId);
 
-			$param = (object) array('projectId' => $keyList[0], 'inputId' => $keyList[1], 'schemaVersionId' => $keyList[2]);
+			$param = (object) array('projectId' => $keyList[0], 'inputId' => $keyList[1], 'schemaVersionId' => $keyList[2], 'functionId' => $keyList[3]);
 			$result = $this->mFR->searchFunctionalRequirementDetail($param);
 
 			if(0 < count($result)){

@@ -662,6 +662,7 @@ class ChangeManagement_model extends CI_Model{
 				$testCaseId = $resultLastTCVersion->testCaseId;
 				$oldTCVersionId = $resultLastTCVersion->testCaseVersionId;
 				$oldTCVersionNumber = (int)$resultLastTCVersion->testCaseVersionNumber;
+				$newTCVersionNumber = $oldTCVersionNumber + 1;
 				$oldUpdateDate = $resultLastTCVersion->updateDate;
 			}
 
@@ -672,8 +673,6 @@ class ChangeManagement_model extends CI_Model{
 			//Insert Test Case Version.
 			if(CHANGE_TYPE_ADD == $testcaseInfoVal->changeType 
 				|| CHANGE_TYPE_EDIT == $testcaseInfoVal->changeType){
-
-				$newTCVersionNumber = $oldTCVersionNumber + 1;
 
 				$paramInsert = (object) array(
 					'testCaseId' 		 => $testCaseId,
@@ -748,101 +747,101 @@ class ChangeManagement_model extends CI_Model{
 		}
 
 		//**[Version Control of RTM]
-		if(!$errorFlag && !empty($affectedRTM)){
+		if(!$errorFlag && null != $affectedRTM && 0 < count($affectedRTM)){
 		
-		//Get Latest RTM Info
-		$resultLastRTMInfo = $this->getLastRTMVersion($affectedProjectId);
-		$newRTMVersionNumber = (int)$resultLastRTMInfo->rtmVersionNumber + 1;
-		$oldRtmVersionId = $resultLastRTMInfo->rtmVersionId;
-		$oldRtmUpdateDate = $resultLastRTMInfo->updateDate;
+			//Get Latest RTM Info
+			$resultLastRTMInfo = $this->getLastRTMVersion($affectedProjectId);
+			$newRTMVersionNumber = (int)$resultLastRTMInfo->rtmVersionNumber + 1;
+			$oldRtmVersionId = $resultLastRTMInfo->rtmVersionId;
+			$oldRtmUpdateDate = $resultLastRTMInfo->updateDate;
 
-		$affectedRTM->oldRTMVerNO = $resultLastRTMInfo->rtmVersionNumber;
-		$affectedRTM->newRTMVerNO = $newRTMVersionNumber;
+			$affectedRTM->oldRTMVerNO = $resultLastRTMInfo->rtmVersionNumber;
+			$affectedRTM->newRTMVerNO = $newRTMVersionNumber;
 
-		//Update Disabled Old RTM Version
-		$paramUpdate = (object) array(
-			'effectiveEndDate' => $newCurrentDate,
-			'activeFlag' => UNACTIVE_CODE,
-			'updateDate' => $newCurrentDate,
-			'user' => $user,
-			'rtmVersionIdCondition' => $oldRtmVersionId,
-			'projectId' => $affectedProjectId,
-			'updateDateCondition' => $oldRtmUpdateDate);
+			//Update Disabled Old RTM Version
+			$paramUpdate = (object) array(
+				'effectiveEndDate' => $newCurrentDate,
+				'activeFlag' => UNACTIVE_CODE,
+				'updateDate' => $newCurrentDate,
+				'user' => $user,
+				'rtmVersionIdCondition' => $oldRtmVersionId,
+				'projectId' => $affectedProjectId,
+				'updateDateCondition' => $oldRtmUpdateDate);
 
-		$rowUpdate = $this->mRTM->updateRTMVersion($paramUpdate);
-		if(1 != $rowUpdate){
-			$errorFlag = true;
-			$error_message = str_replace("{0}", "RTM", ER_MSG_016);
-			break;
-		}
-
-		//Insert New RTM Version
-		$paramInsert = (object) array(
-			'projectId' 		 => $affectedProjectId,
-			'versionNo' 	 	 => $newRTMVersionNumber,
-			'effectiveStartDate' => $newCurrentDate, 
-			'activeFlag' 		 => ACTIVE_CODE,
-			'previousVersionId'  => $oldRtmVersionId);
-
-		$this->mRTM->insertRTMVersion($paramInsert, $user);
-
-		foreach($affectedRTM->details as $value){
-			$functionId = "";
-			$testCaseId = "";
-
-			//get Functional Requirement Info
-			$resultFRInfo = $this->mFR->searchExistFunctionalRequirement($value->functionNo, $affectedProjectId);
-			if(null == $resultFRInfo || 0 == count($resultFRInfo)){
+			$rowUpdate = $this->mRTM->updateRTMVersion($paramUpdate);
+			if(1 != $rowUpdate){
 				$errorFlag = true;
 				$error_message = str_replace("{0}", "RTM", ER_MSG_016);
 				break;
 			}
 
-			$functionId = $resultFRInfo[0]['functionId'];
+			//Insert New RTM Version
+			$paramInsert = (object) array(
+				'projectId' 		 => $affectedProjectId,
+				'versionNo' 	 	 => $newRTMVersionNumber,
+				'effectiveStartDate' => $newCurrentDate, 
+				'activeFlag' 		 => ACTIVE_CODE,
+				'previousVersionId'  => $oldRtmVersionId);
 
-			//get Test Case Info
-			$resultTCInfo = $this->mTestCase->searchExistTestCaseHeader($affectedProjectId, $value->testCaseNo);
-			if(null == $resultTCInfo || 0 == count($resultTCInfo)){
-				$errorFlag = true;
-				$error_message = str_replace("{0}", "RTM", ER_MSG_016);
-				break;
-			}
+			$this->mRTM->insertRTMVersion($paramInsert, $user);
 
-			$testCaseId = $resultTCInfo->testCaseId;
+			foreach($affectedRTM->details as $value){
+				$functionId = "";
+				$testCaseId = "";
 
-			//set Function Id & Test case Id
-			$value->functionId = $functionId;
-			$value->testCaseId = $testCaseId;
-
-			//Insert RTM Info
-			if(CHANGE_TYPE_ADD == $value->changeType){
-				$paramInsert = (object) array(
-					'projectId' 			=> $affectedProjectId,
-					'functionId' 			=> $functionId,
-					'testCaseId' 			=> $testCaseId,
-					'effectiveStartDate' 	=> $newCurrentDate,
-					'activeFlag' 			=> ACTIVE_CODE);
-				$this->mRTM->insertRTMInfo($paramInsert, $user);
-			}
-
-			//Update RTM Info
-			if(CHANGE_TYPE_DELETE == $value->changeType){
-				$paramUpdate = (object) array(
-					'effectiveEndDate'  => $newCurrentDate,
-					'activeFlag' 		=> UNACTIVE_CODE,
-					'updateDate' 		=> $newCurrentDate,
-					'user' 				=> $user,
-					'projectId' 		=> $affectedProjectId,
-					'functionId' 		=> $functionId,
-					'testCaseId' 		=> $testCaseId);
-				$rowUpdate = $this->mRTM->updateRTMInfo($paramUpdate);
-				if(1 != $rowUpdate){
+				//get Functional Requirement Info
+				$resultFRInfo = $this->mFR->searchExistFunctionalRequirement($value->functionNo, $affectedProjectId);
+				if(null == $resultFRInfo || 0 == count($resultFRInfo)){
 					$errorFlag = true;
 					$error_message = str_replace("{0}", "RTM", ER_MSG_016);
 					break;
 				}
+
+				$functionId = $resultFRInfo[0]['functionId'];
+
+				//get Test Case Info
+				$resultTCInfo = $this->mTestCase->searchExistTestCaseHeader($affectedProjectId, $value->testCaseNo);
+				if(null == $resultTCInfo || 0 == count($resultTCInfo)){
+					$errorFlag = true;
+					$error_message = str_replace("{0}", "RTM", ER_MSG_016);
+					break;
+				}
+
+				$testCaseId = $resultTCInfo->testCaseId;
+
+				//set Function Id & Test case Id
+				$value->functionId = $functionId;
+				$value->testCaseId = $testCaseId;
+
+				//Insert RTM Info
+				if(CHANGE_TYPE_ADD == $value->changeType){
+					$paramInsert = (object) array(
+						'projectId' 			=> $affectedProjectId,
+						'functionId' 			=> $functionId,
+						'testCaseId' 			=> $testCaseId,
+						'effectiveStartDate' 	=> $newCurrentDate,
+						'activeFlag' 			=> ACTIVE_CODE);
+					$this->mRTM->insertRTMInfo($paramInsert, $user);
+				}
+
+				//Update RTM Info
+				if(CHANGE_TYPE_DELETE == $value->changeType){
+					$paramUpdate = (object) array(
+						'effectiveEndDate'  => $newCurrentDate,
+						'activeFlag' 		=> UNACTIVE_CODE,
+						'updateDate' 		=> $newCurrentDate,
+						'user' 				=> $user,
+						'projectId' 		=> $affectedProjectId,
+						'functionId' 		=> $functionId,
+						'testCaseId' 		=> $testCaseId);
+					$rowUpdate = $this->mRTM->updateRTMInfo($paramUpdate);
+					if(1 != $rowUpdate){
+						$errorFlag = true;
+						$error_message = str_replace("{0}", "RTM", ER_MSG_016);
+						break;
+					}
+				}
 			}
-		}
 		}
 
 		//return result;
