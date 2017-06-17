@@ -36,7 +36,9 @@ class Project_model extends CI_Model {
 		}
 		
 		$where_clause = implode(' AND ', $where);
-		$queryStr = "SELECT projectId, projectName, projectNameAlias, startDate, endDate, customer FROM M_PROJECT WHERE $where_clause ORDER BY projectName";
+		$queryStr = "SELECT projectId, projectName, projectNameAlias, startDate, endDate, customer FROM M_PROJECT 
+			WHERE $where_clause 
+			ORDER BY projectName";
 		//echo $queryStr."<br/>";
 		$result = $this->db->query($queryStr);
 		return $result->result_array();
@@ -48,7 +50,7 @@ class Project_model extends CI_Model {
 				p.projectId, p.projectName, p.projectNameAlias, 
 				CONVERT(nvarchar, p.startDate, 103) as startDate, 
 				CONVERT(nvarchar, p.endDate, 103) as endDate, 
-				CAST(p.customer AS VARBINARY(MAX)) as customer, 
+				p.customer as customer, 
 				p.databaseName, p.hostname, p.port, p.username, p.password, p.startFlag
 			FROM M_PROJECT p
 			WHERE p.projectId = $projectId";

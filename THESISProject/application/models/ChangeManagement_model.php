@@ -402,7 +402,7 @@ class ChangeManagement_model extends CI_Model{
 			$oldDBVersionNumber = '';
 
 			$lastDBVersionInfo = $this->getLastDatabaseSchemaVersion($affectedProjectId, $value->tableName, $value->columnName);
-			
+
 			if(empty($value->affectedAction)){
 				if(0 == count($lastDBVersionInfo)){
 					$newDBVersionNumber = INITIAL_VERSION;
@@ -439,73 +439,78 @@ class ChangeManagement_model extends CI_Model{
 					$newDBVersionNumber = INITIAL_VERSION;
 				}
 			}
+			
+			if(CHANGE_TYPE_DELETE != $value->affectedAction){
+				$value->oldSchemaVersionNo = $oldDBVersionNumber;
+				$value->newSchemaVersionNo = $newDBVersionNumber;
 
-			$value->oldSchemaVersionNo = $oldDBVersionNumber;
-			$value->newSchemaVersionNo = $newDBVersionNumber;
-
-			//insert database schema data
-			$dbParam = (object) array(
-					'projectId' => $affectedProjectId,
-					'tableName' => $value->tableName,
-					'columnName' => $value->columnName,
-					'schemaVersionNo' => $newDBVersionNumber,
-					'previousVersionId' => $oldDBVersionId,
-					'status' => ACTIVE_CODE);
-			$resultInsert = $this->mDB->insertDatabaseSchemaVersion($dbParam, $user);
-			if(null != $resultInsert){
-				$schemaVersionId = $resultInsert;
-			}else{
-				$errorFlag = true;
-				$error_message = str_replace("{0}", "Database Schema", ER_MSG_016);
-				break;
-			}
-
-			//insert database schema detail**(get direct from database target)
-			$dbSchemaDetail = $this->mDB->getSchemaFromDatabaseTarget($connectionDB, $value->tableName, $value->columnName);
-			if(!empty($dbSchemaDetail)){
-				$dataLength = '';
-				$scaleLength = '';
-				$defaultValue = '';
-
-				$miscResult = $this->mMisc->searchMiscellaneous(MISC_DATA_INPUT_DATA_TYPE, $dbSchemaDetail['dataType']);
-				$dataTypeCategory = $miscResult[0]['miscValue2'];
-				if(DATA_TYPE_CATEGORY_STRINGS == $dataTypeCategory){
-					$dataLength = $dbSchemaDetail['charecterLength'];
-				}else if(DATA_TYPE_CATEGORY_NUMERICS == $dataTypeCategory){
-					if("decimal" == $dbSchemaDetail['dataType']){
-						$dataLength = $dbSchemaDetail['numericPrecision'];
-						$scaleLength = $dbSchemaDetail['numericScale'];
-					}
+				//insert database schema data
+				$dbParam = (object) array(
+						'projectId' => $affectedProjectId,
+						'tableName' => $value->tableName,
+						'columnName' => $value->columnName,
+						'schemaVersionNo' => $newDBVersionNumber,
+						'previousVersionId' => $oldDBVersionId,
+						'status' => ACTIVE_CODE);
+				$resultInsert = $this->mDB->insertDatabaseSchemaVersion($dbParam, $user);
+				if(null != $resultInsert){
+					$schemaVersionId = $resultInsert;
+				}else{
+					$errorFlag = true;
+					$error_message = str_replace("{0}", "Database Schema", ER_MSG_016);
+					break;
 				}
 
-				$defaultValue = $dbSchemaDetail['columnDefault'];
-				if(!empty($dbSchemaDetail['columnDefault'])){
-					if(DATA_TYPE_CATEGORY_DATE == $dataTypeCategory){
-						$defaultValue = substr($defaultValue, 1, -1);
-					}else{
-						$defaultValue = str_replace('(', '', $defaultValue);
-						$defaultValue = str_replace(')', '', $defaultValue);
-					}
-				}
+				//insert database schema detail**(get direct from database target)
+				$dbSchemaDetail = $this->mDB->getSchemaFromDatabaseTarget($connectionDB, $value->tableName, $value->columnName);
+				if(!empty($dbSchemaDetail)){
+					$dataLength = '';
+					$scaleLength = '';
+					$defaultValue = '';
 
-				$param = (object) array(
-					'tableName' => $dbSchemaDetail['tableName'],
-					'columnName' => $dbSchemaDetail['columnName'],
-					'schemaVersionId' => $schemaVersionId,
-					'dataType' => $dbSchemaDetail['dataType'],
-					'dataLength' => $dataLength,
-					'scale' => $scaleLength,
-					'defaultValue' => $defaultValue,
-					'minValue' => $dbSchemaDetail['minValue'],
-					'maxValue' => $dbSchemaDetail['maxValue'],
-					'primaryKey' => $dbSchemaDetail['isPrimaryKey'],
-					'unique' => $dbSchemaDetail['isUnique'],
-					'null' => $dbSchemaDetail['isNotNull']);
-				$resultInsert = $this->mDB->insertDatabaseSchemaInfo($param, $affectedProjectId);
+					$miscResult = $this->mMisc->searchMiscellaneous(MISC_DATA_INPUT_DATA_TYPE, $dbSchemaDetail['dataType']);
+					$dataTypeCategory = $miscResult[0]['miscValue2'];
+					if(DATA_TYPE_CATEGORY_STRINGS == $dataTypeCategory){
+						$dataLength = $dbSchemaDetail['charecterLength'];
+					}else if(DATA_TYPE_CATEGORY_NUMERICS == $dataTypeCategory){
+						if("decimal" == $dbSchemaDetail['dataType']){
+							$dataLength = $dbSchemaDetail['numericPrecision'];
+							$scaleLength = $dbSchemaDetail['numericScale'];
+						}
+					}
+
+					$defaultValue = $dbSchemaDetail['columnDefault'];
+					if(!empty($dbSchemaDetail['columnDefault'])){
+						if(DATA_TYPE_CATEGORY_DATE == $dataTypeCategory){
+							$defaultValue = substr($defaultValue, 1, -1);
+						}else{
+							$defaultValue = str_replace('(', '', $defaultValue);
+							$defaultValue = str_replace(')', '', $defaultValue);
+						}
+					}
+
+					$param = (object) array(
+						'tableName' => strtoupper($dbSchemaDetail['tableName']),
+						'columnName' => strtoupper($dbSchemaDetail['columnName']),
+						'schemaVersionId' => $schemaVersionId,
+						'dataType' => $dbSchemaDetail['dataType'],
+						'dataLength' => $dataLength,
+						'scale' => $scaleLength,
+						'defaultValue' => $defaultValue,
+						'minValue' => $dbSchemaDetail['minValue'],
+						'maxValue' => $dbSchemaDetail['maxValue'],
+						'primaryKey' => $dbSchemaDetail['isPrimaryKey'],
+						'unique' => $dbSchemaDetail['isUnique'],
+						'null' => $dbSchemaDetail['isNotNull']);
+					$resultInsert = $this->mDB->insertDatabaseSchemaInfo($param, $affectedProjectId);
+				}else{
+					$errorFlag = true;
+					$error_message = ER_TRN_013;
+					break;
+				}
 			}else{
-				$errorFlag = true;
-				$error_message = ER_TRN_013;
-				break;
+				$value->oldSchemaVersionNo = $oldDBVersionNumber;
+				$value->newSchemaVersionNo = '';
 			}
 		}//endforeach; (database schema)
 
@@ -567,7 +572,10 @@ class ChangeManagement_model extends CI_Model{
 			//3.2 Create new input of FR information
 			foreach($functionInfoVal->functionInput as $keyInputName => $value){
 
-				$resultExistInput = $this->mFR->searchFRInputInformation($affectedProjectId, $keyInputName);
+				$resultExistInput = $this->mFR->searchFRInputInformation($affectedProjectId, $keyInputName, ACTIVE_CODE);
+				//var_dump($affectedProjectId."|".$keyInputName);
+				//var_dump($resultExistInput);
+
 				if(null == $resultExistInput || 0 == count($resultExistInput)){
 					//insert new input (case: never has input before)
 					$paramFRInput = (object) array(
@@ -575,7 +583,7 @@ class ChangeManagement_model extends CI_Model{
 						'inputName' => $keyInputName,
 						'referTableName' => $value->refTableName,
 						'referColumnName' => $value->refColumnName,
-						'user' => $user );
+						'user' => $user);
 					$resultInputId = $this->mFR->insertFRInput($paramFRInput);
 					$inputId = $resultInputId;
 				}else{
@@ -583,7 +591,8 @@ class ChangeManagement_model extends CI_Model{
 
 					$paramFRInputCondition = (object) array(
 						'functionId' => $oldFunctionId,
-						'inputName' => $keyInputName);
+						'inputName' => $keyInputName,
+						'inputActiveFlag' => ACTIVE_CODE);
 					$resultFRInput = $this->mFR->searchExistFRInputInFunctionalRequirement($paramFRInputCondition);
 					if(null != $resultFRInput && 0 < count($resultFRInput)){
 						$oldSchemaVersionId = $resultFRInput[0]['schemaVersionId'];
@@ -596,16 +605,41 @@ class ChangeManagement_model extends CI_Model{
 				$schemaVersionId = $resultSchemaInfo->schemaVersionId;
 
 				if("add" == $value->changeType || "edit" == $value->changeType){
-					//insert new version input detail
-					$paramFRDetail = (object) array(
-						'inputId' => $inputId,
-						'schemaVersionId' => $schemaVersionId,
-						'effectiveStartDate' => $newCurrentDate,
-						'effectiveEndDate' => '',
-						'activeFlag' => ACTIVE_CODE,
-						'user' => $user);
-					//insertFRDetail
-					$resultInsert = $this->mFR->insertFRDetail($oldFunctionId, $paramFRDetail);
+
+					//Check exist InputId and SchemaVersionId
+					$criteria = (object) array(
+						'functionId' 	  => $oldFunctionId,
+						'inputId' 	 	  => $inputId, 
+						'schemaVersionId' => $schemaVersionId);
+					$resultFRInputDetail = $this->mFR->searchExistFRInputInFunctionalRequirement($criteria);
+					if(null != $resultFRInputDetail && 0 < count($resultFRInputDetail)){
+						//Update input detail
+						$paramFRDetail = (object) array(
+							'user' => $user,
+							'activeFlag' => ACTIVE_CODE,
+							'currentDate' => $newCurrentDate,
+							'effectiveEndDate' => '',
+							'inputId' => $inputId,
+							'functionId' => $oldFunctionId,
+							'oldSchemaVersionId' => $oldSchemaVersionId);
+						$resultUpdate = $this->mFR->updateFunctionalRequirementsDetail($paramFRDetail);
+						if(0 == $resultUpdate){
+							$errorFlag = true;
+							$error_message = str_replace("{0}", "Functional Requirements", ER_MSG_016);
+							break 2;
+						}
+					}else{
+						//insert new version input detail
+						$paramFRDetail = (object) array(
+							'inputId' => $inputId,
+							'schemaVersionId' => $schemaVersionId,
+							'effectiveStartDate' => $newCurrentDate,
+							'effectiveEndDate' => '',
+							'activeFlag' => ACTIVE_CODE,
+							'user' => $user);
+						//insertFRDetail
+						$resultInsert = $this->mFR->insertFRDetail($oldFunctionId, $paramFRDetail);
+					}
 				}
 
 				if("edit" == $value->changeType || "delete" == $value->changeType){
@@ -668,8 +702,12 @@ class ChangeManagement_model extends CI_Model{
 
 			$testcaseInfoVal->testCaseId = $testCaseId;
 			$testcaseInfoVal->oldVerNO = $oldTCVersionNumber;
-			$testcaseInfoVal->newVerNO = $newTCVersionNumber;
-
+			if(CHANGE_TYPE_DELETE != $testcaseInfoVal->changeType){
+				$testcaseInfoVal->newVerNO = $newTCVersionNumber;
+			}else{
+				$testcaseInfoVal->newVerNO = '';
+			}
+			
 			//Insert Test Case Version.
 			if(CHANGE_TYPE_ADD == $testcaseInfoVal->changeType 
 				|| CHANGE_TYPE_EDIT == $testcaseInfoVal->changeType){
@@ -705,7 +743,7 @@ class ChangeManagement_model extends CI_Model{
 			//Insert or Update Test Case Detail
 			foreach($testcaseInfoVal->testCaseDetails as $keyInputName => $value){
 
-				$resultInputInfo = $this->mFR->searchFRInputInformation($affectedProjectId, $keyInputName);
+				$resultInputInfo = $this->mFR->searchFRInputInformation($affectedProjectId, $keyInputName, ACTIVE_CODE);
 				if(null == $resultInputInfo || 0 == count($resultInputInfo)){
 					$errorFlag = true;
 					$error_message = str_replace("{0}", "Test Case", ER_MSG_016);
@@ -840,6 +878,28 @@ class ChangeManagement_model extends CI_Model{
 						$error_message = str_replace("{0}", "RTM", ER_MSG_016);
 						break;
 					}
+				}
+			}
+		}
+
+		//**[Update FR Input's Status]
+		foreach($affectedSchemaList as $value) {
+			if(CHANGE_TYPE_DELETE == $value->affectedAction){
+				$inputInfo = $this->mFR->searchExistFRInputsByTableAndColumnName($value->tableName, $value->columnName, $affectedProjectId, ACTIVE_CODE);
+
+				//Disable ACTIVE FLAG of FR INPUT
+				$paramUpdate = (object) array(
+					'activeFlag' => UNACTIVE_CODE, 
+					'updateDate' => $newCurrentDate, 
+					'updateUser' => $user,
+					'projectId'  => $affectedProjectId,
+					'inputId'    => $inputInfo->inputId);
+				//var_dump($value->tableName."|".$value->columnName."|".$affectedProjectId);
+				$rowUpdate = $this->mFR->updateStatusFRInput($paramUpdate);
+				if(1 !== $rowUpdate){
+					$errorFlag = true;
+					$error_message = str_replace("{0}", "Update FR Input's status", ER_MSG_016);
+					break;
 				}
 			}
 		}

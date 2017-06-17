@@ -703,6 +703,7 @@ class ChangeManagement extends CI_Controller{
 		$inputId = '';
 
 		//1. Check Existing in Selected Functional Requirement
+		$param->inputActiveFlag = ACTIVE_CODE;
 		$resultExist = $this->mFR->searchExistFRInputInFunctionalRequirement($param);
 		if(0 < count($resultExist)){
 			$errorMsg = ER_TRN_005;
@@ -724,7 +725,7 @@ class ChangeManagement extends CI_Controller{
 		}
 
 		//3. Check input name match with table & column or not? (REQ INPUT DB)
-		$resultInputInfo = $this->mFR->searchFRInputInformation($projectId, $param->inputName);
+		$resultInputInfo = $this->mFR->searchFRInputInformation($projectId, $param->inputName, ACTIVE_CODE);
 		if(0 < count($resultInputInfo)){
 			$referTableName = $resultInputInfo->refTableName;
 			$referColumnName = $resultInputInfo->refColumnName;
@@ -742,7 +743,7 @@ class ChangeManagement extends CI_Controller{
 		//4. Check table & column name match with input data (REQ INPUT DB)
 		if(!$correctFRInput){
 			$resultInputInfo = $this->mFR->searchExistFRInputsByTableAndColumnName(
-				$param->table, $param->column, $projectId);
+				$param->table, $param->column, $projectId, ACTIVE_CODE);
 			if(0 <  count($resultInputInfo)){
 				if($param->inputName == $resultInputInfo->inputName){
 					$param->inputId = $resultInputInfo->inputId;
@@ -976,6 +977,9 @@ class ChangeManagement extends CI_Controller{
 		$url = 'http://localhost/StubService/ChangeAPI.php';
 
 		$json = json_decode($this->common->postCURL($url, $passData));
+		
+		$this->writeJsonFile($passData, $json, $param->functionId);
+
 		return $json;
 
 		//echo '<br><hr><h2>'.$this->postCURL($url, $passData).'</h2><br><hr><br>';
@@ -996,6 +1000,22 @@ class ChangeManagement extends CI_Controller{
 		$this->load->view('template/header');
 		$this->load->view('template/body', $data);
 		$this->load->view('template/footer');
+	}
+
+	private function writeJsonFile($outputData, $inputData, $changedFunctionId){
+		try{
+			$datetime = date('YmdHis');
+			$outputFileName = "log/changeOutputJson_".$changedFunctionId."_".$datetime.".txt";
+
+			$encodedString = json_encode($outputData);
+			file_put_contents($outputFileName, $encodedString);
+
+			$encodedString = json_encode($inputData);
+			$inputFileName = "log/changeInputJson_".$changedFunctionId."_".$datetime.".txt";
+			file_put_contents($inputFileName, $encodedString);
+		}catch(Exception $e){
+			echo 'Caught exception: ',  $e->getMessage(), "\n";
+		}
 	}
 }
 

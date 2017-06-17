@@ -12,6 +12,12 @@
 	<!-- Main content -->
 	<div class="row">
 	 	<div class="col-md-12">
+	 		<?php if(!empty($error_message)) { ?>
+			<div class="alert alert-danger alert-dismissible" style="margin-top: 3px;margin-bottom: 3px;">
+				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
+				<?php echo $error_message; ?>
+			</div>
+			<?php } ?>
 	 		<div class="box box-primary">
 	 			<div class="box-header with-border">
               		<h3 class="box-title">Search Criteria</h3>
@@ -92,7 +98,6 @@
 		                	</div>
 		                </div>
 	            	</div>
-	            	<?php echo "<div style='color:red'>". $error_message ."</div>"?>
 	            </form>
             </div>
 	 	</div>

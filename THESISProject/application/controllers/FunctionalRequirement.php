@@ -188,7 +188,7 @@ class FunctionalRequirement extends CI_Controller {
 	       			}
 
 
-       				$resultInputInfo = $this->FR->searchFRInputInformation($projectId, $value[KEY_FR_INPUT_NAME]);
+       				$resultInputInfo = $this->FR->searchFRInputInformation($projectId, $value[KEY_FR_INPUT_NAME], ACTIVE_CODE);
        				if(0 < count($resultInputInfo)){
        					//Validate with exist data
        					$referTableName = $resultInputInfo->refTableName;
@@ -234,7 +234,7 @@ class FunctionalRequirement extends CI_Controller {
 
 		       			//Check exist Table and Column Name in Database
 		       			if($hasTableName && $hasColumnName){
-		       				$resultSchemaInfo = $this->FR->searchExistFRInputsByTableAndColumnName($value[KEY_FR_INPUT_TABLE_NAME], $value[KEY_FR_INPUT_FIELD_NAME], $projectId);
+		       				$resultSchemaInfo = $this->FR->searchExistFRInputsByTableAndColumnName($value[KEY_FR_INPUT_TABLE_NAME], $value[KEY_FR_INPUT_FIELD_NAME], $projectId, ACTIVE_CODE);
 		       				if(0 < count($resultSchemaInfo)){
 		       					$resultUpload = $this->appendThings($resultUpload, 'ER_IMP_037', $lineNo);
 		       					$errorFlag = TRUE;
@@ -289,7 +289,7 @@ class FunctionalRequirement extends CI_Controller {
 	    	$isSaveSuccess = $this->FR->uploadFR($funtionalRequirementsList);
 
 	    	if($isSaveSuccess){
-	    		$successMsg = ER_MSG_009;
+	    		$successMsg =  str_replace("{0}", $funtionalRequirementsList[0]->functionNo, IF_MSG_004);
 	    	}else{
 	    		$error = ER_MSG_008;
 	    	}

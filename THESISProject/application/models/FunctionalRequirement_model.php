@@ -53,11 +53,14 @@ class FunctionalRequirement_model extends CI_Model {
 		return $result->result_array();
 	}
 
-	function searchFRInputInformation($projectId, $inputName){
+	function searchFRInputInformation($projectId, $inputName, $activeFlag){
+		$activeFlag = (!empty($activeFlag)? "'".$activeFlag."'": "NULL");
 		$queryStr = "SELECT * 
 			FROM M_FN_REQ_INPUT i 
 			WHERE i.projectId = $projectId 
-			AND i.inputName = '$inputName'";
+			AND i.inputName = '$inputName'
+			AND ($activeFlag is null or i.activeFlag = $activeFlag)
+			ORDER BY i.createDate desc";
 		$result = $this->db->query($queryStr);
 		return $result->row();
 	}
@@ -93,16 +96,25 @@ class FunctionalRequirement_model extends CI_Model {
 	}
 
 	function searchExistFRInputInFunctionalRequirement($param){
-		if(null != $param->functionId && !empty($param->functionId)){
+		if(isset($param->functionId) && !empty($param->functionId)){
 			$where[] = "h.functionId = $param->functionId";
 		}
-		if(null != $param->inputName && !empty($param->inputName)){
+		if(isset($param->inputName) && !empty($param->inputName)){
 			$where[] = "i.inputName = '$param->inputName'";
+		}
+		if(isset($param->inputId) && !empty($param->inputId)){
+			$where[] = "i.inputId = $param->inputId";
+		}
+		if(isset($param->schemaVersionId) && !empty($param->schemaVersionId)){
+			$where[] = "d.schemaVersionId = $param->schemaVersionId";
+		}
+		if(isset($param->inputActiveFlag) && !empty($param->inputActiveFlag)){
+			$where[] = "i.activeFlag = '$param->inputActiveFlag'";
 		}
 
 		$where_clause = implode(' AND ', $where);
 
-		$queryStr = "SELECT h.functionId, d.inputId, d.schemaVersionId
+		$queryStr = "SELECT h.functionId, d.inputId, i.inputName, d.schemaVersionId
 			FROM M_FN_REQ_HEADER h
 			INNER JOIN M_FN_REQ_DETAIL d
 			ON h.functionId = d.functionId
@@ -113,15 +125,26 @@ class FunctionalRequirement_model extends CI_Model {
 
 		$result = $this->db->query($queryStr);
 		return $result->result_array();
-
 	}
 
-	function searchExistFRInputsByTableAndColumnName($tableName, $columnName, $projectId){
+	function searchExistFRDetailbyCriteria($param){
+		$sqlStr = "SELECT *
+			FROM M_FN_REQ_DETAIL
+			WHERE functionId = $param->functionId
+			AND inputId = $param->inputId
+			AND effectiveStartDate = '$param->effectiveStartDate'";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
+	function searchExistFRInputsByTableAndColumnName($tableName, $columnName, $projectId, $activeFlag){
+		$activeFlag = (!empty($activeFlag)? "'".$activeFlag."'": "NULL");
 		$queryStr = "SELECT *
 			FROM M_FN_REQ_INPUT fi
 			WHERE fi.refTableName = '$tableName'
 			AND fi.refColumnName = '$columnName'
-			AND fi.projectId = $projectId";
+			AND fi.projectId = $projectId
+			AND ($activeFlag is null or fi.activeFlag = $activeFlag)";
 		$result = $this->db->query($queryStr);
 		return $result->row();
 	}
@@ -304,6 +327,17 @@ class FunctionalRequirement_model extends CI_Model {
 		return $this->db->affected_rows();
 	}
 
+	function updateStatusFRInput($param){
+		$sqlStr = "UPDATE M_FN_REQ_INPUT
+			SET activeFlag = '$param->activeFlag',
+				updateDate = '$param->updateDate',
+				updateUser = '$param->updateUser'
+			WHERE projectId = $param->projectId
+			AND inputId = $param->inputId";
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
 	function updateFunctionalRequirementsDetail($param){
 
 		$effectiveEndDate = !empty($param->effectiveEndDate)? "'".$param->effectiveEndDate."'" : "NULL";
@@ -355,9 +389,17 @@ class FunctionalRequirement_model extends CI_Model {
 		return $this->db->affected_rows();
 	}
 
+	function deleteFunctionalRequirementInput($param){
+		$sqlStr = "DELETE FROM M_FN_REQ_INPUT
+			WHERE inputId = $param->inputId
+			AND activeFlag = '1'";
+
+		$result = $this->db->query($sqlStr);
+		return $this->db->affected_rows();
+	}
+
 	function uploadFR($param){
-		$this->db->trans_start(); //Starting Transaction
-		$this->db->trans_strict(FALSE);
+		$this->db->trans_begin(); //Starting Transaction
 
 		//insert Functional Requirement Header
 		$functionId = $this->insertFRHeader($param[0]);
@@ -395,7 +437,6 @@ class FunctionalRequirement_model extends CI_Model {
 			}// end foreach
 		}// end if
 
-		$this->db->trans_complete();
     	$trans_status = $this->db->trans_status();
 	    if($trans_status == FALSE){
 	    	$this->db->trans_rollback();

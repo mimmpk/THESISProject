@@ -114,7 +114,7 @@ class TestCaseManagement extends CI_Controller{
        		    	//Saving data
        		    	$saveResult = $this->mTestCase->uploadTestCaseInfo($testCaseInfoList, $user);
        		    	if($saveResult){
-       		    		$successMessage = ER_MSG_009;
+       		    		$successMessage = str_replace("{0}", $testCaseInfoList[0]->testCaseNo, IF_MSG_005);
        		    	}else{
        		    		$errorMessage = ER_MSG_008;
        		    	}
@@ -213,7 +213,7 @@ class TestCaseManagement extends CI_Controller{
    					$checkInputName = $value[KEY_TC_INPUT_NAME];
    				}
 
-   				$result = $this->mRequirement->searchFRInputInformation($projectId, $value[KEY_TC_INPUT_NAME]);
+   				$result = $this->mRequirement->searchFRInputInformation($projectId, $value[KEY_TC_INPUT_NAME], ACTIVE_CODE);
    				if(null == $result || empty($result)){
    					$uploadResult = $this->appendThings($uploadResult, 'ER_IMP_048', $lineNo);
 					$hasError = TRUE;

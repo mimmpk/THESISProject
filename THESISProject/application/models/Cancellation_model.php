@@ -151,7 +151,7 @@ class Cancellation_model extends CI_Model{
 			'changeRequestNo'		=> $changeRequestNo);
 		$rowUpdate = $this->mChange->updateChangeRequestHeader($paramUpdate);
 		if(1 !== $rowUpdate){
-			$error_message = ER_MSG_019;
+			$error_message = str_replace("{0}", "Update Change Request Header", ER_MSG_019);
 			$isSuccess = false;
 		}
 
@@ -170,6 +170,7 @@ class Cancellation_model extends CI_Model{
 		$affectedProjectId = $changeResult->projectInfo;
 		$affectedRequirements = $changeResult->affectedRequirement;
 		$affectedTestCase = $changeResult->affectedTestCase;
+		$affectedSchema = $changeResult->affectedSchema;
 
 		$newCurrentDate = date('Y-m-d H:i:s');
 
@@ -194,6 +195,7 @@ class Cancellation_model extends CI_Model{
 				'functionId' => $functionId, 'functionVersionId' => $previousFnReqVersionId);
 			$previousFnReqInfo = $this->mFR->searchFunctionalRequirementVersionByCriteria($param);
 
+			$previousEffectiveStartDate = $previousFnReqInfo->effectiveStartDate;
 			$previousEffectiveEndDate = $previousFnReqInfo->effectiveEndDate;
 			$previousUpdateDate = $previousFnReqInfo->updateDate;
 
@@ -208,7 +210,7 @@ class Cancellation_model extends CI_Model{
 				'oldUpdateDate' 		=> $previousUpdateDate);
 			$rowUpdate = $this->mFR->updateFunctionalRequirementsVersion($paramUpdate);
 			if(1 !== $rowUpdate){
-				$error_message = ER_MSG_019;
+				$error_message = str_replace("{0}", "Enable Previous Version of Requirement Header", ER_MSG_019);
 				return false;
 			}
 
@@ -218,28 +220,48 @@ class Cancellation_model extends CI_Model{
 				'functionVersionId' => $latestFnReqInfo->functionVersionId);
 			$rowDelete = $this->mFR->deleteFunctionalRequirementHeader($paramDelete);
 			if(1 !== $rowDelete){
-				$error_message = ER_MSG_019;
+				$error_message = str_replace("{0}", "Delete Lastest Version of Requirement Header", ER_MSG_019);
 				return false;
 			}
 
 			//1.2 Update Version of Functional Requirement Detail 
 			$FnReqDetailHistoryList = $this->mChange->getChangeHistoryFnReqDetailList($fnReqHistoryId);
 			foreach($FnReqDetailHistoryList as $detail){
-				$inputInfo = $this->mFR->searchFRInputInformation($affectedProjectId, $detail['inputName']);
+				$inputInfo = $this->mFR->searchFRInputInformation($affectedProjectId, $detail['inputName'], '');
 
 				$inputId = $inputInfo->inputId;
 
 				if(CHANGE_TYPE_ADD == $detail['changeType'] 
 					|| CHANGE_TYPE_EDIT == $detail['changeType']){
-					//A. Delete Latest Version
-					$paramDelete = (object) array(
-						'functionId' 		 => $functionId,
-						'inputId' 	 		 => $inputId,
+
+					$paramDetail = (object) $arrayName = array(
+						'functionId' 		 => $functionId, 
+						'inputId' 			 => $inputId, 
 						'effectiveStartDate' => $effectiveStartDate);
-					$rowDelete = $this->mFR->deleteFunctionalRequirementDetail($paramDelete);
-					if(1 !== $rowDelete){
-						$error_message = ER_MSG_019;
-						return false;
+					$result = $this->mFR->searchExistFRDetailbyCriteria($paramDetail);
+					if(0 < count($result)){
+						//A1. Delete Latest Version
+						$rowDelete = $this->mFR->deleteFunctionalRequirementDetail($paramDetail);
+						if(1 !== $rowDelete){
+							$error_message = str_replace("{0}", "Delete Requirement Detail", ER_MSG_019);
+							return false;
+						}
+					}else{
+						//A2. Update Disable Previous Version of FR Detail
+						//Case: Revert own FR Detail
+						$paramUpdate = (object) array(
+						'effectiveEndDate' 	=> $previousEffectiveStartDate,
+						'activeFlag' 		=> UNACTIVE_CODE,
+						'currentDate' 		=> $newCurrentDate,
+						'user' 				=> $user,
+						'functionId' 		=> $functionId,
+						'inputId' 			=> $inputId,
+						'endDateCondition' 	=> '');
+						$rowUpdate = $this->mFR->updateFunctionalRequirementsDetail($paramUpdate);
+						if(1 !== $rowUpdate){
+							$error_message = str_replace("{0}", "Delete Requirement Detail", ER_MSG_019);
+							return false;
+						}
 					}
 				}
 
@@ -256,7 +278,7 @@ class Cancellation_model extends CI_Model{
 						'endDateCondition' 	=> $previousEffectiveEndDate);
 					$rowUpdate = $this->mFR->updateFunctionalRequirementsDetail($paramUpdate);
 					if(1 !== $rowUpdate){
-						$error_message = ER_MSG_019;
+						$error_message = str_replace("{0}", "Delete Requirement Detail", ER_MSG_019);
 						return false;
 					}
 				}
@@ -282,14 +304,14 @@ class Cancellation_model extends CI_Model{
 					'testCaseId' => $testCaseId, 'testCaseVersionNumber' => $newVersion);
 				$rowDelete = $this->mTestCase->deleteTestCaseVersion($paramDelete);
 				if(1 !== $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Delete Latest Version of Test Case", ER_MSG_019);
 					return false;
 				}
 
 				//B.Delete Header
 				$rowDelete = $this->mTestCase->deleteTestCaseHeader($testCaseId);
 				if(1 !== $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Delete Test Case Header", ER_MSG_019);
 					return false;
 				}
 
@@ -299,7 +321,7 @@ class Cancellation_model extends CI_Model{
 					'effectiveStartDate' => $testCaseVersionInfo->effectiveStartDate);
 				$rowDelete = $this->mTestCase->deleteTestCaseDetail($paramDelete);
 				if(0 == $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Delete Test Case Detail", ER_MSG_019);
 					return false;
 				}
 			}
@@ -324,7 +346,7 @@ class Cancellation_model extends CI_Model{
 					'updateDateCondition' => $updateDate);
 				$rowUpdate = $this->mTestCase->updateTestCaseVersion($paramUpdate);
 				if(1 !== $rowUpdate){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Update Test Case Version", ER_MSG_019);
 					return false;
 				}
 
@@ -338,7 +360,7 @@ class Cancellation_model extends CI_Model{
 					'endDateCondition' 	  => $effectiveEndDate);
 				$rowUpdate = $this->mTestCase->updateTestCaseDetail($paramUpdate);
 				if(0 == $rowUpdate){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Update Test Case Detail", ER_MSG_019);
 					return false;
 				}
 			}
@@ -348,10 +370,13 @@ class Cancellation_model extends CI_Model{
 					'testCaseId' => $testCaseId, 'testCaseVersionNumber' => $newVersion);
 				$testCaseVersionInfo = $this->mTestCase->searchTestCaseVersionInformationByCriteria($criteria);
 
+				$criteria->testCaseVersionNumber = $oldVersion;
+				$oldTestCaseVersionInfo = $this->mTestCase->searchTestCaseVersionInformationByCriteria($criteria);
+
 				$testCaseVersionId = $testCaseVersionInfo->testCaseVersionId;
 				$previousVersionId = $testCaseVersionInfo->previousVersionId;
 				$effectiveStartDate = $testCaseVersionInfo->effectiveStartDate;
-				$updateDate = $testCaseVersionInfo->updateDate;
+				$updateDate = $oldTestCaseVersionInfo->updateDate;
 
 				//A.Delete Latest Version
 				$paramDelete = (object) array(
@@ -359,7 +384,7 @@ class Cancellation_model extends CI_Model{
 					'testCaseVersionId' => $testCaseVersionId);
 				$rowDelete = $this->mTestCase->deleteTestCaseVersion($paramDelete);
 				if(1 != $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Delete Test Case Version", ER_MSG_019);
 					return false;
 				}
 
@@ -374,7 +399,7 @@ class Cancellation_model extends CI_Model{
 					'updateDateCondition' => $updateDate);
 				$rowUpdate = $this->mTestCase->updateTestCaseVersion($paramUpdate);
 				if(1 !== $rowUpdate){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Update Test Case Version", ER_MSG_019);
 					return false;
 				}
 
@@ -425,17 +450,36 @@ class Cancellation_model extends CI_Model{
 
 				$rowDelete = $this->mDB->deleteDatabaseSchemaVersion($paramDelete);
 				if(0 == $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Delete Schema Version", ER_MSG_019);
 					return false;
 				}
 
 				//B.DELETE INFO
 				$rowDelete = $this->mDB->deleteDatabaseSchemaInfo($paramDelete);
 				if(0 == $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Delete Schema Info", ER_MSG_019);
 					return false;
 				}
+
+				//C.DELETE RELATED FR INPUT
+				foreach($affectedSchema as $data){
+					if($tableName == $data->tableName && $columnName == $data->columnName){
+						if(CHANGE_TYPE_DELETE == $data->affectedAction){
+							$resultInput = $this->mFR->searchExistFRInputsByTableAndColumnName($tableName, $columnName, $affectedProjectId, ACTIVE_CODE);
+							
+							$paramDelete = (object) array(
+								'inputId' => $resultInput->inputId);
+							$rowDelete = $this->mFR->deleteFunctionalRequirementInput($paramDelete);	
+							if(1 !== $rowDelete){
+								$error_message = str_replace("{0}", "Delete FR Input", ER_MSG_019);
+								return false;
+							}
+							break;
+						}
+					}
+				}
 			}
+
 			if(CHANGE_TYPE_DELETE == $changeType){
 				
 				$criteria = (object) array(
@@ -459,10 +503,33 @@ class Cancellation_model extends CI_Model{
 					'oldSchemaVersionId' => $oldSchemaVersionId);
 				$rowUpdate = $this->mDB->updateDatabaseSchemaVersion($paramUpdate);
 				if(1 !== $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Update Schema Version", ER_MSG_019);
 					return false;
 				}
+
+				//UPDATE STATUS FR_INPUT
+				foreach($affectedSchema as $data){
+					if($tableName == $data->tableName && $columnName == $data->columnName){
+						if(CHANGE_TYPE_ADD == $data->affectedAction){
+							$resultInput = $this->mFR->searchExistFRInputsByTableAndColumnName($tableName, $columnName, $affectedProjectId, '');
+
+							$paramUpdate = (object) array(
+								'activeFlag' => ACTIVE_CODE,
+								'updateDate' => $newCurrentDate, 
+								'updateUser' => $user, 
+								'projectId'  => $affectedProjectId,
+								'inputId'    => $resultInput->inputId);
+							$rowUpdate = $this->mFR->updateStatusFRInput($paramUpdate);	
+							if(1 !== $rowUpdate){
+								$error_message = str_replace("{0}", "Update FR Input's status", ER_MSG_019);
+								return false;
+							}
+							break;
+						}
+					}
+				}
 			}
+
 			if(CHANGE_TYPE_EDIT == $changeType){
 				$criteria = (object) array(
 					'projectId' 	=> $affectedProjectId,
@@ -483,14 +550,14 @@ class Cancellation_model extends CI_Model{
 
 				$rowDelete = $this->mDB->deleteDatabaseSchemaVersion($paramDelete);
 				if(1 !== $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Delete Schema Version", ER_MSG_019);
 					return false;
 				}
 
 				//B.DELETE LATEST INFO
 				$rowDelete = $this->mDB->deleteDatabaseSchemaInfo($paramDelete);
 				if(1 !== $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Delete Schema Info", ER_MSG_019);
 					return false;
 				}
 
@@ -506,7 +573,7 @@ class Cancellation_model extends CI_Model{
 					'oldSchemaVersionId' => $previousSchemaVersionId);
 				$rowUpdate = $this->mDB->updateDatabaseSchemaVersion($paramUpdate);
 				if(1 !== $rowDelete){
-					$error_message = ER_MSG_019;
+					$error_message = str_replace("{0}", "Update Schema Version", ER_MSG_019);
 					return false;
 				}
 			}
@@ -525,7 +592,7 @@ class Cancellation_model extends CI_Model{
 
 			$rtmVersionInfo = $this->mRTM->searchRTMVersionInfoByCriteria($criteria);
 			if(null == $rtmVersionInfo || 0 == count($rtmVersionInfo)){
-				$error_message = ER_MSG_019;
+				$error_message = str_replace("{0}", "Search RTM Version", ER_MSG_019);
 				return false;
 			}
 
@@ -541,7 +608,7 @@ class Cancellation_model extends CI_Model{
 				'rtmVersionId' 	=> $newRTMVersionId);
 			$rowDelete = $this->mRTM->deleteRTMVersion($paramDelete);
 			if(1 !== $rowDelete){
-				$error_message = ER_MSG_019;
+				$error_message = str_replace("{0}", "Delete RTM Version", ER_MSG_019);
 				return false;
 			}
 
@@ -556,7 +623,7 @@ class Cancellation_model extends CI_Model{
 				'updateDateCondition' 	=> $oldUpdateDate);
 			$rowUpdate = $this->mRTM->updateRTMVersion($paramUpdate);
 			if(1 !== $rowUpdate){
-				$error_message = ER_MSG_019;
+				$error_message = Estr_replace("{0}", "Update Schema Version", ER_MSG_019);
 				return false;
 			}
 

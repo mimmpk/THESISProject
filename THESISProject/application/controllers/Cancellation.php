@@ -124,9 +124,8 @@ class Cancellation extends CI_Controller{
 					$this->displayResult($changeRequestNo, $projectId);
 					return false;
 				}
-				
 			}else{
-				$error_message = ER_MSG_019;
+				$error_message = str_replace("{0}", "Input Reason", ER_MSG_019);
 			}
 		}catch(Exception $e) {
 			$error_message = $e->getMessage();

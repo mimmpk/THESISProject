@@ -130,9 +130,10 @@ class DatabaseSchema extends CI_Controller{
            			}
 
            			//Saving data
-           			$result = $this->mDbSchema->uploadDatabaseSchema($databaseSchemaList, $user, $projectId);
-           			if($result){
-           				$successMessage = ER_MSG_009;
+           			$resultUpload = $this->mDbSchema->uploadDatabaseSchema($databaseSchemaList, $user, $projectId);
+           			if($resultUpload){
+           				//$successMessage = ER_MSG_009;
+                        $successMessage =  str_replace("{0}", $databaseSchemaList[0]->tableName, IF_MSG_003); 
            			}else{
            				$errorMessage = ER_MSG_008;
            			}

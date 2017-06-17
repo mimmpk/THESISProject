@@ -171,8 +171,8 @@
 					<div class="row">
 						<div class="col-sm-12">
 							<div class="form-group" id="_inputForm">
-								<label>The reason for cancelling the change.</label>
-								<input type="text" class="form-control" id="inputReason" name="inputReason" value="<?php echo $reason ?>" disabled>
+								<label>The reason for cancelling the change:</label>
+								<h4><span class="text-green"><?php echo $reason; ?></span></h4>
 							</div>
 						</div>
 					</div>
