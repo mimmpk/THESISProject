@@ -157,98 +157,7 @@
                 </div>
 			</div>
 
-			<!-- 1. Functional Requirements -->
-			<div class="box box-success collapsed-box">
-				<div class="box-header with-border">
-					<h3 class="box-title">The affected Functional Requirements</h3>
-					<div class="box-tools pull-right">
-						<span class="badge bg-green"><?php echo count($affectedFnReqList) ?></span>
-						<button type="button" class="btn btn-box-tool" data-widget="collapse">
-							<i class="fa fa-plus"></i>
-						</button>
-					</div>
-				</div>
-				<div class="box-body no-padding table-responsive">
-				<?php if(null != $affectedFnReqList && 0 < count($affectedFnReqList)) {?>
-				<table class="table table-condensed">
-				<tbody>
-					<tr>
-						<th class="col-md-1">#</th>
-						<th class="col-md-5">Functional Requirement No.</th>
-						<th class="col-md-3 hidden-sm hidden-xs">Old Version</th>
-						<th class="col-md-3 hidden-sm hidden-xs">New Version</th>
-					</tr>
-				<?php 
-				$i = 1; 
-				foreach($affectedFnReqList as $value){ ?>
-					<tr>
-						<td><?php echo $i++ ?></td>
-						<td><?php echo $value['functionNo'] ?></td>
-						<td class="hidden-sm hidden-xs">
-							<small class="label label-default"><?php echo $value['oldFunctionVersion'] ?></small>
-						</td>
-						<td class="hidden-sm hidden-xs">
-							<small class="label label-success"><?php echo $value['newFunctionVersion'] ?></small>
-						</td>
-					</tr>
-				<?php } ?>
-				</tbody>
-				</table>
-				<?php }else{
-					echo "<h3>".constant("ER_MSG_018")."</h3>";
-				} ?>
-				</div>
-			</div>
-
-			<!-- 2. Test Cases -->
-			<div class="box box-success collapsed-box">
-				<div class="box-header">
-					<h3 class="box-title">The affected Test Cases</h3>
-					<div class="box-tools pull-right">
-						<span class="badge bg-green"><?php echo count($affectedTestCaseList) ?></span>
-						<button type="button" class="btn btn-box-tool" data-widget="collapse">
-							<i class="fa fa-plus"></i>
-						</button>
-					</div>
-				</div>
-				<div class="box-body no-padding table-responsive">
-				<?php if(null != $affectedTestCaseList && 0 < count($affectedTestCaseList)){ ?>
-					<table class="table table-condensed">
-					<tbody>
-						<tr>
-							<th class="col-md-1">#</th>
-							<th class="col-md-3">Test Case No.</th>
-							<th class="col-md-2">Change Type</th>
-							<th class="col-md-3 hidden-sm hidden-xs">Old Version</th>
-							<th class="col-md-3 hidden-sm hidden-xs">New Version</th>
-						</tr>
-						<?php 
-						$tcCount = 1;
-						foreach($affectedTestCaseList as $value){ ?>
-							<tr>
-								<td><?php echo $tcCount++ ?></td>
-								<td><?php echo $value['testCaseNo'] ?></td>
-								<td><?php
-									$label = "add" == $value['changeType']? "text-green" : ("edit" == $value['changeType']? "text-yellow" : "text-red");
-									?>
-									<i class="fa fa-circle-o <?php echo $label; ?>"></i>
-									<span><?php echo $value['changeType'] ?></span>
-								</td>
-								<td class="hidden-sm hidden-xs">
-									<small class="label label-default"><?php echo $value['oldTestCaseVersionNumber'] ?></small>
-								</td>
-								<td class="hidden-sm hidden-xs">
-									<small class="label label-success"><?php echo $value['newTestCaseVersionNumber'] ?></small>
-								</td>
-							</tr>
-						<?php } ?>
-					</tbody>
-					</table>
-				<?php } ?>
-				</div>
-			</div>
-
-			<!-- 3. Database Schema -->
+			<!-- 1. Database Schema -->
 			<div class="box box-success collapsed-box">
 				<div class="box-header with-border">
 					<h3 class="box-title">The affected Database Schema</h3>
@@ -301,6 +210,97 @@
 				<?php }else{
 					echo "<h3>".constant("ER_MSG_018")."</h3>";
 				} ?>
+				</div>
+			</div>
+
+			<!-- 2. Functional Requirements -->
+			<div class="box box-success collapsed-box">
+				<div class="box-header with-border">
+					<h3 class="box-title">The affected Functional Requirements</h3>
+					<div class="box-tools pull-right">
+						<span class="badge bg-green"><?php echo count($affectedFnReqList) ?></span>
+						<button type="button" class="btn btn-box-tool" data-widget="collapse">
+							<i class="fa fa-plus"></i>
+						</button>
+					</div>
+				</div>
+				<div class="box-body no-padding table-responsive">
+				<?php if(null != $affectedFnReqList && 0 < count($affectedFnReqList)) {?>
+				<table class="table table-condensed">
+				<tbody>
+					<tr>
+						<th class="col-md-1">#</th>
+						<th class="col-md-5">Functional Requirement No.</th>
+						<th class="col-md-3 hidden-sm hidden-xs">Old Version</th>
+						<th class="col-md-3 hidden-sm hidden-xs">New Version</th>
+					</tr>
+				<?php 
+				$i = 1; 
+				foreach($affectedFnReqList as $value){ ?>
+					<tr>
+						<td><?php echo $i++ ?></td>
+						<td><?php echo $value['functionNo'] ?></td>
+						<td class="hidden-sm hidden-xs">
+							<small class="label label-default"><?php echo $value['oldFunctionVersion'] ?></small>
+						</td>
+						<td class="hidden-sm hidden-xs">
+							<small class="label label-success"><?php echo $value['newFunctionVersion'] ?></small>
+						</td>
+					</tr>
+				<?php } ?>
+				</tbody>
+				</table>
+				<?php }else{
+					echo "<h3>".constant("ER_MSG_018")."</h3>";
+				} ?>
+				</div>
+			</div>
+
+			<!-- 3. Test Cases -->
+			<div class="box box-success collapsed-box">
+				<div class="box-header">
+					<h3 class="box-title">The affected Test Cases</h3>
+					<div class="box-tools pull-right">
+						<span class="badge bg-green"><?php echo count($affectedTestCaseList) ?></span>
+						<button type="button" class="btn btn-box-tool" data-widget="collapse">
+							<i class="fa fa-plus"></i>
+						</button>
+					</div>
+				</div>
+				<div class="box-body no-padding table-responsive">
+				<?php if(null != $affectedTestCaseList && 0 < count($affectedTestCaseList)){ ?>
+					<table class="table table-condensed">
+					<tbody>
+						<tr>
+							<th class="col-md-1">#</th>
+							<th class="col-md-3">Test Case No.</th>
+							<th class="col-md-2">Change Type</th>
+							<th class="col-md-3 hidden-sm hidden-xs">Old Version</th>
+							<th class="col-md-3 hidden-sm hidden-xs">New Version</th>
+						</tr>
+						<?php 
+						$tcCount = 1;
+						foreach($affectedTestCaseList as $value){ ?>
+							<tr>
+								<td><?php echo $tcCount++ ?></td>
+								<td><?php echo $value['testCaseNo'] ?></td>
+								<td><?php
+									$label = "add" == $value['changeType']? "text-green" : ("edit" == $value['changeType']? "text-yellow" : "text-red");
+									?>
+									<i class="fa fa-circle-o <?php echo $label; ?>"></i>
+									<span><?php echo $value['changeType'] ?></span>
+								</td>
+								<td class="hidden-sm hidden-xs">
+									<small class="label label-default"><?php echo $value['oldTestCaseVersionNumber'] ?></small>
+								</td>
+								<td class="hidden-sm hidden-xs">
+									<small class="label label-success"><?php echo $value['newTestCaseVersionNumber'] ?></small>
+								</td>
+							</tr>
+						<?php } ?>
+					</tbody>
+					</table>
+				<?php } ?>
 				</div>
 			</div>
 

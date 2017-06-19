@@ -115,7 +115,6 @@
 			                			<span class="label label-success"><?php echo ACTIVE_STATUS; ?></span>
 			                			<?php } ?>
 			                		</td>
-			                		<td></td>
 			                	</tr>
 			                <?php endforeach; ?>
 		                <?php } else { ?>

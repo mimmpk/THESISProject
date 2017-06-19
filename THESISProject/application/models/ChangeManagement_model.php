@@ -599,12 +599,12 @@ class ChangeManagement_model extends CI_Model{
 					}
 				}
 
-				//find latest version of reference schema that related with function's input
-				$resultSchemaInfo = $this->mDB->searchExistDatabaseSchemaInfo($value->refTableName, $value->refColumnName, $affectedProjectId);
-
-				$schemaVersionId = $resultSchemaInfo->schemaVersionId;
-
 				if("add" == $value->changeType || "edit" == $value->changeType){
+
+					//find latest version of reference schema that related with function's input
+					$resultSchemaInfo = $this->mDB->searchExistDatabaseSchemaInfo($value->refTableName, $value->refColumnName, $affectedProjectId);
+
+					$schemaVersionId = $resultSchemaInfo->schemaVersionId;
 
 					//Check exist InputId and SchemaVersionId
 					$criteria = (object) array(
@@ -785,7 +785,10 @@ class ChangeManagement_model extends CI_Model{
 		}
 
 		//**[Version Control of RTM]
-		if(!$errorFlag && null != $affectedRTM && 0 < count($affectedRTM)){
+		if(!$errorFlag 
+			&& isset($affectedRTM) 
+			&& 0 < count($affectedRTM) 
+			&& !empty($affectedRTM->details)){
 		
 			//Get Latest RTM Info
 			$resultLastRTMInfo = $this->getLastRTMVersion($affectedProjectId);
@@ -1042,7 +1045,7 @@ class ChangeManagement_model extends CI_Model{
 		}
 
 		//6. save change history RTM header and detail
-		if(null != $affectedRTM && 0 < count($affectedRTM)){
+		if(isset($affectedRTM) && 0 < count($affectedRTM) && !empty($affectedRTM->details)){
 
 			$paramInsert = (object) array(
 				'changeRequestNo' => $changeRequestNo,

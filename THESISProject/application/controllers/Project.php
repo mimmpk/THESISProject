@@ -183,6 +183,7 @@ class Project extends CI_Controller {
 						if(null != $result){
 							echo "<script type='text/javascript'>alert('Save Successful!')</script>";
 							$this->viewDetail($result);
+							return false;
 						}else{
 							$error_message = ER_MSG_003;
 						}

@@ -396,6 +396,7 @@
 		</div>
 	</div> -->
 
+	<?php if(isset($headerInfo['isLatestChange']) && 'Y' == $headerInfo['isLatestChange']){ ?>
 	<div class="row">
 		<div class="col-md-12">
 			<form role="form" method="post" id="cancelChange_form" action="<?php echo base_url() ?>Cancellation/cancel/">
@@ -423,4 +424,5 @@
 	      	</form>	
 		</div>
 	</div>
+	<?php } ?>
 </section>

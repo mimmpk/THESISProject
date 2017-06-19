@@ -276,7 +276,9 @@ class DatabaseSchema_model extends CI_Model{
 			    $sqlStr = "{call getCheckConstraint(?, ?, ?)}";
 				$stmt2 = sqlsrv_query($conn, $sqlStr, $procedure_params);
 				if($stmt2 === false){  
-				     die( print_r( sqlsrv_errors(), true));  
+				     die( print_r( sqlsrv_errors(), true));
+				     $dbSchemaDetail['minValue'] = '';
+				     $dbSchemaDetail['maxValue'] = '';
 				}else{
 					//print_r("Min: " .$min. "\nMax: ". $max);
 					$dbSchemaDetail['minValue'] = $min;
