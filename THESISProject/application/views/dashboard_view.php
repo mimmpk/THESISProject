@@ -74,14 +74,28 @@
 									<th>Change User</th>
 									<th>Status</th>
 								</tr>
+							<?php if(isset($changeList) && 0 < count($changeList)){ 
+								$define = 1;
+								foreach($changeList as $value): ?>
 								<tr>
-									<td>1</td>
-									<td>SIS: Student Information System</td>
-									<td>CR-1706001</td>
-									<td>17-Jun-2017</td>
-									<td>TEST USER 01</td>
-									<td>closed</td>
+									<td><?php echo $define++; ?></td>
+									<td><?php echo $value['projectNameAlias']." : ".$value['projectName'] ?></td>
+									<td><?php echo $value['changeRequestNo']; ?></td>
+									<td><?php echo $value['changeDate']; ?></td>
+									<td><?php echo $value['changeUser']; ?></td>
+									<td>
+									<?php
+										if("CCL" == $value['changeStatus']){
+											echo "<span class='label label-danger'>Cancelled
+												 </span>";
+										}else{
+											echo "<span class='label label-success'>Closed
+												 </span>";
+										}
+									 ?>
+									 </td>
 								</tr>
+							<?php endforeach; } ?>
 							</tbody>
 						</table>
 					</div>

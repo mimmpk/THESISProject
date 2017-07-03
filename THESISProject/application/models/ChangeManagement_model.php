@@ -55,6 +55,26 @@ class ChangeManagement_model extends CI_Model{
 		return $result->result_array();
 	}
 
+	function searchChangeRequestList(){
+		$sqlStr = "SELECT 
+				top 10
+				p.projectName, 
+				p.projectNameAlias, 
+				i.changeRequestNo,
+				i.changeStatus, 
+				i.changeUserId,
+				CONVERT(nvarchar, i.changeDate, 120) as changeDate,
+				CONCAT(u.firstname, '   ', u.lastname) as changeUser
+			FROM T_CHANGE_REQUEST_HEADER i
+			INNER JOIN M_PROJECT p
+			ON i.projectId = p.projectId
+			INNER JOIN M_USERS u
+			ON i.changeUserId = u.userId
+			ORDER BY i.createDate desc";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();
+	}
+
 	function deleteTempFRInputChangeList($param){
 		if(!empty($param->userId)){
 			$where[] = "userId = $param->userId";

@@ -3,6 +3,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Dashboard extends CI_Controller {
 
+	function __construct(){
+		parent::__construct();
+		$this->load->model('ChangeManagement_model', 'mChange');
+	}
+
 	/**
 	 * Index Page for this controller.
 	 *
@@ -28,7 +33,7 @@ class Dashboard extends CI_Controller {
 		//1. Get Number of Project, FnReq, TestCase, DatabaseSchema
 
 		//2. Get Latest Change Information
-
+		$data['changeList'] = $this->mChange->searchChangeRequestList();
 
 		$this->load->view('template/header');
 		$this->load->view('template/body',$data);

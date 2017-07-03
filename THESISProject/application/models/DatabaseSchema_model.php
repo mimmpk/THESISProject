@@ -130,7 +130,7 @@ class DatabaseSchema_model extends CI_Model{
 		$dataType = $param->dataType;
 		$dataLength = !empty($param->dataLength)? $param->dataLength : "NULL";
 		$scale = !empty($param->scale)? $param->scale : "NULL";
-		$defaultValue = !empty($param->defaultValue)? $param->defaultValue : "NULL";
+		$defaultValue = !empty($param->defaultValue)? "'".$param->defaultValue."'" : "NULL";
 		$minValue = !empty($param->minValue)? $param->minValue : "NULL";
 		$maxValue = !empty($param->maxValue)? $param->maxValue : "NULL";
 
