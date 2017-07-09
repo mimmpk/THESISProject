@@ -12,7 +12,7 @@
 		<div class="col-lg-3 col-ms-6">
 			<div class="small-box bg-aqua">
 				<div class="inner">
-					<h3>5</h3>
+					<h3><?php echo $projectCount; ?></h3>
 					<p>Projects</p>
 				</div>
 				<div class="icon">
@@ -23,7 +23,7 @@
 		<div class="col-lg-3 col-ms-6">
 			<div class="small-box bg-green">
 				<div class="inner">
-					<h3>10</h3>
+					<h3><?php echo $requirementsCount; ?></h3>
 					<p>Functional Requirements</p>
 				</div>
 				<div class="icon">
@@ -34,7 +34,7 @@
 		<div class="col-lg-3 col-ms-6">
 			<div class="small-box bg-yellow">
 				<div class="inner">
-					<h3>5</h3>
+					<h3><?php echo $testCaseCount; ?></h3>
 					<p>Test Cases</p>
 				</div>
 				<div class="icon">
@@ -45,7 +45,7 @@
 		<div class="col-lg-3 col-ms-6">
 			<div class="small-box bg-red">
 				<div class="inner">
-					<h3>30</h3>
+					<h3><?php echo $dbSchemaCount; ?></h3>
 					<p>Database Schema</p>
 				</div>
 				<div class="icon">

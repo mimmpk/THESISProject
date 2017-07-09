@@ -36,6 +36,12 @@ class FunctionalRequirement_model extends CI_Model {
 		return $result->result_array();
 	}
 
+	function searchCountAllFunctionalRequirements(){
+		$result = $this->db->query("
+			SELECT count(*) as counts FROM M_FN_REQ_HEADER");
+		return $result->row();
+	}
+
 	function searchExistFunctionalRequirement($fnId, $projectId){
 		if(null != $projectId && !empty($projectId)){
 			$where[] = "projectId = '$projectId'";

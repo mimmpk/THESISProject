@@ -76,6 +76,12 @@ class Project_model extends CI_Model {
 		return $result->result_array();
 	}
 
+	function searchCountAllProjects(){
+		$result = $this->db->query("
+			SELECT count(*) as counts FROM M_PROJECT WHERE activeFlag = '1'");
+		return $result->row();
+	}
+
 	function searchCountProjectInformation($projectName, $projectAlias, $startDate, $endDate, $customer){
 		$result = $this->db->query("SELECT count(*) as counts FROM users where username = '$username' and pwd = '$password'");
 		//echo var_dump($result->counts);

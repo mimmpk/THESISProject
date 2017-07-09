@@ -54,7 +54,26 @@ class ChangeManagement extends CI_Controller{
 		$this->reloadPage('', $projectId, $functionId);
 	}
 
-	function requestChangeFRInputs(){
+	function checkRelatesOtherFRs(){
+		$output = "N";
+		$functionId = $this->input->post('functionId');
+		$functionVersion = $this->input->post('functionVersion');
+		$userId = $this->session->userdata('userId');
+
+		if(!empty($functionVersion) && !empty($functionId)){
+			$param = (object) array(
+				'userId' => $userId,
+				'functionId' => $functionId,
+				'functionVersion' => $functionVersion);
+			$result = $this->mChange->searchRelatedChangeFRInputs($param);
+			if(null != $result && 0 < count($result)){
+				$output = "Y";
+			}
+		}
+		echo $output;
+	}
+
+	function doChangeProcess(){ //requestChangeFRInputs
 		$errorFlag = false;
 		$success_message = '';
 		$error_message = '';
@@ -107,33 +126,37 @@ class ChangeManagement extends CI_Controller{
 			/** 4.Save Change Request */
 			/** 5.Save Change History */
 			if(null != $changeResult && !empty($changeResult)){
-				$user = $this->session->userdata('username');
+				if('Y' == $changeResult->result->isSuccess){
+					$user = $this->session->userdata('username');
 
-				$changeInfo = (object) array(
-					'userId' => $userId,
-					'projectId' => $projectId,
-					'functionId' => $functionId,
-					'functionVersion' => $functionVersion);
-
-				$projectInfo = $this->mProject->searchProjectDetail($projectId);
-				$result = $this->mChange->changeProcess($changeInfo, $changeResult, $projectInfo, $user, $error_message, $changeRequestNo);
-
-				if($result == true){ //Change success
-					
-					/** 6.Remove Test Change list */
-					$paramDelete = (object) array(
+					$changeInfo = (object) array(
 						'userId' => $userId,
+						'projectId' => $projectId,
 						'functionId' => $functionId,
 						'functionVersion' => $functionVersion);
-					$this->mChange->deleteTempFRInputChangeList($paramDelete);
 
-					/** 7.Display Result */
-					$this->displayChangeResult($changeRequestNo);
-					return false;
+					$projectInfo = $this->mProject->searchProjectDetail($projectId);
+					$result = $this->mChange->changeProcess($changeInfo, $changeResult, $projectInfo, $user, $error_message, $changeRequestNo);
+
+					if($result == true){ //Change success
+						
+						/** 6.Remove Test Change list */
+						$paramDelete = (object) array(
+							'userId' => $userId,
+							'functionId' => $functionId,
+							'functionVersion' => $functionVersion);
+						$this->mChange->deleteTempFRInputChangeList($paramDelete);
+
+						/** 7.Display Result */
+						$this->displayChangeResult($changeRequestNo);
+						return false;
+					}
+				}else{
+					$error_message = $changeResult->result->error_message;
 				}
 			}else{
 				$errorFlag = true;
-				$error_message = str_replace("{0}", "Change Result", ER_MSG_016);
+				$error_message = str_replace("{0}", "Request Web Service", ER_MSG_016);
 			}
 
 		}catch(Exception $e){
@@ -1005,13 +1028,13 @@ class ChangeManagement extends CI_Controller{
 	private function writeJsonFile($outputData, $inputData, $changedFunctionId){
 		try{
 			$datetime = date('YmdHis');
-			$outputFileName = "log/changeOutputJson_".$changedFunctionId."_".$datetime.".txt";
+			$outputFileName = "log/change/requestDataJson".$changedFunctionId."_".$datetime.".txt";
 
 			$encodedString = json_encode($outputData);
 			file_put_contents($outputFileName, $encodedString);
 
 			$encodedString = json_encode($inputData);
-			$inputFileName = "log/changeInputJson_".$changedFunctionId."_".$datetime.".txt";
+			$inputFileName = "log/change/responseDataJson_".$changedFunctionId."_".$datetime.".txt";
 			file_put_contents($inputFileName, $encodedString);
 		}catch(Exception $e){
 			echo 'Caught exception: ',  $e->getMessage(), "\n";

@@ -75,6 +75,21 @@ class ChangeManagement_model extends CI_Model{
 		return $result->result_array();
 	}
 
+	function searchRelatedChangeFRInputs($param){
+		$sqlStr = "SELECT  t.functionId, d.functionId, d.inputId
+			FROM T_TEMP_CHANGE_LIST t 
+			INNER JOIN M_FN_REQ_DETAIL d
+			ON t.inputId = d.inputId
+			AND d.functionId <> t.functionId
+			AND d.activeFlag = '1'
+			WHERE t.changeType IN ('edit', 'delete')
+			AND t.userId = $param->userId
+			AND t.functionId = $param->functionId
+			AND t.functionVersion = $param->functionVersion";
+		$result = $this->db->query($sqlStr);
+		return $result->result_array();	
+	}
+
 	function deleteTempFRInputChangeList($param){
 		if(!empty($param->userId)){
 			$where[] = "userId = $param->userId";

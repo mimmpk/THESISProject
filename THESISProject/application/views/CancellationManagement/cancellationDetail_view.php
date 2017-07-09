@@ -399,7 +399,7 @@
 	<?php if(isset($headerInfo['isLatestChange']) && 'Y' == $headerInfo['isLatestChange']){ ?>
 	<div class="row">
 		<div class="col-md-12">
-			<form role="form" method="post" id="cancelChange_form" action="<?php echo base_url() ?>Cancellation/cancel/">
+			<form role="form" method="post" id="cancelChange_form" action="<?php echo base_url() ?>Cancellation/doCancelProcess/">
 				<input type="hidden" name="changeRequestNo" value="<?php echo $keyParam['changeRequestNo'] ?>">
         		<input type="hidden" name="projectId" value="<?php echo $keyParam['projectId'] ?>">
 				<div class="box box-solid" style="margin-top: 10px;">

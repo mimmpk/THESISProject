@@ -25,7 +25,7 @@
 			</div>
 			<?php } ?>
 			
-			<form role="form" action="<?php echo base_url() ?>ChangeManagement/requestChangeFRInputs/" method="post" enctype="multipart/form-data">
+			<form role="form" id="changeRequestForm" action="<?php echo base_url() ?>ChangeManagement/doChangeProcess/" method="post" enctype="multipart/form-data">
 				<?php echo form_hidden($hfield); ?>
 				<div class="box box-primary">
 					<div class="box-header with-border">
@@ -233,10 +233,33 @@
 	                </div>
                 </div>
                 <div align="right">
-                	<button type="submit" class="btn btn-primary" style="margin-top: -10px;">
+                	<button type="button" class="btn btn-primary sumbitChangeRequest" style="margin-top: -10px;">
                 		<i class="fa fa-save"></i> Submit
                 	</button>
                 </div>
+
+                <!-- Start: Modal -->
+                <div class="modal fade" id="confirm_change_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+               		<div class="modal-dialog" role="document">
+               			<div class="modal-content">
+               				<div class="modal-header">
+               					<h4 class="modal-title" id="myModalLabel">Confirmation</h4>
+               				</div>
+               				<div class="modal-body">
+               					This change relates to other functional requirements. Are you sure to submit the change request?
+               				</div>
+               				<div class="modal-footer">
+						        <button type="button" class="btn btn-default" data-dismiss="modal">
+						        	Cancel
+						        </button>
+						        <button type="button" class="btn btn-primary confirmChangeRequest">
+						        	OK
+						        </button>
+					      	</div>
+               			</div>
+               		</div>	
+                </div>
+                <!-- End: Modal -->
             </form>
 		</div>
 	</div>

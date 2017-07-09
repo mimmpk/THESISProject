@@ -59,6 +59,12 @@ class DatabaseSchema_model extends CI_Model{
     	return json_encode($row_set); //format the array into json data
 	}
 
+	function searchCountAllDatabaseSchema(){
+		$result = $this->db->query("
+			SELECT distinct tableName, columnName FROM M_DATABASE_SCHEMA_INFO");
+		return $result->num_rows();
+	}
+
 	function searchExistDatabaseSchemaInfo($tableName, $columnName, $projectId){
 		$sqlStr = "SELECT di.*
 			FROM M_DATABASE_SCHEMA_INFO di

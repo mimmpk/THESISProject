@@ -54,7 +54,6 @@
 				fetch_post_data(keyId);
 			});
 
-
 			$(document).on('click', '.addInput', function(){
 				var projectId = $('input[name=projectId]').val();
 				var functionId = $('input[name=functionId]').val();
@@ -194,6 +193,29 @@
 						}
 					});	
 				}
+			});
+
+			$(document).on('click', '.sumbitChangeRequest', function(){
+				var functionId = $('input[name=functionId]').val();
+				var functionVersion = $('input[name=functionVersion]').val();
+				$.ajax({
+					url:"<?php echo base_url(); ?>ChangeManagement/checkRelatesOtherFRs/",
+					method:"POST",
+					data:{functionId: functionId, functionVersion: functionVersion},
+					success:function(data){
+						//alert(data);
+						if("Y" == data){
+							$('#confirm_change_modal').modal('show');
+						}else{
+							$('#changeRequestForm').submit();
+						}
+						return false;
+					}
+				});	
+			});
+
+			$(document).on('click', '.confirmChangeRequest', function(){
+				$('#changeRequestForm').submit();
 			});
 			//**************************[End: Change Management]*************************
 

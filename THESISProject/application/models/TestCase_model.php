@@ -40,6 +40,12 @@ class TestCase_model extends CI_Model{
 		return $result->result_array();
 	}
 
+	function searchCountAllTestCases(){
+		$result = $this->db->query("
+			SELECT count(*) as counts FROM M_TESTCASE_HEADER");
+		return $result->row();
+	}
+
 	function searchExistTestCaseDetail($projectId, $testCaseNo = '', $refInputId = ''){
 		if(!empty($projectId)){
 			$where[] = "th.projectId = $projectId";

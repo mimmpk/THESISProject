@@ -6,6 +6,10 @@ class Dashboard extends CI_Controller {
 	function __construct(){
 		parent::__construct();
 		$this->load->model('ChangeManagement_model', 'mChange');
+		$this->load->model('Project_model', 'mProject');
+		$this->load->model('FunctionalRequirement_model', 'mFR');
+		$this->load->model('TestCase_model', 'mTestCase');
+		$this->load->model('DatabaseSchema_model', 'mDB');
 	}
 
 	/**
@@ -31,6 +35,16 @@ class Dashboard extends CI_Controller {
 
 
 		//1. Get Number of Project, FnReq, TestCase, DatabaseSchema
+		$resultProjectCount = $this->mProject->searchCountAllProjects();
+		$data['projectCount'] = $resultProjectCount->counts;
+
+		$resultFRCount = $this->mFR->searchCountAllFunctionalRequirements();
+		$data['requirementsCount'] = $resultFRCount->counts;
+
+		$resultTestCaseCount = $this->mTestCase->searchCountAllTestCases();
+		$data['testCaseCount'] = $resultFRCount->counts;
+
+		$data['dbSchemaCount'] = $this->mDB->searchCountAllDatabaseSchema();
 
 		//2. Get Latest Change Information
 		$data['changeList'] = $this->mChange->searchChangeRequestList();

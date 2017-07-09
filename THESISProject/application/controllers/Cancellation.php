@@ -75,7 +75,7 @@ class Cancellation extends CI_Controller{
 		$this->openView($data, 'view');
 	}
 
-	public function cancel(){
+	public function doCancelProcess(){
 		$error_message = '';
 		$success_message = '';
 
@@ -107,22 +107,26 @@ class Cancellation extends CI_Controller{
 					);
 				$changeResult = $this->callChangeAPI($param);
 
-				/** 3. Control Version */
-				/** 4. Update Change Request's Status */
-				$user = $this->session->userdata('username');
+				if('Y' == $changeResult->result->isSuccess){
+					/** 3. Control Version */
+					/** 4. Update Change Request's Status */
+					$user = $this->session->userdata('username');
 
-				$processData = array(
-					'user' 				  => $user, 
-					'changeRequestNo' 	  => $changeRequestNo, 
-					'reason' 			  => $reason,
-					'updateDateCondition' => $changeInfo->updateDate);
+					$processData = array(
+						'user' 				  => $user, 
+						'changeRequestNo' 	  => $changeRequestNo, 
+						'reason' 			  => $reason,
+						'updateDateCondition' => $changeInfo->updateDate);
 
-				$controlVersionResult = $this->mCancellation->cancelProcess($changeResult, $error_message, $processData);
+					$controlVersionResult = $this->mCancellation->cancelProcess($changeResult, $error_message, $processData);
 
-				/** 5. Display Result */
-				if($controlVersionResult == true){
-					$this->displayResult($changeRequestNo, $projectId);
-					return false;
+					/** 5. Display Result */
+					if($controlVersionResult == true){
+						$this->displayResult($changeRequestNo, $projectId);
+						return false;
+					}
+				}else{
+					$error_message = $changeResult->result->error_message;
 				}
 			}else{
 				$error_message = str_replace("{0}", "Input Reason", ER_MSG_019);
@@ -353,10 +357,28 @@ class Cancellation extends CI_Controller{
 		$url = 'http://localhost/StubService/ChangeAPI.php';
 
 		$json = json_decode($this->common->postCURL($url, $passData));
+
+		$this->writeJsonFile($passData, $json, $param->functionNo);
 	
 		return $json;
 
 		//echo '<br><hr><h2>'.$this->postCURL($url, $passData).'</h2><br><hr><br>';
+	}
+
+	private function writeJsonFile($outputData, $inputData){
+		try{
+			$datetime = date('YmdHis');
+			$outputFileName = "log/cancel/requestDataJson_".$datetime.".txt";
+
+			$encodedString = json_encode($outputData);
+			file_put_contents($outputFileName, $encodedString);
+
+			$encodedString = json_encode($inputData);
+			$inputFileName = "log/cancel/responseDataJson_".$datetime.".txt";
+			file_put_contents($inputFileName, $encodedString);
+		}catch(Exception $e){
+			echo 'Caught exception: ',  $e->getMessage(), "\n";
+		}
 	}
 
 	private function openView($data, $view){
