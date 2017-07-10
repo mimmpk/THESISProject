@@ -103,6 +103,73 @@ class VersionManagement_TestCase extends CI_Controller{
 		$this->index();
 	}
 
+	public function diffWithPreviousVersion(){
+		$output = "";
+		$testCaseDetailList = array();
+
+		$testCaseId = $this->input->post('testCaseId');
+		$testCaseVersionId = $this->input->post('testCaseVersionId');
+
+		$criteria = (object) array(
+			'testCaseId' => $testCaseId, 'testCaseVersionId' => $testCaseVersionId);
+		$versionInfo = $this->mTC->searchTestCaseVersionInformationByCriteria($criteria);
+
+		if(null != $versionInfo && !empty($versionInfo->previousVersionId)){
+
+			$criteria->testCaseVersionId = $versionInfo->previousVersionId;
+			$pVersionInfo = $this->mTC->searchTestCaseVersionInformationByCriteria($criteria);
+
+			$param = (object) array(
+				'testCaseId' 	=> $testCaseId,
+				'cTargetDate' 	=> $versionInfo->effectiveStartDate,	//Newer 
+				'pTargetDate'   => $pVersionInfo->effectiveStartDate);	//Older
+			$testCaseDetailList = $this->mVerMng->searchDiffPreviousVersion_TestCase($param);
+
+			$output .= '
+			<div class="col-md-3">
+				<b>Test Case ID:</b>
+			</div>
+			<div class="col-md-3">
+				<span>'.$versionInfo->testCaseNo.'</span>
+			</div>	
+			<div class="col-md-3">
+				<b>Previous Version:</b>
+			</div>
+			<div class="col-md-3">
+				<span>'.$pVersionInfo->testCaseVersionNumber.'</span>
+			</div>		
+			<table class="table table-condensed">
+				<tbody>
+					<tr>
+						<th></th>
+						<th>Input Name</th>
+						<th>Test Data</th>
+					</tr>';
+			foreach($testCaseDetailList as $value){
+				$colorBg = "";
+				if('newer' == $value['version'] && 2 == $value['_count']){
+					$action = '&nbsp';
+				}else if('newer' == $value['version'] && 1 == $value['_count']){
+					$action = '<span class="label label-success">
+					<i class="fa fa-plus"></i></span>';
+					$colorBg = BG_COLOR_ADD;
+				}else if('older' == $value['version'] && 1 == $value['_count']){
+					$action = '<span class="label label-danger">
+					<i class="fa fa-minus"></i></span>';
+					$colorBg = BG_COLOR_DELETE;
+				}
+				$output .= '
+				<tr bgcolor="'.$colorBg.'">
+					<td>'.$action.'</td>
+					<td>'.$value['refInputName'].'</td>
+					<td>'.$value['testData'].'</td>
+				</tr>';
+			}
+			$output .= '</tbody></table>';
+		}
+		echo $output;
+	}
+
 	private function initialComboBox($projectId, $testCaseId, &$data){
 		$data['projectCombo'] = $this->mProj->searchStartProjectCombobox();
 		if(null != $projectId && !empty($projectId)){

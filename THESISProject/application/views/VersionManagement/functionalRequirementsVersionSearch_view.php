@@ -19,6 +19,7 @@
             	<form role="form" action="<?php echo base_url() ?>VersionManagement_FnReq/search/" method="post">
             		<input type="hidden" id="selectedProjectId"  name="selectedProjectId" value="<?php echo $projectId; ?>">
             		<input type="hidden" id="selectedFnReqId" name="selectedFnReqId" value="<?php echo $fnReqId; ?>">
+            		<input type="hidden" id="selectedFnReqVersion" name="selectedFnReqVersion" value="<?php echo $fnReqVersionId; ?>">
          			<div class="box-body">
          				<div class="row">
          					<div class="col-sm-12">
@@ -119,7 +120,7 @@
 								</dl>
 							</div>
 						</div>
-						<div class="col-sm-3">
+						<div class="col-sm-2">
 							<div class="form-group">
 								<dl>
 									<dt>Version:</dt>
@@ -127,7 +128,7 @@
 								</dl>
 							</div>
 						</div>
-						<div class="col-sm-2">
+						<div class="col-sm-3">
 							<div class="form-group">
 								<dl>
 									<dt>Status:</dt>
@@ -138,6 +139,9 @@
 									}else{
 										echo "<span class='badge bg-red'>".constant("UNACTIVE_STATUS")."</span>";
 									} ?>
+									<div class="pull-right">
+										<button id="btnDiffVersion">Diff with Previous Version</button>
+									</div>
 									</dd>
 								</dl>
 							</div>
@@ -214,4 +218,21 @@
 		</div>
 	</div>
 	<?php } ?>
+
+	<!-- Modal -->
+	<div class="modal fade" id="diffVersionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title" id="myModalLabel">Diff with Previous Version</h4>
+				</div>
+				<div class="modal-body" id="diffVersionContent">
+
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </section>

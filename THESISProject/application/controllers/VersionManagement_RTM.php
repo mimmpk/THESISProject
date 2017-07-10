@@ -74,6 +74,66 @@ class VersionManagement_RTM extends CI_Controller{
 		$this->index();
 	}
 
+	public function diffWithPreviousVersion(){
+		$output = "";
+		$rtmDetailList = array();
+
+		$projectId = $this->input->post('projectId');
+		$rtmVersionId = $this->input->post('rtmVersionId');
+
+		$criteria = (object) array('projectId' => $projectId, 'rtmVersionId' => $rtmVersionId);
+		$versionInfo = $this->mRTM->searchRTMVersionInfo($criteria);
+		
+		if(null != $versionInfo && !empty($versionInfo->previousVersionId)){
+			
+			$criteria->rtmVersionId = $versionInfo->previousVersionId;
+			$pVersionInfo = $this->mRTM->searchRTMVersionInfo($criteria);
+
+			$param = (object) array(
+				'projectId' => $projectId,
+				'cTargetDate' => $versionInfo->effectiveStartDate,
+				'pTargetDate' => $pVersionInfo->effectiveStartDate);
+			$rtmDetailList = $this->mVerMng->searchDiffPreviousVersion_RTM($param);
+
+			$output .= '
+			<div class="col-md-3">
+				<b>RTM Previous Version:</b>
+			</div>
+			<div class="col-md-9">
+				<span class="label label-info" style="text-align:left;">'.$pVersionInfo->rtmVersionNumber.'</span>
+			</div>
+			<table class="table table-condensed">
+				<tbody>
+					<tr>
+						<th style="width:10px;"></th>
+						<th>Functional Requirements ID</th>
+						<th>Test Case ID</th>
+					</tr>';
+			foreach($rtmDetailList as $value){
+				$colorBg = "";
+				if('newer' == $value['version'] && 2 == $value['_count']){
+					$action = '&nbsp';
+				}else if('newer' == $value['version'] && 1 == $value['_count']){
+					$action = '<span class="label label-success">
+					<i class="fa fa-plus"></i></span>';
+					$colorBg = BG_COLOR_ADD;
+				}else if('older' == $value['version'] && 1 == $value['_count']){
+					$action = '<span class="label label-danger">
+					<i class="fa fa-minus"></i></span>';
+					$colorBg = BG_COLOR_DELETE;
+				}
+				$output .= '
+				<tr bgcolor="'.$colorBg.'">
+					<td>'.$action.'</td>
+					<td>'.$value['functionNo'].'</td>
+					<td>'.$value['testCaseNo'].'</td>
+				</tr>';
+			}
+			$output .= '</tbody></table>';
+		}
+		echo $output;
+	}
+
 	private function initialComboBox($projectId, &$data){
 		$data['projectCombo'] = $this->mProj->searchStartProjectCombobox();
 		if(null != $projectId && !empty($projectId)){

@@ -101,6 +101,82 @@ class VersionManagement_FnReq extends CI_Controller{
 		$this->index();
 	}
 
+	public function diffWithPreviousVersion(){
+		$output = "";
+		$fnDetailList = array();
+
+		$projectId = $this->input->post('projectId');
+		$fnReqId = $this->input->post('functionId');
+		$fnReqVersionId = $this->input->post('functionVersion');
+
+		$criteria = (object) array(
+				'functionId' => $fnReqId, 'functionVersionId' => $fnReqVersionId);
+		$versionInfo = $this->mFR->searchFunctionalRequirementVersionByCriteria($criteria);
+		if(null != $versionInfo->previousVersionId && !empty($versionInfo->previousVersionId)){
+			
+			$previousVersionId = $versionInfo->previousVersionId;
+
+			$criteria = (object) array(
+				'functionId' => $fnReqId, 'functionVersionId' => $previousVersionId);
+			$pVersionInfo = $this->mFR->searchFunctionalRequirementVersionByCriteria($criteria);
+
+			//Get Functional Requirements Detail
+			$param = (object) array(
+				'projectId' 	=> $projectId, 
+				'functionId' 	=> $fnReqId,
+				'cTargetDate' 	=> $versionInfo->effectiveStartDate,	//Newer 
+				'pTargetDate'   => $pVersionInfo->effectiveStartDate);	//Older
+			$fnDetailList = $this->mVerMng->searchDiffPreviousVersion_Requirements($param);
+
+			$output .= '
+				<table class="table table-condensed">
+					<tbody>
+						<tr>
+							<th></th>
+							<th>Input Name</th>
+							<th>Data Type</th>
+							<th>Data Length</th>
+							<th>Scale</th>
+							<th>Unique</th>
+							<th>NOT NULL</th>
+							<th>Default</th>
+							<th>Min</th>
+							<th>Max</th>
+						</tr>';
+
+			foreach($fnDetailList as $value){
+				$colorBg = "";
+				if('newer' == $value['version'] && 2 == $value['_count']){
+					$action = '&nbsp';
+				}else if('newer' == $value['version'] && 1 == $value['_count']){
+					$action = '<span class="label label-success">
+					<i class="fa fa-plus"></i></span>';
+					$colorBg = BG_COLOR_ADD;
+				}else if('older' == $value['version'] && 1 == $value['_count']){
+					$action = '<span class="label label-danger">
+					<i class="fa fa-minus"></i></span>';
+					$colorBg = BG_COLOR_DELETE;
+				}
+				$output .= '
+				<tr bgcolor="'.$colorBg.'">
+					<td>'.$action.'</td>
+					<td>'.$value['inputName'].'</td>
+					<td>'.$value['dataType'].'</td>
+					<td>'.$value['dataLength'].'</td>
+					<td>'.$value['decimalPoint'].'</td>
+					<td>'.$value['constraintUnique'].'</td>
+					<td>'.$value['constraintNull'].'</td>
+					<td>'.$value['constraintDefault'].'</td>
+					<td>'.$value['constraintMinValue'].'</td>
+					<td>'.$value['constraintMaxValue'].'</td>
+				</tr>';
+			}
+			$output .= '</tbody></table>';		
+		}
+
+		echo $output;
+	}
+
 	private function initialComboBox($projectId, $fnReqId, &$data){
 		$data['projectCombo'] = $this->Project->searchStartProjectCombobox();
 		if(null != $projectId && !empty($projectId)){

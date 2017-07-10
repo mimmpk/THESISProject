@@ -24,6 +24,25 @@
 					});
 				}
 			});
+
+			$("#btnDiffVersion").click(function(){
+				var projectId = $('#selectedProjectId').val();
+				var versionId = $('#selectedVersionId').val();
+				$.ajax({
+					url: baseUrl+'VersionManagement_RTM/diffWithPreviousVersion',
+					data: {projectId: projectId, rtmVersionId: versionId},
+					type: 'POST',
+					success: function(result){
+						if("" != result){
+							$('#diffVersionModal').modal('show');
+							$('#diffVersionContent').html(result);
+						}else{
+							alert('This is an initial Version!!');
+						}
+						return false;
+					}
+				});
+			});
 		});
 	</script>
 

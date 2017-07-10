@@ -24,6 +24,10 @@
 					<h3 class="box-title">Search Criteria</h3>
 				</div>
 				<form class="form-horizontal" action="<?php echo base_url() ?>VersionManagement_TestCase/search/" method="post">
+					<input type="hidden" id="selectedProjectId" value="<?php echo $projectId; ?>">
+					<input type="hidden" id="selectedTestCaseId" value="<?php echo $testCaseId; ?>">
+					<input type="hidden" id="selectedTestCaseVersionId" value="<?php echo $testCaseVersionId; ?>">
+
             		<div class="box-body">
             			<div class="form-group">
     						<label for="inputProjectName" class="col-sm-2 control-label">
@@ -129,7 +133,7 @@
 								</dl>
 							</div>
 						</div>
-						<div class="col-sm-3">
+						<div class="col-sm-2">
 							<div class="form-group">
 								<dl>
 									<dt>Version:</dt>
@@ -137,7 +141,7 @@
 								</dl>
 							</div>
 						</div>
-						<div class="col-sm-2">
+						<div class="col-sm-3">
 							<div class="form-group">
 								<dl>
 									<dt>Status:</dt>
@@ -148,6 +152,10 @@
 									}else{
 										echo "<span class='badge bg-red'>".constant("UNACTIVE_STATUS")."</span>";
 									} ?>
+									<div class="pull-right">
+										<button id="btnDiffVersion">Diff with Previous Version</button>
+									</div>
+									
 									</dd>
 								</dl>
 							</div>
@@ -184,4 +192,21 @@
 		</div>
 	</div>
 	<?php } ?>
+
+	<!-- Modal -->
+	<div class="modal fade" id="diffVersionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title" id="myModalLabel">Diff with Previous Version</h4>
+				</div>
+				<div class="modal-body" id="diffVersionContent">
+
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </section>

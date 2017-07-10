@@ -52,6 +52,25 @@
 			$("#btnReset").click(function() {
 				window.location  = baseUrl + "VersionManagement_TestCase/reset";
 			});
+
+			$("#btnDiffVersion").click(function(){
+				var testCaseId = $('#selectedTestCaseId').val();
+				var testCaseVersionId = $('#selectedTestCaseVersionId').val();
+				$.ajax({
+					url: baseUrl+'VersionManagement_TestCase/diffWithPreviousVersion',
+					data: {testCaseId: testCaseId, testCaseVersionId: testCaseVersionId},
+					type: 'POST',
+					success: function(result){
+						if("" != result){
+							$('#diffVersionModal').modal('show');
+							$('#diffVersionContent').html(result);
+						}else{
+							alert('This is an initial Version!!');
+						}
+						return false;
+					}
+				});
+			});
 		});
 	</script>
 
